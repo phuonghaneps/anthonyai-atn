@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Anthony AI (ATN) – Official Token Site</title>
+  <meta name="description" content="Official page for Anthony AI (ATN) token on BNB Chain. Contract, tokenomics, LP lock, roadmap, and links." />
+  <meta property="og:title" content="Anthony AI (ATN) – Official" />
+  <meta property="og:description" content="ATN on BNB Chain. Fixed 2,000,000 supply. LP locked until 31 Dec 2029. View contract, tokenomics, and roadmap." />
+  <meta property="og:type" content="website" />
+  <meta name="theme-color" content="#0ea5e9" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <style>
+    :root{
+      --bg: #0b1220;
+      --card: #0f172a;
+      --muted: #94a3b8;
+      --text: #e2e8f0;
+      --accent: #06b6d4;
+      --accent-2: #22c55e;
+      --ring: rgba(34,197,94,.25);
+      --shadow: 0 8px 30px rgba(2,6,23,.35);
+      --radius: 16px;
+    }
+    *{box-sizing: border-box}
+    html,body{height:100%}
+    body{
+      margin:0; font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      background: radial-gradient(1200px 600px at 20% -20%, #0ea5e933, transparent),
+                  radial-gradient(900px 500px at 80% -10%, #22c55e22, transparent),
+                  var(--bg);
+      color: var(--text);
+    }
+    a{color:var(--accent); text-decoration:none}
+    a:hover{opacity:.9}
+    .container{width:min(1180px, 92vw); margin-inline:auto}
+    header{
+      position:sticky; top:0; z-index:50; backdrop-filter:saturate(150%) blur(8px);
+      background:linear-gradient(180deg, rgba(15,23,42,.8), rgba(15,23,42,.55));
+      border-bottom:1px solid rgba(148,163,184,.12);
+    }
+    .nav{display:flex; align-items:center; gap:16px; padding:14px 0}
+    .brand{display:flex; align-items:center; gap:10px; font-weight:800; letter-spacing:.3px}
+    .brand .logo{width:34px; height:34px; border-radius:9px; background:conic-gradient(from 210deg, #22c55e, #06b6d4); box-shadow:var(--shadow)}
+    .grow{flex:1}
+    .nav a.btn{padding:10px 14px; border:1px solid rgba(148,163,184,.18); border-radius:12px; color:var(--text)}
+    .nav a.cta{background:linear-gradient(135deg, #22c55e, #06b6d4); color:#06202a; font-weight:700; border:none}
+
+    .hero{display:grid; grid-template-columns:1.1fr .9fr; gap:34px; align-items:center; padding:60px 0}
+    @media (max-width:900px){.hero{grid-template-columns:1fr; padding:40px 0}}
+    h1{font-size:clamp(32px, 4.8vw, 54px); line-height:1.06; margin:0 0 12px}
+    .lead{font-size:clamp(16px, 2vw, 18px); color:var(--muted)}
+    .card{background:linear-gradient(180deg, rgba(255,255,255,.02), rgba(255,255,255,.01)); border:1px solid rgba(148,163,184,.12); border-radius:var(--radius); box-shadow:var(--shadow)}
+    .pill{display:inline-flex; gap:8px; align-items:center; padding:8px 12px; border-radius:999px; border:1px solid rgba(148,163,184,.16); color:var(--muted)}
+
+    .grid{display:grid; gap:18px}
+    .grid.cols-3{grid-template-columns:repeat(3, 1fr)}
+    .grid.cols-2{grid-template-columns:repeat(2, 1fr)}
+    @media (max-width:900px){.grid.cols-3,.grid.cols-2{grid-template-columns:1fr}}
+
+    .section{padding:48px 0}
+    .section h2{margin:0 0 8px; font-size:32px}
+    .section p.sub{color:var(--muted); margin:0 0 16px}
+
+    .contract{display:grid; gap:10px}
+    .copy-row{display:flex; gap:10px; align-items:center; background:var(--card); padding:12px; border-radius:12px; border:1px solid rgba(148,163,184,.16)}
+    .copy-row code{white-space:nowrap; overflow:auto; scrollbar-width:none}
+    .copy-row button{margin-left:auto; background:transparent; color:var(--accent); border:1px dashed rgba(6,182,212,.5); border-radius:10px; padding:8px 10px; cursor:pointer}
+
+    .token-stats{display:grid; grid-template-columns:repeat(3, 1fr); gap:12px}
+    @media (max-width:700px){.token-stats{grid-template-columns:1fr}}
+    .stat{padding:18px; border-radius:14px; border:1px solid rgba(148,163,184,.14); background:var(--card)}
+    .stat small{display:block; color:var(--muted)}
+    .stat strong{font-size:20px}
+
+    .card-pad{padding:20px}
+    .btn{display:inline-flex; align-items:center; gap:10px; border-radius:12px; padding:12px 14px; border:1px solid rgba(148,163,184,.18); color:var(--text)}
+    .btn.primary{background:linear-gradient(135deg, #22c55e, #06b6d4); color:#06202a; border:none; font-weight:700}
+
+    .road{display:grid; gap:14px}
+    .road .step{padding:16px; border:1px solid rgba(148,163,184,.14); border-radius:14px; background:var(--card)}
+    .road .step h4{margin:0 0 6px}
+    .badge{display:inline-block; padding:3px 10px; border-radius:999px; background:#0b2e24; color:#34d399; border:1px solid #14532d; font-size:12px; font-weight:600}
+
+    footer{padding:36px 0; color:var(--muted); border-top:1px solid rgba(148,163,184,.12)}
+    .links{display:flex; flex-wrap:wrap; gap:10px}
+    .links a{padding:10px 12px; border:1px solid rgba(148,163,184,.18); border-radius:10px}
+
+    .disclaimer{font-size:13.5px; color:#93a7c0}
+  </style>
+</head>
+<body>
+  <header>
+    <div class="container nav">
+      <div class="brand"><div class="logo" aria-hidden="true"></div> Anthony AI <span style="opacity:.7; font-weight:600">(ATN)</span></div>
+      <div class="grow"></div>
+      <a class="btn" href="#tokenomics">Tokenomics</a>
+      <a class="btn" href="#roadmap">Roadmap</a>
+      <a class="btn" href="https://bscscan.com/token/0xb5C84953983931dd2C10C9b04a4379eE52697193" target="_blank" rel="noopener">BscScan</a>
+      <a class="btn cta" href="https://pancakeswap.finance/swap?outputCurrency=0xb5C84953983931dd2C10C9b04a4379eE52697193" target="_blank" rel="noopener">Trade on PancakeSwap</a>
+    </div>
+  </header>
+
+  <main class="container">
+    <!-- HERO -->
+    <section class="hero">
+      <div>
+        <span class="pill">BNB Chain · BEP‑20</span>
+        <h1>Anthony AI (ATN)</h1>
+        <p class="lead">Fixed <strong>2,000,000 ATN</strong> supply. Liquidity is <strong>locked until 31 Dec 2029</strong>. Transparent tokenomics, community‑first roadmap, and practical AI‑driven utility.</p>
+        <div class="section" style="padding:18px 0 0">
+          <div class="token-stats">
+            <div class="stat"><small>Total Supply</small><strong>2,000,000 ATN</strong></div>
+            <div class="stat"><small>LP Lock</small><strong>PinkLock → 31 Dec 2029</strong></div>
+            <div class="stat"><small>Decimals</small><strong>18</strong></div>
+          </div>
+        </div>
+        <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:8px">
+          <a class="btn primary" href="https://pancakeswap.finance/swap?outputCurrency=0xb5C84953983931dd2C10C9b04a4379eE52697193" target="_blank" rel="noopener">Buy / Trade</a>
+          <a class="btn" href="https://bscscan.com/token/0xb5C84953983931dd2C10C9b04a4379eE52697193" target="_blank" rel="noopener">View Contract</a>
+          <a class="btn" href="https://pinksale.finance/pinklock/bsc/0x6a0ba3d48b25855bad2102796c837d9668ff8c18" target="_blank" rel="noopener">Verify LP Lock</a>
+        </div>
+      </div>
+
+      <div class="card card-pad">
+        <h3 style="margin:0 0 8px">Contract Address</h3>
+        <p class="sub" style="margin:0 0 10px; color:var(--muted)">Click to copy or add the token to your wallet.</p>
+        <div class="contract">
+          <div class="copy-row" title="ATN Contract on BNB Chain">
+            <code id="addr">0xb5C84953983931dd2C10C9b04a4379eE52697193</code>
+            <button id="copy">Copy</button>
+            <button id="watch">Add to Wallet</button>
+          </div>
+          <small style="color:var(--muted)">LP Token (Cake‑LP): <a target="_blank" rel="noopener" href="https://bscscan.com/token/0x6a0ba3d48b25855bad2102796c837d9668ff8c18">0x6a0ba3…fF8c18</a></small>
+        </div>
+      </div>
+    </section>
+
+    <!-- TOKENOMICS -->
+    <section id="tokenomics" class="section">
+      <h2>Tokenomics</h2>
+      <p class="sub">Remaining supply distribution (≈ 1.9M ATN). LP locked on PinkLock.</p>
+      <div class="grid cols-2">
+        <div class="card card-pad">
+          <canvas id="pie" height="240" aria-label="ATN distribution chart"></canvas>
+        </div>
+        <div class="card card-pad">
+          <ul style="list-style:none; padding:0; margin:0; display:grid; gap:10px">
+            <li><strong>25%</strong> · Development — <span class="muted">475,000 ATN</span></li>
+            <li><strong>20%</strong> · Community & Airdrop — <span class="muted">380,000 ATN</span></li>
+            <li><strong>20%</strong> · Team (locked) — <span class="muted">380,000 ATN</span></li>
+            <li><strong>15%</strong> · Marketing — <span class="muted">285,000 ATN</span></li>
+            <li><strong>15%</strong> · Partnerships & Listing — <span class="muted">285,000 ATN</span></li>
+            <li><strong>5%</strong> · Reserve — <span class="muted">95,000 ATN</span></li>
+          </ul>
+          <div style="margin-top:16px; display:flex; gap:10px; flex-wrap:wrap">
+            <a class="btn" target="_blank" rel="noopener" href="https://bscscan.com/token/0xb5C84953983931dd2C10C9b04a4379eE52697193#balances">Holders on BscScan</a>
+            <a class="btn" target="_blank" rel="noopener" href="https://x.com/Token_ATN">Follow on X</a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ROADMAP -->
+    <section id="roadmap" class="section">
+      <h2>Roadmap</h2>
+      <p class="sub">A practical, execution‑first plan. Timelines may adjust as we prioritize security and real usage.</p>
+      <div class="grid cols-3 road">
+        <div class="step">
+          <span class="badge">Phase 1</span>
+          <h4>Relaunch & Foundations</h4>
+          <ul>
+            <li>Contract relaunch on BNB Chain</li>
+            <li>LP added & <strong>locked to 2029‑12‑31</strong></li>
+            <li>Tokenomics & transparency hub</li>
+            <li>Website + Brand refresh</li>
+          </ul>
+        </div>
+        <div class="step">
+          <span class="badge">Phase 2</span>
+          <h4>Adoption & Listings</h4>
+          <ul>
+            <li>Community growth & airdrops</li>
+            <li>Marketing partnerships</li>
+            <li>Analytics dashboard / lite utilities</li>
+            <li>Apply for additional listings</li>
+          </ul>
+        </div>
+        <div class="step">
+          <span class="badge">Phase 3</span>
+          <h4>Utility & Scale</h4>
+          <ul>
+            <li>AI‑assisted features (research / tools)</li>
+            <li>Developer grants & integrations</li>
+            <li>Ongoing audits & security reviews</li>
+            <li>DAO‑driven initiatives (subject to feasibility)</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- FAQ -->
+    <section class="section">
+      <h2>FAQ</h2>
+      <div class="grid cols-2">
+        <div class="card card-pad">
+          <h4 style="margin:0 0 6px">Which network?</h4>
+          <p class="sub">BNB Chain (BEP‑20). You can add ATN to MetaMask using the "Add to Wallet" button.</p>
+          <h4 style="margin:12px 0 6px">Is the LP locked?</h4>
+          <p class="sub">Yes. Locked with <a target="_blank" rel="noopener" href="https://pinksale.finance/pinklock/bsc/0x6a0ba3d48b25855bad2102796c837d9668ff8c18">PinkLock</a> until 31 Dec 2029. Always verify links.</p>
+          <h4 style="margin:12px 0 6px">Where to trade?</h4>
+          <p class="sub">On PancakeSwap: <a target="_blank" rel="noopener" href="https://pancakeswap.finance/swap?outputCurrency=0xb5C84953983931dd2C10C9b04a4379eE52697193">ATN/BNB</a>.</p>
+        </div>
+        <div class="card card-pad">
+          <h4 style="margin:0 0 6px">Contract address?</h4>
+          <p class="sub"><code>0xb5C84953983931dd2C10C9b04a4379eE52697193</code> (BNB Chain). View on <a target="_blank" rel="noopener" href="https://bscscan.com/token/0xb5C84953983931dd2C10C9b04a4379eE52697193">BscScan</a>.</p>
+          <h4 style="margin:12px 0 6px">Can supply change?</h4>
+          <p class="sub">No. Total supply is fixed at 2,000,000 ATN. Distribution is transparent and on‑chain.</p>
+          <h4 style="margin:12px 0 6px">Contacts</h4>
+          <p class="sub">X: <a target="_blank" rel="noopener" href="https://x.com/Token_ATN">@Token_ATN</a> · Telegram: <a target="_blank" rel="noopener" href="#">Coming soon</a> · Email: <a href="mailto:hello@anthonyai.org">hello@anthonyai.org</a></p>
+        </div>
+      </div>
+      <p class="disclaimer" style="margin-top:16px">Disclaimer: This site is for information only and does not constitute financial advice or a solicitation to invest. Crypto assets are volatile and involve risk. Always do your own research and verify contract addresses.</p>
+    </section>
+  </main>
+
+  <footer>
+    <div class="container" style="display:flex; gap:12px; align-items:center; justify-content:space-between; flex-wrap:wrap">
+      <div>© <span id="year"></span> Anthony AI (ATN). All rights reserved.</div>
+      <div class="links">
+        <a target="_blank" rel="noopener" href="https://bscscan.com/token/0xb5C84953983931dd2C10C9b04a4379eE52697193">BscScan</a>
+        <a target="_blank" rel="noopener" href="https://pancakeswap.finance/swap?outputCurrency=0xb5C84953983931dd2C10C9b04a4379eE52697193">PancakeSwap</a>
+        <a target="_blank" rel="noopener" href="https://pinksale.finance/pinklock/bsc/0x6a0ba3d48b25855bad2102796c837d9668ff8c18">PinkLock</a>
+        <a target="_blank" rel="noopener" href="https://x.com/Token_ATN">X (Twitter)</a>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    // Year
+    document.getElementById('year').textContent = new Date().getFullYear();
+
+    // Copy & watch asset
+    const addr = '0xb5C84953983931dd2C10C9b04a4379eE52697193';
+    document.getElementById('copy').addEventListener('click', async () => {
+      try{ await navigator.clipboard.writeText(addr); alert('Contract copied to clipboard'); }catch(e){ alert('Copy failed'); }
+    });
+    document.getElementById('watch').addEventListener('click', async () => {
+      if(!window.ethereum){ alert('Wallet not detected'); return }
+      try{
+        await window.ethereum.request({
+          method: 'wallet_watchAsset',
+          params: {
+            type: 'ERC20', // works for BEP20 within EVM wallets
+            options: {
+              address: addr,
+              symbol: 'ATN',
+              decimals: 18,
+              image: location.origin + '/favicon.ico'
+            }
+          }
+        });
+      }catch(err){ console.log(err); }
+    });
+
+    // Tokenomics chart
+    const ctx = document.getElementById('pie');
+    const data = {
+      labels: [
+        'Development (25%)',
+        'Community & Airdrop (20%)',
+        'Team – locked (20%)',
+        'Marketing (15%)',
+        'Partnerships & Listing (15%)',
+        'Reserve (5%)'
+      ],
+      datasets: [{
+        data: [25, 20, 20, 15, 15, 5],
+        backgroundColor: ['#22c55e','#60a5fa','#f59e0b','#ef4444','#06b6d4','#a78bfa'],
+        borderColor: 'rgba(15,23,42,.8)',
+        borderWidth: 2,
+        hoverOffset: 6
+      }]
+    };
+    new Chart(ctx, {
+      type: 'doughnut',
+      data,
+      options: {
+        plugins: {
+          legend: { position: 'bottom', labels: { color: '#cbd5e1' } }
+        },
+        cutout: '55%'
+      }
+    });
+  </script>
+</body>
+</html>

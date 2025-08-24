@@ -91,11 +91,26 @@
 
     .disclaimer{font-size:13.5px; color:#93a7c0}
   </style>
+    <!-- === ATN favicon & social image === -->
+  <link rel="icon" href="/favicon-32.png" type="image/png" sizes="32x32">
+  <meta property="og:image" content="/og-image.png">
+
+  <!-- === Logo CSS (thêm style cho logo ảnh thật) === -->
+  <style>
+    .brand a{ display:flex; align-items:center; gap:10px; color:var(--text); text-decoration:none; }
+    .brand a:hover{ opacity:.9; }
+    .brand img{ height:34px; width:auto; border-radius:9px; box-shadow:var(--shadow); display:block; }
+  </style>
 </head>
 <body>
   <header>
     <div class="container nav">
-      <div class="brand"><div class="logo" aria-hidden="true"></div> Anthony AI <span style="opacity:.7; font-weight:600">(ATN)</span></div>
+      <div class="brand">
+  <a href="https://vnbot.ai.vn" target="_blank" rel="noopener" title="Go to official website">
+    <img src="/logo_atn.png" alt="Anthony AI (ATN) logo">
+    Anthony AI <span style="opacity:.7; font-weight:600">(ATN)</span>
+  </a>
+</div>
       <div class="grow"></div>
       <a class="btn" href="#tokenomics">Tokenomics</a>
       <a class="btn" href="#roadmap">Roadmap</a>
@@ -298,3 +313,4 @@
   </script>
 </body>
 </html>
+

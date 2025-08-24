@@ -102,6 +102,24 @@
     .brand img{ height:34px; width:auto; border-radius:9px; box-shadow:var(--shadow); display:block; }
   </style>
 </head>
+    <style>
+    /* Chart container */
+    .chart-embed{
+      position: relative;
+      width: 100%;
+      height: 560px;
+      border: 1px solid rgba(148,163,184,.12);
+      border-radius: 14px;
+      overflow: hidden;
+      background: var(--card);
+    }
+    .chart-embed iframe{
+      position: absolute; inset: 0;
+      width: 100%; height: 100%;
+      border: 0;
+    }
+  </style>
+</head>
 <body>
   <header>
     <div class="container nav">
@@ -114,6 +132,7 @@
       <div class="grow"></div>
       <a class="btn" href="#tokenomics">Tokenomics</a>
       <a class="btn" href="#roadmap">Roadmap</a>
+      <a class="btn" href="#chart">Chart</a>
       <a class="btn" href="https://bscscan.com/token/0xb5C84953983931dd2C10C9b04a4379eE52697193" target="_blank" rel="noopener">BscScan</a>
       <a class="btn cta" href="https://pancakeswap.finance/swap?outputCurrency=0xb5C84953983931dd2C10C9b04a4379eE52697193" target="_blank" rel="noopener">Trade on PancakeSwap</a>
     </div>
@@ -150,6 +169,33 @@
             <button id="watch">Add to Wallet</button>
           </div>
           <small style="color:var(--muted)">LP Token (Cake‑LP): <a target="_blank" rel="noopener" href="https://bscscan.com/token/0x6a0ba3d48b25855bad2102796c837d9668ff8c18">0x6a0ba3…fF8c18</a></small>
+        </div>
+      </div>
+    </section>
+    <!-- CHART -->
+    <section id="chart" class="section">
+      <h2>Live Chart</h2>
+      <p class="sub">Realtime price & trades from Dexscreener.</p>
+
+      <div class="card card-pad">
+        <div class="chart-embed">
+          <iframe
+            src="https://dexscreener.com/bsc/0x6a0ba3d48b25855bad2102796c837d9668ff8c18?embed=1&theme=dark&hidepairtabs=true&trades=1"
+            loading="lazy"
+            allowtransparency="true"
+            allow="clipboard-write; fullscreen">
+          </iframe>
+        </div>
+
+        <div style="margin-top:12px; display:flex; gap:10px; flex-wrap:wrap">
+          <a class="btn" target="_blank" rel="noopener"
+             href="https://dexscreener.com/bsc/0x6a0ba3d48b25855bad2102796c837d9668ff8c18">
+            Open on Dexscreener
+          </a>
+          <a class="btn" target="_blank" rel="noopener"
+             href="https://www.geckoterminal.com/bsc/pools/0x6a0ba3d48b25855bad2102796c837d9668ff8c18?info=1">
+            View on GeckoTerminal
+          </a>
         </div>
       </div>
     </section>
@@ -313,4 +359,5 @@
   </script>
 </body>
 </html>
+
 

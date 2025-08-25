@@ -86,18 +86,18 @@
       });
     })();
 
-    // ----- Line: Live price + stats (GeckoTerminal) -----
+  // ----- Line: Live price + stats (GeckoTerminal) -----
 (function initLiveChart(){
   var canvas = document.getElementById("priceLine");
   var ctxLine = canvas ? canvas.getContext("2d") : null;
-  if (!ctxLine) return;
+  if (!ctxLine) { return; }
 
-  // KHÓA kích thước để ngăn "bung"
+  // Khóa kích thước để tránh "bung"
   var w = (canvas.parentNode && canvas.parentNode.clientWidth) ? canvas.parentNode.clientWidth : 900;
   canvas.style.width  = "100%";
   canvas.style.height = "320px";
-  canvas.width        = w;
-  canvas.height       = 320;
+  canvas.width  = w;
+  canvas.height = 320;
 
   var priceData = {
     labels: [],
@@ -127,7 +127,7 @@
     }
   });
 
-  // ==== DOM cho 4 chỉ số ====
+  // 4 chỉ số
   var priceEl = document.getElementById("statPrice");
   var liqEl   = document.getElementById("statLiq");
   var fdvEl   = document.getElementById("statFdv");
@@ -156,7 +156,7 @@
   var timer = null;
   var abortCtrl = null;
 
-  // Seed dữ liệu lịch sử để có line ngay
+  // Seed lịch sử vào chart
   function seedChartFromGT(){
     return fetch(GT_OHLCV_URL, { cache: "no-store" })
       .then(function(r){ return r.json(); })
@@ -173,7 +173,7 @@
           var close = Number(row[4] || 0);
           if (!isFinite(close) || close <= 0) continue;
 
-          var label = new Date(ts*1000).toLocaleTimeString([], {hour:"2-digit", minute:"2-digit"});
+          var label = new Date(ts*1000).toLocaleTimeString([], {"hour":"2-digit", "minute":"2-digit"});
           priceData.labels.push(label);
           priceData.datasets[0].data.push(close);
         }
@@ -182,7 +182,7 @@
       .catch(function(e){ console.log("GT seed error:", e); });
   }
 
-  // Cập nhật số liệu + thêm 1 điểm mới
+  // Cập nhật chỉ số + thêm điểm mới
   function refreshFromGT(){
     if (abortCtrl && abortCtrl.abort) abortCtrl.abort();
     abortCtrl = (typeof AbortController !== "undefined") ? new AbortController() : null;
@@ -204,7 +204,7 @@
         if (volEl)   volEl.textContent   = vol24    ? ("$" + fmtCompact(vol24)) : "—";
 
         if (isFinite(priceUsd) && priceUsd > 0){
-          var label = new Date().toLocaleTimeString([], {hour:"2-digit", minute:"2-digit"});
+          var label = new Date().toLocaleTimeString([], {"hour":"2-digit", "minute":"2-digit"});
           priceData.labels.push(label);
           priceData.datasets[0].data.push(priceUsd);
 
@@ -218,7 +218,7 @@
       .catch(function(e){ console.log("GT pool error:", e); });
   }
 
-  // Khởi chạy: seed rồi update định kỳ
+  // Khởi chạy
   seedChartFromGT().then(function(){ refreshFromGT(); });
   timer = setInterval(refreshFromGT, 20000);
 
@@ -227,8 +227,9 @@
     if (timer) { clearInterval(timer); timer = null; }
     if (abortCtrl && abortCtrl.abort) abortCtrl.abort();
   }
-  document.addEventListener("visibilitychange", function(){ document.hidden ? stop() : (timer || (timer = setInterval(refreshFromGT, 20000))); });
+  document.addEventListener("visibilitychange", function(){
+    if (document.hidden) { stop(); }
+    else if (!timer) { timer = setInterval(refreshFromGT, 20000); }
+  });
   window.addEventListener("pagehide", stop);
 })(); // end initLiveChart
-
-

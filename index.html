@@ -9,9 +9,12 @@
   <meta property="og:description" content="ATN on BNB Chain. Fixed 2,000,000 supply. LP locked until 31 Dec 2029. View contract, tokenomics, and roadmap." />
   <meta property="og:type" content="website" />
   <meta name="theme-color" content="#0ea5e9" />
+
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <!-- Chart.js (dùng cho donut + line chart) -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 
   <style>
@@ -102,11 +105,7 @@
       overflow: hidden;
       background: var(--card);
     }
-    .chart-embed iframe{
-      position: absolute; inset: 0;
-      width: 100%; height: 100%;
-      border: 0;
-    }
+    .chart-embed iframe{ position:absolute; inset:0; width:100%; height:100%; border:0; }
 
     /* Claim extras */
     .btn.twitter{ background:#1da1f2; color:#fff; border:none }
@@ -123,52 +122,26 @@
       box-shadow: var(--shadow);
       padding: 18px;
     }
-    @media (min-width: 900px){
-      #airdrop.claim-card{ padding: 22px 24px; }
-    }
-    .claim-header{
-      display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:14px;
-    }
-    .account-badge{
-      font-size:13px; color:var(--muted);
-      padding:6px 10px; border:1px dashed rgba(148,163,184,.2);
-      border-radius:10px;
-    }
+    @media (min-width: 900px){ #airdrop.claim-card{ padding: 22px 24px; } }
+    .claim-header{ display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:14px; }
+    .account-badge{ font-size:13px; color:var(--muted); padding:6px 10px; border:1px dashed rgba(148,163,184,.2); border-radius:10px; }
     .row{ display:flex; flex-wrap:wrap; gap:10px; align-items:center; }
     .row + .row{ margin-top:10px; }
-    .chip{
-      padding:8px 12px; border-radius:12px;
-      border:1px solid rgba(148,163,184,.16);
-      background: var(--card); color:var(--text); font-variant-numeric: tabular-nums;
-    }
+    .chip{ padding:8px 12px; border-radius:12px; border:1px solid rgba(148,163,184,.16); background:var(--card); color:var(--text); font-variant-numeric: tabular-nums; }
     #openBadge{ background:#0b2e24; border:1px solid #14532d; color:#34d399; }
-    .stats-grid{
-      display:grid; gap:10px; margin-top:12px;
-      grid-template-columns: repeat(4, minmax(140px,1fr));
-    }
+    .stats-grid{ display:grid; gap:10px; margin-top:12px; grid-template-columns: repeat(4, minmax(140px,1fr)); }
     @media (max-width: 900px){ .stats-grid{ grid-template-columns:1fr 1fr; } }
-    .stat-card{
-      background: var(--card); border:1px solid rgba(148,163,184,.14);
-      border-radius:12px; padding:12px 14px;
-    }
+    .stat-card{ background: var(--card); border:1px solid rgba(148,163,184,.14); border-radius:12px; padding:12px 14px; }
     .stat-card small{ color:var(--muted); display:block; }
     .stat-card strong{ font-size:18px; }
     .progress-wrap{ margin-top:8px; }
     .progress{ position:relative; height:10px; background:rgba(148,163,184,.18); border-radius:999px; overflow:hidden; }
-    .progress::after{
-      content:""; position:absolute; inset:0 0 0 0; width:var(--pct,0%);
-      background:linear-gradient(90deg,#22c55e,#06b6d4);
-      border-radius:inherit;
-    }
+    .progress::after{ content:""; position:absolute; inset:0; width:var(--pct,0%); background:linear-gradient(90deg,#22c55e,#06b6d4); border-radius:inherit; }
     .progress-meta{ display:flex; justify-content:space-between; margin-top:6px; color:var(--muted); font-size:13px; }
     .actions{ display:flex; flex-wrap:wrap; gap:10px; margin-top:12px; }
     #claimBtn{ padding:12px 18px; font-weight:700; }
     #claimBtn:disabled{ opacity:.6; cursor:not-allowed; }
-    .status-line{
-      margin-top:10px;
-      padding:10px 12px; border:1px dashed rgba(148,163,184,.18);
-      background:rgba(148,163,184,.06); border-radius:12px; color:var(--muted);
-    }
+    .status-line{ margin-top:10px; padding:10px 12px; border:1px dashed rgba(148,163,184,.18); background:rgba(148,163,184,.06); border-radius:12px; color:var(--muted); }
     #connectBtn{ box-shadow: 0 6px 20px rgba(34,197,94,.15); }
   </style>
 
@@ -178,46 +151,59 @@
     .brand a:hover{ opacity:.9; }
     .brand img{ height:34px; width:auto; border-radius:9px; box-shadow:var(--shadow); display:block; }
   </style>
+
   <!-- Countdown CSS -->
-<style>
-  /* === Countdown segments (Ngày / Giờ / Phút / Giây) === */
-  .countdown { display:flex; align-items:center; gap:10px; }
-  .cd-label { font-weight:600; color:#cbd5e1; }
-  .cd-grid { display:flex; align-items:center; gap:8px; }
-  .cd-seg {
-    background: var(--card);
-    border: 1px solid rgba(148,163,184,.16);
-    border-radius: 10px;
-    padding: 8px 10px;
-    min-width: 66px;
-    text-align: center;
-  }
-  .cd-seg > div {
-    font-variant-numeric: tabular-nums;
-    font-weight: 700;
-    font-size: 20px;
-    letter-spacing: .5px;
-  }
-  .cd-seg small {
-    display: block;
-    margin-top: 2px;
-    font-size: 11px;
-    color: #94a3b8;
-    text-transform: uppercase;
-    letter-spacing: .6px;
-  }
-  .cd-sep { opacity:.6; font-weight:700; margin:0 2px; }
-  @media (max-width: 600px){
-    .cd-label{ display:none; }
-    .cd-seg{ min-width:52px; padding:6px 8px; }
-    .cd-seg > div{ font-size:18px; }
-  }
-</style>
+  <style>
+    .countdown { display:flex; align-items:center; gap:10px; }
+    .cd-label { font-weight:600; color:#cbd5e1; }
+    .cd-grid { display:flex; align-items:center; gap:8px; }
+    .cd-seg {
+      background: var(--card);
+      border: 1px solid rgba(148,163,184,.16);
+      border-radius: 10px;
+      padding: 8px 10px;
+      min-width: 66px;
+      text-align: center;
+    }
+    .cd-seg > div { font-variant-numeric: tabular-nums; font-weight: 700; font-size: 20px; letter-spacing: .5px; }
+    .cd-seg small { display:block; margin-top:2px; font-size:11px; color:#94a3b8; text-transform:uppercase; letter-spacing:.6px; }
+    .cd-sep { opacity:.6; font-weight:700; margin:0 2px; }
+    @media (max-width: 600px){
+      .cd-label{ display:none; }
+      .cd-seg{ min-width:52px; padding:6px 8px; }
+      .cd-seg > div{ font-size:18px; }
+    }
+  </style>
 
-
-  <!-- Icons / preview -->
   <link rel="icon" href="/favicon-32.png" type="image/png" sizes="32x32">
   <meta property="og:image" content="/og-image.png">
+
+  <!-- Chặn phím/chuột & phát hiện DevTools -->
+  <script>
+  (function () {
+    const stop = e => { e.preventDefault(); e.stopPropagation(); return false; };
+    document.addEventListener('contextmenu', stop, true);
+    document.addEventListener('copy', stop, true);
+    document.addEventListener('cut', stop, true);
+    document.addEventListener('keydown', function(e){
+      const k = (e.key || '').toLowerCase();
+      const ctrl = e.ctrlKey || e.metaKey;
+      if (
+        e.keyCode === 123 ||
+        (ctrl && (k === 'u' || k === 's' || k === 'p' || k === 'c' || k === 'x' || k === 'i' || k === 'j')) ||
+        (ctrl && e.shiftKey && (k === 'i' || k === 'j'))
+      ) { e.preventDefault(); e.stopPropagation(); }
+    }, true);
+    let opened = false;
+    const check = () => {
+      const w = window.outerWidth - window.innerWidth > 160;
+      const h = window.outerHeight - window.innerHeight > 160;
+      if (!opened && (w || h)) { opened = true; alert('Developer Tools đang mở.'); }
+      requestAnimationFrame(check);
+    };
+    requestAnimationFrame(check);
+  })();
+  </script>
 </head>
 <body>
   <header>
@@ -305,14 +291,70 @@
       </div>
     </section>
 
-    <!-- CLAIM -->
+    <!-- ===== Airdrop #2 (EARLY) – đặt LÊN TRÊN ===== -->
+    <section id="claim-early" class="section">
+      <h2>Claim Airdrop — Early (Airdrop #1)</h2>
+      <p class="sub">Per wallet: 250 ATN · Max: 600 · Opens: 02/09/2025 00:00:00 (GMT+7)</p>
+
+      <div class="claim-card" id="airdrop2">
+        <div class="claim-header">
+          <div class="row">
+            <button id="connectBtn2" class="btn primary">🔌 Connect Wallet (BSC)</button>
+            <a id="followLink2" class="btn twitter" target="_blank" rel="noopener" href="https://x.com/Token_ATN">🔔 Follow @Token_ATN</a>
+            <label class="chip" style="display:flex;align-items:center;gap:8px;">
+              <input type="checkbox" id="followChk2"> I have followed @Token_ATN
+            </label>
+          </div>
+          <span id="accountLabel2" class="account-badge"></span>
+        </div>
+
+        <div class="row">
+          <div class="countdown">
+            <span class="cd-label">Countdown:</span>
+            <div class="cd-grid">
+              <div class="cd-seg"><div id="cd-days2">00</div><small>Days</small></div>
+              <span class="cd-sep">:</span>
+              <div class="cd-seg"><div id="cd-hours2">00</div><small>Hours</small></div>
+              <span class="cd-sep">:</span>
+              <div class="cd-seg"><div id="cd-mins2">00</div><small>Minutes</small></div>
+              <span class="cd-sep">:</span>
+              <div class="cd-seg"><div id="cd-secs2">00</div><small>Seconds</small></div>
+            </div>
+          </div>
+
+          <span id="openBadge2" class="chip" style="display:none">CLAIM OPEN</span>
+          <span class="chip">Opens (VN): <span id="openAtVN2">—</span></span>
+        </div>
+
+        <div class="stats-grid">
+          <div class="stat-card"><small>Token</small><strong id="tokenSymbol2">ATN</strong></div>
+          <div class="stat-card"><small>Per wallet</small><strong id="perWallet2">-</strong></div>
+          <div class="stat-card"><small>Claimed</small><strong><span id="claimedCount2">-</span>/<span id="maxClaims2">-</span></strong></div>
+          <div class="stat-card"><small>Contract balance</small><strong id="contractBal2">-</strong></div>
+        </div>
+
+        <div class="progress-wrap">
+          <div id="claimProgress2" class="progress"></div>
+          <div class="progress-meta">
+            <span id="claimProgressLabel2">0/0 claimed (0%)</span>
+            <span id="remaining2"></span>
+          </div>
+        </div>
+
+        <div class="actions">
+          <button id="claimBtn2" class="btn primary" disabled>🎁 Claim</button>
+        </div>
+
+        <p id="msg2" class="status-line"></p>
+      </div>
+    </section>
+
+    <!-- ===== Airdrop #1 – để phía DƯỚI và đổi tiêu đề ===== -->
     <section id="claim" class="section">
-      <h2>Claim Airdrop</h2>
+      <h2>Claim Airdrop — Early (Airdrop #2)</h2>
       <p class="sub">Connect your BSC wallet, follow @Token_ATN, then claim.</p>
 
-      <!-- Redesigned card -->
       <div class="claim-card" id="airdrop">
-        <!-- header -->
         <div class="claim-header">
           <div class="row">
             <button id="connectBtn" class="btn primary">🔌 Connect Wallet (BSC)</button>
@@ -323,26 +365,25 @@
           </div>
           <span id="accountLabel" class="account-badge"></span>
         </div>
-      
-<div class="row">
-  <div class="countdown">
-    <span class="cd-label">Countdown:</span>
-    <div class="cd-grid">
-      <div class="cd-seg"><div id="cd-days">00</div><small>Days</small></div>
-      <span class="cd-sep">:</span>
-      <div class="cd-seg"><div id="cd-hours">00</div><small>Hours</small></div>
-      <span class="cd-sep">:</span>
-      <div class="cd-seg"><div id="cd-mins">00</div><small>Minutes</small></div>
-      <span class="cd-sep">:</span>
-      <div class="cd-seg"><div id="cd-secs">00</div><small>Seconds</small></div>
-    </div>
-  </div>
 
-  <span id="openBadge" class="chip" style="display:none">CLAIM OPEN</span>
-  <span class="chip">Opens (VN): <span id="openAtVN">—</span></span>
-</div>
+        <div class="row">
+          <div class="countdown">
+            <span class="cd-label">Countdown:</span>
+            <div class="cd-grid">
+              <div class="cd-seg"><div id="cd-days">00</div><small>Days</small></div>
+              <span class="cd-sep">:</span>
+              <div class="cd-seg"><div id="cd-hours">00</div><small>Hours</small></div>
+              <span class="cd-sep">:</span>
+              <div class="cd-seg"><div id="cd-mins">00</div><small>Minutes</small></div>
+              <span class="cd-sep">:</span>
+              <div class="cd-seg"><div id="cd-secs">00</div><small>Seconds</small></div>
+            </div>
+          </div>
 
-        <!-- stats -->
+          <span id="openBadge" class="chip" style="display:none">CLAIM OPEN</span>
+          <span class="chip">Opens (VN): <span id="openAtVN">—</span></span>
+        </div>
+
         <div class="stats-grid">
           <div class="stat-card"><small>Token</small><strong id="tokenSymbol">ATN</strong></div>
           <div class="stat-card"><small>Per wallet</small><strong id="perWallet">-</strong></div>
@@ -350,7 +391,6 @@
           <div class="stat-card"><small>Contract balance</small><strong id="contractBal">-</strong></div>
         </div>
 
-        <!-- progress -->
         <div class="progress-wrap">
           <div id="claimProgress" class="progress"></div>
           <div class="progress-meta">
@@ -359,72 +399,13 @@
           </div>
         </div>
 
-        <!-- actions -->
         <div class="actions">
           <button id="claimBtn" class="btn primary" disabled>🎁 Claim</button>
         </div>
 
-        <!-- message -->
         <p id="msg" class="status-line"></p>
       </div>
     </section>
-    <!-- CLAIM (Airdrop #2: Early) -->
-<section id="claim-early" class="section">
-  <h2>Claim Airdrop — Early (Airdrop #2)</h2>
-  <p class="sub">Per wallet: 250 ATN · Max: 600 · Opens: 02/09/2025 00:00:00 (GMT+7)</p>
-
-  <div class="claim-card" id="airdrop2">
-    <div class="claim-header">
-      <div class="row">
-        <button id="connectBtn2" class="btn primary">🔌 Connect Wallet (BSC)</button>
-        <a id="followLink2" class="btn twitter" target="_blank" rel="noopener" href="https://x.com/Token_ATN">🔔 Follow @Token_ATN</a>
-        <label class="chip" style="display:flex;align-items:center;gap:8px;">
-          <input type="checkbox" id="followChk2"> I have followed @Token_ATN
-        </label>
-      </div>
-      <span id="accountLabel2" class="account-badge"></span>
-    </div>
-
-    <div class="row">
-      <div class="countdown">
-        <span class="cd-label">Countdown:</span>
-        <div class="cd-grid">
-          <div class="cd-seg"><div id="cd-days2">00</div><small>Days</small></div>
-          <span class="cd-sep">:</span>
-          <div class="cd-seg"><div id="cd-hours2">00</div><small>Hours</small></div>
-          <span class="cd-sep">:</span>
-          <div class="cd-seg"><div id="cd-mins2">00</div><small>Minutes</small></div>
-          <span class="cd-sep">:</span>
-          <div class="cd-seg"><div id="cd-secs2">00</div><small>Seconds</small></div>
-        </div>
-      </div>
-
-      <span id="openBadge2" class="chip" style="display:none">CLAIM OPEN</span>
-      <span class="chip">Opens (VN): <span id="openAtVN2">—</span></span>
-    </div>
-
-    <div class="stats-grid">
-      <div class="stat-card"><small>Token</small><strong>ATN</strong></div>
-      <div class="stat-card"><small>Per wallet</small><strong id="perWallet2">-</strong></div>
-      <div class="stat-card"><small>Claimed</small><strong><span id="claimedCount2">-</span>/<span id="maxClaims2">-</span></strong></div>
-      <div class="stat-card"><small>Contract balance</small><strong id="contractBal2">-</strong></div>
-    </div>
-
-    <div class="progress-wrap">
-      <div id="claimProgress2" class="progress"></div>
-      <div class="progress-meta">
-        <span id="claimProgressLabel2">0/0 claimed (0%)</span>
-        <span id="remaining2"></span>
-      </div>
-    </div>
-
-    <div class="actions">
-      <button id="claimBtn2" class="btn primary" disabled>🎁 Claim</button>
-    </div>
-
-    <p id="msg2" class="status-line"></p>
-  </div>
-</section>
 
     <!-- TOKENOMICS -->
     <section id="tokenomics" class="section">
@@ -526,62 +507,6 @@
     </div>
   </footer>
 
-  <script>
-    // Year
-    document.getElementById('year').textContent = new Date().getFullYear();
-
-    // Copy & watch asset
-    const addr = '0xb5C84953983931dd2C10C9b04a4379eE52697193';
-    document.getElementById('copy').addEventListener('click', async () => {
-      try{ await navigator.clipboard.writeText(addr); alert('Contract copied to clipboard'); }catch(e){ alert('Copy failed'); }
-    });
-    document.getElementById('watch').addEventListener('click', async () => {
-      if(!window.ethereum){ alert('Wallet not detected'); return }
-      try{
-        await window.ethereum.request({
-          method: 'wallet_watchAsset',
-          params: {
-            type: 'ERC20', // BEP-20 is ERC-20 compatible
-            options: {
-              address: addr,
-              symbol: 'ATN',
-              decimals: 18,
-              image: location.origin + '/favicon-32.png'
-            }
-          }
-        });
-      }catch(err){ console.log(err); }
-    });
-
-    // Tokenomics donut
-    const ctx = document.getElementById('pie');
-    const data = {
-      labels: [
-        'Development (25%)',
-        'Community & Airdrop (20%)',
-        'Team – locked (20%)',
-        'Marketing (15%)',
-        'Partnerships & Listing (15%)',
-        'Reserve (5%)'
-      ],
-      datasets: [{
-        data: [25, 20, 20, 15, 15, 5],
-        backgroundColor: ['#22c55e','#60a5fa','#f59e0b','#ef4444','#06b6d4','#a78bfa'],
-        borderColor: 'rgba(15,23,42,.8)',
-        borderWidth: 2,
-        hoverOffset: 6
-      }]
-    };
-    new Chart(ctx, {
-      type: 'doughnut',
-      data,
-      options: {
-        plugins: { legend: { position: 'bottom', labels: { color: '#cbd5e1' } } },
-        cutout: '55%'
-      }
-    });
-  </script>
-
   <!-- Ethers v5 (UMD) -->
   <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js" crossorigin="anonymous"></script>
   <!-- Fallback ethers.js -->
@@ -598,564 +523,9 @@
     }
   </script>
 
-  <!-- Claim logic: countdown + stats + connect + claim -->
-  <script>
-(() => {
-/*** ====== YOUR CONFIG ====== ***/
-const X_HANDLE     = "Token_ATN";
-const AIRDROP_ADDR = "0xA395c7d4d4A864773D9141E3CDC61599DFea24c0";
-const AIRDROP_ABI  = [
-  {"inputs":[{"internalType":"address","name":"tokenAddress","type":"address"},{"internalType":"uint256","name":"_startTime","type":"uint256"},{"internalType":"uint256","name":"_amountPerWallet","type":"uint256"},{"internalType":"uint256","name":"_maxClaims","type":"uint256"}],"stateMutability":"nonpayable","type":"constructor"},
-  {"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"account","type":"address"},{"indexed":false,"internalType":"uint256","name":"amount","type":"uint256"},{"indexed":true,"internalType":"uint256","name":"claimNo","type":"uint256"}],"name":"Claimed","type":"event"},
-  {"anonymous":false,"inputs":[{"indexed":false,"internalType":"uint256","name":"amount","type":"uint256"}],"name":"Deposited","type":"event"},
-  {"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"oldOwner","type":"address"},{"indexed":true,"internalType":"address","name":"newOwner","type":"address"}],"name":"OwnershipTransferred","type":"event"},
-  {"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"to","type":"address"},{"indexed":false,"internalType":"uint256","name":"amount","type":"uint256"}],"name":"Withdrawn","type":"event"},
-  {"inputs":[],"name":"amountPerWallet","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
-  {"inputs":[],"name":"claim","outputs":[],"stateMutability":"nonpayable","type":"function"},
-  {"inputs":[{"internalType":"address","name":"","type":"address"}],"name":"claimed","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"view","type":"function"},
-  {"inputs":[],"name":"claimsCount","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
-  {"inputs":[{"internalType":"address","name":"user","type":"address"}],"name":"info","outputs":[
-    {"internalType":"uint256","name":"_startTime","type":"uint256"},
-    {"internalType":"uint256","name":"_amountPerWallet","type":"uint256"},
-    {"internalType":"uint256","name":"_maxClaims","type":"uint256"},
-    {"internalType":"uint256","name":"_claimsCount","type":"uint256"},
-    {"internalType":"bool","name":"_claimed","type":"bool"},
-    {"internalType":"uint256","name":"_contractBalance","type":"uint256"}
-  ],"stateMutability":"view","type":"function"},
-  {"inputs":[],"name":"maxClaims","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
-  {"inputs":[],"name":"owner","outputs":[{"internalType":"address","name":"","type":"address"}],"stateMutability":"view","type":"function"},
-  {"inputs":[],"name":"startTime","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
-  {"inputs":[],"name":"token","outputs":[{"internalType":"contract IERC20","name":"","type":"address"}],"stateMutability":"view","type":"function"},
-  {"inputs":[{"internalType":"address","name":"newOwner","type":"address"}],"name":"transferOwnership","outputs":[],"stateMutability":"nonpayable","type":"function"},
-  {"inputs":[{"internalType":"address","name":"to","type":"address"},{"internalType":"uint256","name":"amount","type":"uint256"}],"name":"withdrawLeftover","outputs":[],"stateMutability":"nonpayable","type":"function"}
-];
-
-/*** ====== RPCs ====== ***/
-const RPCS = [
-  "https://bsc-dataseed.binance.org/",
-  "https://bsc-dataseed1.defibit.io/",
-  "https://bsc-dataseed1.ninicoin.io/",
-  "https://bsc-dataseed4.bnbchain.org/",
-  "https://endpoints.omniatech.io/v1/bsc/mainnet/public",
-  "https://bsc-pokt.nodies.app"
-];
-
-/*** ====== UTILS ====== ***/
-const $ = id => document.getElementById(id);
-const ZERO = "0x0000000000000000000000000000000000000000";
-const fmt  = (bn,dec=18)=>ethers.utils.formatUnits(bn,dec);
-const short= a => a ? a.slice(0,6)+"…"+a.slice(-4) : "";
-function setMsg(t, kind="info"){
-  const el=$("msg"); if(!el) return;
-  el.textContent = t || "";
-  el.style.color = kind==="error" ? "#ef4444" : kind==="warn" ? "#f59e0b" : "var(--muted)";
-}
-
-/*** ====== STATE ====== ***/
-let provider, signer, airdrop, account=null, pollTimer=null, countdownTimer=null;
-let START_TS=0, PER_WALLET="0", MAX=0, COUNT=0, CLAIMED=false, BALANCE="0";
-
-/* NEW: on-chain time sync to make countdown 100% true */
-let CHAIN_NOW=0, SYNCED_AT_MS=0, chainSyncTimer=null;
-async function syncChainTime(){
-  const b = await provider.getBlock('latest');
-  CHAIN_NOW = Number(b.timestamp);
-  SYNCED_AT_MS = Date.now();
-}
-function nowSec(){
-  // if already synced to chain time, advance from that snapshot; otherwise fall back to local clock
-  return CHAIN_NOW
-    ? Math.floor(CHAIN_NOW + (Date.now() - SYNCED_AT_MS)/1000)
-    : Math.floor(Date.now()/1000);
-}
-
-/*** ====== RENDER STATS ====== ***/
-function renderStats(){
-  $("tokenSymbol") && ($("tokenSymbol").textContent = "ATN");
-  $("perWallet")   && ($("perWallet").textContent   = `${fmt(PER_WALLET)} ATN`);
-  $("maxClaims")   && ($("maxClaims").textContent   = String(MAX));
-  $("claimedCount")&& ($("claimedCount").textContent= String(COUNT));
-  $("contractBal") && ($("contractBal").textContent = `${fmt(BALANCE)} ATN`);
-  $("remaining")   && ($("remaining").textContent   = `Remaining: ${Math.max(Number(MAX)-Number(COUNT),0)} slots`);
-
-  /* progress bar + label (giữ như lần trước) */
-  const pb = $("claimProgress"), lbl = $("claimProgressLabel");
-  if (pb && MAX > 0) {
-    const pct = Math.min(100, Math.round((COUNT / MAX) * 100));
-    pb.style.setProperty("--pct", pct + "%");
-    lbl && (lbl.textContent = `${COUNT}/${MAX} claimed (${pct}%)`);
-  }
-
-  /* NEW: show opening time in Vietnam (GMT+7) if phần tử tồn tại */
-  const openVN = $("openAtVN");
-  if (openVN && START_TS > 0){
-    openVN.textContent = new Date(START_TS*1000).toLocaleString(
-      "vi-VN",
-      { timeZone:"Asia/Ho_Chi_Minh", hour12:false, year:"numeric", month:"2-digit", day:"2-digit", hour:"2-digit", minute:"2-digit", second:"2-digit" }
-    ) + " GMT+7";
-  }
-}
-
-/*** ====== ENABLE/DISABLE CLAIM + MESSAGES ====== ***/
-function updateClaimButton(){
-  const nowOK = (START_TS>0) && (nowSec() >= START_TS);
-  const hasWallet = !!account;
-  const hasFollow = $("followChk")?.checked ?? false;
-  const left = MAX - COUNT;
-  const enough = ethers.BigNumber.from(BALANCE).gte(ethers.BigNumber.from(PER_WALLET));
-
-  const enable = nowOK && hasWallet && hasFollow && left>0 && enough && !CLAIMED;
-  $("claimBtn").disabled = !enable;
-
-  if (!nowOK) setMsg("Claiming has not started yet.", "warn");
-  else if (!hasWallet) setMsg("Connect your wallet to claim.", "info");
-  else if (!hasFollow) setMsg(`Please follow @${X_HANDLE} and tick the checkbox.`, "warn");
-  else if (!enough) setMsg(left<=0 ? "All claim slots have been used." : "The contract has insufficient tokens for claiming.", "warn");
-  else setMsg("");
-}
-
-/*** ====== COUNTDOWN (uses on-chain time) ====== ***/
-function startCountdown(){
-  if (countdownTimer) clearInterval(countdownTimer);
-  const dEl = $("cd-days"), hEl = $("cd-hours"), mEl = $("cd-mins"), sEl = $("cd-secs");
-  const badge = $("openBadge");
-
-  function setAll(a,b,c,d){
-    if (dEl) dEl.textContent = a;
-    if (hEl) hEl.textContent = b;
-    if (mEl) mEl.textContent = c;
-    if (sEl) sEl.textContent = d;
-  }
-
-  function tick(){
-    if (!START_TS){
-      setAll("--","--","--","--");
-      if (badge) badge.style.display = "none";
-      return;
-    }
-    let diff = START_TS - nowSec(); // nowSec() đã dùng chain-time → chuẩn 100%
-    if (diff <= 0){
-      setAll("00","00","00","00");
-      if (badge) badge.style.display = "inline-block";
-      updateClaimButton();
-      return;
-    }
-    const days = Math.floor(diff / 86400); diff %= 86400;
-    const hrs  = Math.floor(diff / 3600);  diff %= 3600;
-    const mins = Math.floor(diff / 60);
-    const secs = diff % 60;
-
-    // Hiển thị 2 chữ số cho giờ/phút/giây; ngày vẫn đầy đủ
-    setAll(String(days).padStart(2,"0"),
-           String(hrs).padStart(2,"0"),
-           String(mins).padStart(2,"0"),
-           String(secs).padStart(2,"0"));
-
-    if (badge) badge.style.display = "none";
-  }
-
-  tick();
-  countdownTimer = setInterval(tick, 1000);
-}
-
-
-/*** ====== READ INFO FROM CONTRACT ====== ***/
-async function fetchInfo(){
-  const u = account || ZERO;
-  const r = await airdrop.info(u);
-  START_TS     = Number(r._startTime);
-  PER_WALLET   = r._amountPerWallet.toString();
-  MAX          = Number(r._maxClaims);
-  COUNT        = Number(r._claimsCount);
-  CLAIMED      = Boolean(r._claimed);
-  BALANCE      = r._contractBalance.toString();
-  renderStats();
-  updateClaimButton();
-}
-
-/*** ====== ENSURE BSC ON METAMASK ====== ***/
-async function ensureBSC(){
-  const net = await provider.getNetwork();
-  if (net.chainId !== 56) {
-    try{
-      await window.ethereum.request({method:"wallet_switchEthereumChain",params:[{chainId:"0x38"}]});
-    }catch{
-      await window.ethereum.request({
-        method:"wallet_addEthereumChain",
-        params:[{ chainId:"0x38", chainName:"BNB Smart Chain",
-          nativeCurrency:{name:"BNB",symbol:"BNB",decimals:18},
-          rpcUrls:["https://bsc-dataseed.binance.org/"],
-          blockExplorerUrls:["https://bscscan.com/"] }]}
-      );
-    }
-  }
-}
-
-/*** ====== CONNECT WALLET ====== ***/
-async function connect(){
-  try{
-    if(!window.ethereum){ setMsg("Please install MetaMask.", "error"); return; }
-    provider = new ethers.providers.Web3Provider(window.ethereum,"any");
-    await provider.send("eth_requestAccounts",[]);
-    await ensureBSC();
-    signer   = provider.getSigner();
-    account  = await signer.getAddress();
-    $("accountLabel").textContent = "Wallet: " + short(account);
-    airdrop  = new ethers.Contract(AIRDROP_ADDR, AIRDROP_ABI, provider);
-
-    // NEW: sync chain time ngay sau khi có provider/signer
-    await syncChainTime();
-    if (chainSyncTimer) clearInterval(chainSyncTimer);
-    chainSyncTimer = setInterval(syncChainTime, 30000);
-
-    await fetchInfo();
-    startCountdown();
-    updateClaimButton();
-  }catch(e){ setMsg(e?.message || String(e), "error"); }
-}
-
-/*** ====== DO CLAIM ====== ***/
-async function doClaim(){
-  try{
-    if(!signer){ setMsg("Please connect your wallet first.", "error"); return; }
-    if(!$("followChk").checked){ setMsg(`Please follow @${X_HANDLE} and tick the checkbox.`, "warn"); return; }
-    if(nowSec() < START_TS){ setMsg("Claiming has not started yet.", "warn"); return; }
-    setMsg("Submitting transaction...");
-    const tx = await airdrop.connect(signer).claim();
-    setMsg("Waiting for confirmation: " + tx.hash);
-    await tx.wait();
-    setMsg("Claim successful!", "success");
-    await fetchInfo(); // refresh stats
-  }catch(e){
-    setMsg((e && (e.error?.message || e.data?.message || e.message)) || "Claim failed", "error");
-  }
-}
-
-/*** ====== READ-ONLY INIT (no wallet) ====== ***/
-async function initReadonly(){
-  let lastErr;
-  for (const url of RPCS){
-    try{
-      provider = new ethers.providers.JsonRpcProvider(url);
-      await provider.getBlockNumber(); // ping
-      airdrop  = new ethers.Contract(AIRDROP_ADDR, AIRDROP_ABI, provider);
-
-      // NEW: sync chain time khi chỉ-đọc
-      await syncChainTime();
-      if (chainSyncTimer) clearInterval(chainSyncTimer);
-      chainSyncTimer = setInterval(syncChainTime, 30000);
-
-      await fetchInfo();
-      startCountdown();
-      startPolling();
-      setMsg("Connect your wallet to claim.", "info");
-      return;
-    }catch(e){ lastErr = e; }
-  }
-  setMsg("Unable to reach BSC RPC from this browser. Open Console to see the error.", "error");
-  console.error("RPC errors:", lastErr);
-}
-
-/*** ====== POLL EVERY 15s ====== ***/
-function startPolling(){
-  if (pollTimer) clearInterval(pollTimer);
-  pollTimer = setInterval(async ()=>{
-    try{ await fetchInfo(); }catch{}
-  }, 15000);
-}
-
-/*** ====== EVENTS ====== ***/
-document.addEventListener("DOMContentLoaded", initReadonly);
-$("followChk") && $("followChk").addEventListener("change", updateClaimButton);
-$("connectBtn") && $("connectBtn").addEventListener("click", connect);
-$("claimBtn")   && $("claimBtn").addEventListener("click", doClaim);
-
-if (window.ethereum){
-  window.ethereum.on("accountsChanged", ()=>location.reload());
-  window.ethereum.on("chainChanged",  ()=>location.reload());
-}
-})();
-</script>
-  <script>
-(() => {
-/*** ====== CONFIG Airdrop #2 (EARLY) ====== ***/
-const X_HANDLE2      = "Token_ATN";
-const AIRDROP2_ADDR  = "0x1f597227BA91E60548c1F6573cC86586EEC878f8";
-const AIRDROP2_ABI   = [{"inputs":[{"internalType":"address","name":"tokenAddress","type":"address"},{"internalType":"uint256","name":"_startTime","type":"uint256"},{"internalType":"uint256","name":"_amountPerWallet","type":"uint256"},{"internalType":"uint256","name":"_maxClaims","type":"uint256"}],"stateMutability":"nonpayable","type":"constructor"},{"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"account","type":"address"},{"indexed":false,"internalType":"uint256","name":"amount","type":"uint256"},{"indexed":true,"internalType":"uint256","name":"claimNo","type":"uint256"}],"name":"Claimed","type":"event"},{"anonymous":false,"inputs":[{"indexed":false,"internalType":"uint256","name":"amount","type":"uint256"}],"name":"Deposited","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"oldOwner","type":"address"},{"indexed":true,"internalType":"address","name":"newOwner","type":"address"}],"name":"OwnershipTransferred","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"to","type":"address"},{"indexed":false,"internalType":"uint256","name":"amount","type":"uint256"}],"name":"Withdrawn","type":"event"},{"inputs":[],"name":"amountPerWallet","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"claim","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"address","name":"","type":"address"}],"name":"claimed","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"claimsCount","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"user","type":"address"}],"name":"info","outputs":[{"internalType":"uint256","name":"_startTime","type":"uint256"},{"internalType":"uint256","name":"_amountPerWallet","type":"uint256"},{"internalType":"uint256","name":"_maxClaims","type":"uint256"},{"internalType":"uint256","name":"_claimsCount","type":"uint256"},{"internalType":"bool","name":"_claimed","type":"bool"},{"internalType":"uint256","name":"_contractBalance","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"maxClaims","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"owner","outputs":[{"internalType":"address","name":"","type":"address"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"startTime","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"token","outputs":[{"internalType":"contract IERC20","name":"","type":"address"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"newOwner","type":"address"}],"name":"transferOwnership","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"address","name":"to","type":"address"},{"internalType":"uint256","name":"amount","type":"uint256"}],"name":"withdrawLeftover","outputs":[],"stateMutability":"nonpayable","type":"function"}];
-
-/*** ====== RPCs ====== ***/
-const RPCS2 = [
-  "https://bsc-dataseed.binance.org/",
-  "https://bsc-dataseed1.defibit.io/",
-  "https://bsc-dataseed1.ninicoin.io/",
-  "https://bsc-dataseed4.bnbchain.org/",
-  "https://endpoints.omniatech.io/v1/bsc/mainnet/public",
-  "https://bsc-pokt.nodies.app"
-];
-
-/*** ====== UTILS ====== ***/
-const $ = id => document.getElementById(id);
-const fmt = (bn, dec=18) => ethers.utils.formatUnits(bn, dec);
-function setMsg2(t, kind="info"){
-  const el = $("msg2"); if(!el) return;
-  el.textContent = t || "";
-  el.style.color = kind==="error" ? "#ef4444" : kind==="warn" ? "#f59e0b" : "var(--muted)";
-}
-
-/*** ====== STATE #2 ====== ***/
-let provider2, signer2, airdrop2, account2=null, pollTimer2=null, countdownTimer2=null;
-let START_TS2=0, PER_WALLET2="0", MAX2=0, COUNT2=0, CLAIMED2=false, BALANCE2="0";
-
-/*** chain time sync (copy) ***/
-let CHAIN_NOW2=0, SYNCED_AT_MS2=0, chainSyncTimer2=null;
-async function syncChainTime2(){
-  const b = await provider2.getBlock('latest');
-  CHAIN_NOW2 = Number(b.timestamp);
-  SYNCED_AT_MS2 = Date.now();
-}
-const nowSec2 = () => CHAIN_NOW2 ? Math.floor(CHAIN_NOW2 + (Date.now()-SYNCED_AT_MS2)/1000) : Math.floor(Date.now()/1000);
-
-/*** render stats #2 ***/
-function renderStats2(){
-  $("tokenSymbol2") && ($("tokenSymbol2").textContent = "ATN");
-  $("perWallet2")   && ($("perWallet2").textContent   = `${fmt(PER_WALLET2)} ATN`);
-  $("maxClaims2")   && ($("maxClaims2").textContent   = String(MAX2));
-  $("claimedCount2")&& ($("claimedCount2").textContent= String(COUNT2));
-  $("contractBal2") && ($("contractBal2").textContent = `${fmt(BALANCE2)} ATN`);
-  $("remaining2")   && ($("remaining2").textContent   = `Remaining: ${Math.max(Number(MAX2)-Number(COUNT2),0)} slots`);
-  const pb = $("claimProgress2"), lbl = $("claimProgressLabel2");
-  if (pb && MAX2>0){
-    const pct = Math.min(100, Math.round((COUNT2 / MAX2) * 100));
-    pb.style.setProperty("--pct", pct + "%");
-    lbl && (lbl.textContent = `${COUNT2}/${MAX2} claimed (${pct}%)`);
-  }
-  const openVN = $("openAtVN2");
-  if (openVN && START_TS2>0){
-    openVN.textContent = new Date(START_TS2*1000).toLocaleString(
-      "vi-VN",{ timeZone:"Asia/Ho_Chi_Minh", hour12:false, year:"numeric", month:"2-digit", day:"2-digit", hour:"2-digit", minute:"2-digit", second:"2-digit"}
-    ) + " GMT+7";
-  }
-}
-
-/*** enable/disable claim #2 ***/
-function updateClaimButton2(){
-  const nowOK = (START_TS2>0) && (nowSec2() >= START_TS2);
-  const hasWallet = !!account2;
-  const hasFollow = $("followChk2")?.checked ?? false;
-  const left = MAX2 - COUNT2;
-  const enough = ethers.BigNumber.from(BALANCE2).gte(ethers.BigNumber.from(PER_WALLET2));
-  const enable = nowOK && hasWallet && hasFollow && left>0 && enough && !CLAIMED2;
-  $("claimBtn2").disabled = !enable;
-
-  if (!nowOK) setMsg2("Claiming has not started yet.", "warn");
-  else if (!hasWallet) setMsg2("Connect your wallet to claim.", "info");
-  else if (!hasFollow) setMsg2(`Please follow @${X_HANDLE2} and tick the checkbox.`, "warn");
-  else if (!enough) setMsg2(left<=0 ? "All claim slots have been used." : "The contract has insufficient tokens for claiming.", "warn");
-  else setMsg2("");
-}
-
-/*** countdown #2 ***/
-function startCountdown2(){
-  if (countdownTimer2) clearInterval(countdownTimer2);
-  const dEl=$("cd2-days"), hEl=$("cd2-hours"), mEl=$("cd2-mins"), sEl=$("cd2-secs");
-  const badge=$("openBadge2");
-  const setAll=(a,b,c,d)=>{ if(dEl) dEl.textContent=a; if(hEl) hEl.textContent=b; if(mEl) mEl.textContent=c; if(sEl) sEl.textContent=d; };
-
-  function tick(){
-    if (!START_TS2){ setAll("--","--","--","--"); if(badge) badge.style.display="none"; return; }
-    let diff = START_TS2 - nowSec2();
-    if (diff<=0){ setAll("00","00","00","00"); if(badge) badge.style.display="inline-block"; updateClaimButton2(); return; }
-    const days=Math.floor(diff/86400); diff%=86400;
-    const hrs=Math.floor(diff/3600);  diff%=3600;
-    const mins=Math.floor(diff/60);   const secs=diff%60;
-    setAll(String(days).padStart(2,"0"), String(hrs).padStart(2,"0"), String(mins).padStart(2,"0"), String(secs).padStart(2,"0"));
-    if (badge) badge.style.display="none";
-  }
-  tick(); countdownTimer2=setInterval(tick,1000);
-}
-
-/*** fetch on-chain info #2 ***/
-async function fetchInfo2(){
-  const u = account2 || "0x0000000000000000000000000000000000000000";
-  const r = await airdrop2.info(u);
-  START_TS2     = Number(r._startTime);
-  PER_WALLET2   = r._amountPerWallet.toString();
-  MAX2          = Number(r._maxClaims);
-  COUNT2        = Number(r._claimsCount);
-  CLAIMED2      = Boolean(r._claimed);
-  BALANCE2      = r._contractBalance.toString();
-  renderStats2(); updateClaimButton2();
-}
-
-/*** connect (re-use MetaMask) #2 ***/
-async function ensureBSC2(){
-  const net = await provider2.getNetwork();
-  if (net.chainId !== 56) {
-    try{
-      await window.ethereum.request({method:"wallet_switchEthereumChain",params:[{chainId:"0x38"}]});
-    }catch{
-      await window.ethereum.request({
-        method:"wallet_addEthereumChain",
-        params:[{ chainId:"0x38", chainName:"BNB Smart Chain",
-          nativeCurrency:{name:"BNB",symbol:"BNB",decimals:18},
-          rpcUrls:["https://bsc-dataseed.binance.org/"], blockExplorerUrls:["https://bscscan.com/"] }]}
-      );
-    }
-  }
-}
-
-async function connect2(){
-  try{
-    if(!window.ethereum){ setMsg2("Please install MetaMask.", "error"); return; }
-    provider2 = new ethers.providers.Web3Provider(window.ethereum,"any");
-    await provider2.send("eth_requestAccounts",[]);
-    await ensureBSC2();
-    signer2   = provider2.getSigner();
-    account2  = await signer2.getAddress();
-    $("accountLabel2").textContent = "Wallet: " + (account2.slice(0,6)+"…"+account2.slice(-4));
-    airdrop2  = new ethers.Contract(AIRDROP2_ADDR, AIRDROP2_ABI, provider2);
-
-    await syncChainTime2(); if (chainSyncTimer2) clearInterval(chainSyncTimer2);
-    chainSyncTimer2 = setInterval(syncChainTime2, 30000);
-
-    await fetchInfo2(); startCountdown2(); updateClaimButton2();
-  }catch(e){ setMsg2(e?.message || String(e), "error"); }
-}
-
-/*** do claim #2 ***/
-async function doClaim2(){
-  try{
-    if(!signer2){ setMsg2("Please connect your wallet first.", "error"); return; }
-    if(!$("followChk2").checked){ setMsg2(`Please follow @${X_HANDLE2} and tick the checkbox.`, "warn"); return; }
-    if(nowSec2() < START_TS2){ setMsg2("Claiming has not started yet.", "warn"); return; }
-    setMsg2("Submitting transaction...");
-    const tx = await airdrop2.connect(signer2).claim();
-    setMsg2("Waiting for confirmation: " + tx.hash);
-    await tx.wait();
-    setMsg2("Claim successful!", "success");
-    await fetchInfo2();
-  }catch(e){
-    setMsg2((e && (e.error?.message || e.data?.message || e.message)) || "Claim failed", "error");
-  }
-}
-
-/*** readonly init #2 ***/
-async function initReadonly2(){
-  let lastErr;
-  for(const url of RPCS2){
-    try{
-      provider2 = new ethers.providers.JsonRpcProvider(url);
-      await provider2.getBlockNumber();
-      airdrop2  = new ethers.Contract(AIRDROP2_ADDR, AIRDROP2_ABI, provider2);
-
-      await syncChainTime2(); if (chainSyncTimer2) clearInterval(chainSyncTimer2);
-      chainSyncTimer2 = setInterval(syncChainTime2, 30000);
-
-      await fetchInfo2(); startCountdown2();
-      startPolling2(); setMsg2("Connect your wallet to claim.", "info");
-      return;
-    }catch(e){ lastErr = e; }
-  }
-  setMsg2("Unable to reach BSC RPC for Airdrop #2.", "error"); console.error("RPC errors #2:", lastErr);
-}
-function startPolling2(){ if(pollTimer2) clearInterval(pollTimer2); pollTimer2=setInterval(async()=>{ try{ await fetchInfo2(); }catch{} },15000); }
-
-/*** events #2 ***/
-document.addEventListener("DOMContentLoaded", initReadonly2);
-$("followChk2") && $("followChk2").addEventListener("change", updateClaimButton2);
-$("connectBtn2") && $("connectBtn2").addEventListener("click", connect2);
-$("claimBtn2")   && $("claimBtn2").addEventListener("click", doClaim2);
-
-if (window.ethereum){
-  window.ethereum.on("accountsChanged", ()=>location.reload());
-  window.ethereum.on("chainChanged",  ()=>location.reload());
-}
-})();
-</script>
-
-  <!-- CUSTOM LIVE CHART + STATS (kept) -->
-  <script>
-  const ctxLine = document.getElementById('priceLine')?.getContext('2d');
-  if (ctxLine) {
-    const priceData = {
-      labels: [],
-      datasets: [{
-        label: 'ATN/USD',
-        data: [],
-        borderColor: 'rgba(34,197,94,1)',
-        borderWidth: 2,
-        backgroundColor: 'rgba(34,197,94,.12)',
-        tension: 0.25,
-        fill: true
-      }]
-    };
-
-    const priceChart = new Chart(ctxLine, {
-      type: 'line',
-      data: priceData,
-      options: {
-        plugins: { legend: { display: false } },
-        scales: {
-          x: { ticks: { color: '#cbd5e1' }, grid: { color: 'rgba(148,163,184,.12)' } },
-          y: { ticks: { color: '#cbd5e1' }, grid: { color: 'rgba(148,163,184,.12)' } }
-        }
-      }
-    });
-
-    const PAIR = "0x6a0ba3d48b25855bad2102796c837d9668ff8c18";
-    const DS_URL = `https://api.dexscreener.com/latest/dex/pairs/bsc/${PAIR}`;
-
-    const priceEl = document.getElementById('statPrice');
-    const liqEl   = document.getElementById('statLiq');
-    const fdvEl   = document.getElementById('statFdv');
-    const volEl   = document.getElementById('statVol');
-
-    function fmt(n){
-      if(!n && n !== 0) return "—";
-      const x = Number(n);
-      if (x >= 1e9) return (x/1e9).toFixed(2) + "B";
-      if (x >= 1e6) return (x/1e6).toFixed(2) + "M";
-      if (x >= 1e3) return (x/1e3).toFixed(2) + "K";
-      return x.toFixed(2);
-    }
-
-    async function refreshDex(){
-      try{
-        const r = await fetch(DS_URL, { cache: 'no-store' });
-        const j = await r.json();
-        const p = j?.pairs?.[0];
-        if(!p) return;
-
-        if (priceEl) priceEl.textContent = "$" + Number(p.priceUsd || 0).toFixed(6);
-        if (liqEl)   liqEl.textContent   = "$" + fmt(p.liquidity?.usd);
-        if (fdvEl)   fdvEl.textContent   = "$" + fmt(p.fdv);
-        if (volEl)   volEl.textContent   = "$" + fmt(p.volume?.h24);
-
-        const label = new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
-        priceData.labels.push(label);
-        priceData.datasets[0].data.push(Number(p.priceUsd || 0));
-
-        if(priceData.labels.length > 50){
-          priceData.labels.shift();
-          priceData.datasets[0].data.shift();
-        }
-        priceChart.update();
-      }catch(e){
-        console.log("Dex fetch error:", e);
-      }
-    }
-
-    refreshDex();
-    setInterval(refreshDex, 20000);
-  }
-  </script>
+  <!-- Các script đã tách -->
+  <script src="./claim1.js" defer></script>
+  <script src="./claim2.js" defer></script>
+  <script src="./chart.js"  defer></script>
 </body>
 </html>
-
-
-
-
-
-
-
-

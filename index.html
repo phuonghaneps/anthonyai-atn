@@ -114,6 +114,65 @@
     #claim { scroll-margin-top: 80px; }
   </style>
 
+  <!-- Claim card redesign CSS -->
+  <style>
+    /* ===== Claim card – redesigned ===== */
+    #airdrop.claim-card{
+      background: linear-gradient(180deg, rgba(255,255,255,.02), rgba(255,255,255,.01));
+      border:1px solid rgba(148,163,184,.14);
+      border-radius: 18px;
+      box-shadow: var(--shadow);
+      padding: 18px;
+    }
+    @media (min-width: 900px){
+      #airdrop.claim-card{ padding: 22px 24px; }
+    }
+    .claim-header{
+      display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:14px;
+    }
+    .account-badge{
+      font-size:13px; color:var(--muted);
+      padding:6px 10px; border:1px dashed rgba(148,163,184,.2);
+      border-radius:10px;
+    }
+    .row{ display:flex; flex-wrap:wrap; gap:10px; align-items:center; }
+    .row + .row{ margin-top:10px; }
+    .chip{
+      padding:8px 12px; border-radius:12px;
+      border:1px solid rgba(148,163,184,.16);
+      background: var(--card); color:var(--text); font-variant-numeric: tabular-nums;
+    }
+    #openBadge{ background:#0b2e24; border:1px solid #14532d; color:#34d399; }
+    .stats-grid{
+      display:grid; gap:10px; margin-top:12px;
+      grid-template-columns: repeat(4, minmax(140px,1fr));
+    }
+    @media (max-width: 900px){ .stats-grid{ grid-template-columns:1fr 1fr; } }
+    .stat-card{
+      background: var(--card); border:1px solid rgba(148,163,184,.14);
+      border-radius:12px; padding:12px 14px;
+    }
+    .stat-card small{ color:var(--muted); display:block; }
+    .stat-card strong{ font-size:18px; }
+    .progress-wrap{ margin-top:8px; }
+    .progress{ position:relative; height:10px; background:rgba(148,163,184,.18); border-radius:999px; overflow:hidden; }
+    .progress::after{
+      content:""; position:absolute; inset:0 0 0 0; width:var(--pct,0%);
+      background:linear-gradient(90deg,#22c55e,#06b6d4);
+      border-radius:inherit;
+    }
+    .progress-meta{ display:flex; justify-content:space-between; margin-top:6px; color:var(--muted); font-size:13px; }
+    .actions{ display:flex; flex-wrap:wrap; gap:10px; margin-top:12px; }
+    #claimBtn{ padding:12px 18px; font-weight:700; }
+    #claimBtn:disabled{ opacity:.6; cursor:not-allowed; }
+    .status-line{
+      margin-top:10px;
+      padding:10px 12px; border:1px dashed rgba(148,163,184,.18);
+      background:rgba(148,163,184,.06); border-radius:12px; color:var(--muted);
+    }
+    #connectBtn{ box-shadow: 0 6px 20px rgba(34,197,94,.15); }
+  </style>
+
   <!-- Real logo CSS -->
   <style>
     .brand a{ display:flex; align-items:center; gap:10px; color:var(--text); text-decoration:none; }
@@ -216,32 +275,50 @@
       <h2>Claim Airdrop</h2>
       <p class="sub">Connect your BSC wallet, follow @Token_ATN, then claim.</p>
 
-      <div class="card card-pad" id="airdrop">
-        <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-bottom:10px">
-          <button id="connectBtn" class="btn primary">🔌 Connect Wallet (BSC)</button>
-          <span id="accountLabel" style="opacity:.8"></span>
+      <!-- Redesigned card -->
+      <div class="claim-card" id="airdrop">
+        <!-- header -->
+        <div class="claim-header">
+          <div class="row">
+            <button id="connectBtn" class="btn primary">🔌 Connect Wallet (BSC)</button>
+            <a id="followLink" class="btn twitter" target="_blank" rel="noopener" href="https://x.com/Token_ATN">🔔 Follow @Token_ATN</a>
+            <label class="chip" style="display:flex;align-items:center;gap:8px;">
+              <input type="checkbox" id="followChk"> I have followed @Token_ATN
+            </label>
+          </div>
+          <span id="accountLabel" class="account-badge"></span>
         </div>
 
-        <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-bottom:10px">
-          <a id="followLink" class="btn twitter" target="_blank" rel="noopener" href="https://x.com/Token_ATN">🔔 Follow @Token_ATN</a>
-          <label><input type="checkbox" id="followChk"> I have followed @Token_ATN</label>
+        <!-- countdown -->
+        <div class="row">
+          <span class="chip"><strong>Countdown:</strong> <span id="countdown" style="margin-left:6px">--:--:--:--</span></span>
+          <span id="openBadge" class="chip" style="display:none">CLAIM OPEN</span>
         </div>
 
-        <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-bottom:10px">
-          <strong>Countdown:</strong> <span id="countdown">--:--:--:--</span>
-          <span id="openBadge" class="badge" style="display:none">CLAIM OPEN</span>
+        <!-- stats -->
+        <div class="stats-grid">
+          <div class="stat-card"><small>Token</small><strong id="tokenSymbol">ATN</strong></div>
+          <div class="stat-card"><small>Per wallet</small><strong id="perWallet">-</strong></div>
+          <div class="stat-card"><small>Claimed</small><strong><span id="claimedCount">-</span>/<span id="maxClaims">-</span></strong></div>
+          <div class="stat-card"><small>Contract balance</small><strong id="contractBal">-</strong></div>
         </div>
 
-        <div class="stats" style="display:flex; gap:16px; flex-wrap:wrap; margin-bottom:12px; opacity:.9">
-          <div>Token: <b id="tokenSymbol">ATN</b></div>
-          <div>• Per wallet: <b id="perWallet">-</b></div>
-          <div>• Claimed: <b id="claimedCount">-</b>/<span id="maxClaims">-</span></div>
-          <div>• Contract balance: <b id="contractBal">-</b></div>
-          <div id="remaining"></div>
+        <!-- progress -->
+        <div class="progress-wrap">
+          <div id="claimProgress" class="progress"></div>
+          <div class="progress-meta">
+            <span id="claimProgressLabel">0/0 claimed (0%)</span>
+            <span id="remaining"></span>
+          </div>
         </div>
 
-        <button id="claimBtn" class="btn primary" disabled>🎁 Claim</button>
-        <p id="msg" style="margin-top:12px; color:var(--muted)"></p>
+        <!-- actions -->
+        <div class="actions">
+          <button id="claimBtn" class="btn primary" disabled>🎁 Claim</button>
+        </div>
+
+        <!-- message -->
+        <p id="msg" class="status-line"></p>
       </div>
     </section>
 
@@ -480,7 +557,15 @@ function renderStats(){
   $("maxClaims")   && ($("maxClaims").textContent   = String(MAX));
   $("claimedCount")&& ($("claimedCount").textContent= String(COUNT));
   $("contractBal") && ($("contractBal").textContent = `${fmt(BALANCE)} ATN`);
-  $("remaining")   && ($("remaining").textContent   = `• Remaining: ${Math.max(Number(MAX)-Number(COUNT),0)} slots`);
+  $("remaining")   && ($("remaining").textContent   = `Remaining: ${Math.max(Number(MAX)-Number(COUNT),0)} slots`);
+
+  /* NEW: progress bar + label */
+  const pb = $("claimProgress"), lbl = $("claimProgressLabel");
+  if (pb && MAX > 0) {
+    const pct = Math.min(100, Math.round((COUNT / MAX) * 100));
+    pb.style.setProperty("--pct", pct + "%");
+    lbl && (lbl.textContent = `${COUNT}/${MAX} claimed (${pct}%)`);
+  }
 }
 
 /*** ====== ENABLE/DISABLE CLAIM + MESSAGES ====== ***/

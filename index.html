@@ -92,7 +92,7 @@
 
     .disclaimer{font-size:13.5px; color:#93a7c0}
 
-    /* Chart container (moved into <head>) */
+    /* Chart container */
     .chart-embed{
       position: relative;
       width: 100%;
@@ -214,29 +214,29 @@
     <!-- CLAIM -->
     <section id="claim" class="section">
       <h2>Claim Airdrop</h2>
-      <p class="sub">Kết nối ví BSC, follow @Token_ATN rồi claim.</p>
+      <p class="sub">Connect your BSC wallet, follow @Token_ATN, then claim.</p>
 
       <div class="card card-pad" id="airdrop">
         <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-bottom:10px">
-          <button id="connectBtn" class="btn primary">🔌 Kết nối ví (BSC)</button>
+          <button id="connectBtn" class="btn primary">🔌 Connect Wallet (BSC)</button>
           <span id="accountLabel" style="opacity:.8"></span>
         </div>
 
         <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-bottom:10px">
           <a id="followLink" class="btn twitter" target="_blank" rel="noopener" href="https://x.com/Token_ATN">🔔 Follow @Token_ATN</a>
-          <label><input type="checkbox" id="followChk"> Tôi đã follow @Token_ATN</label>
+          <label><input type="checkbox" id="followChk"> I have followed @Token_ATN</label>
         </div>
 
         <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-bottom:10px">
           <strong>Countdown:</strong> <span id="countdown">--:--:--:--</span>
-          <span id="openBadge" class="badge" style="display:none">ĐÃ MỞ CLAIM</span>
+          <span id="openBadge" class="badge" style="display:none">CLAIM OPEN</span>
         </div>
 
         <div class="stats" style="display:flex; gap:16px; flex-wrap:wrap; margin-bottom:12px; opacity:.9">
           <div>Token: <b id="tokenSymbol">ATN</b></div>
-          <div>• Mỗi ví: <b id="perWallet">-</b></div>
-          <div>• Đã claim: <b id="claimedCount">-</b>/<span id="maxClaims">-</span></div>
-          <div>• Số dư contract: <b id="contractBal">-</b></div>
+          <div>• Per wallet: <b id="perWallet">-</b></div>
+          <div>• Claimed: <b id="claimedCount">-</b>/<span id="maxClaims">-</span></div>
+          <div>• Contract balance: <b id="contractBal">-</b></div>
           <div id="remaining"></div>
         </div>
 
@@ -314,7 +314,7 @@
       <div class="grid cols-2">
         <div class="card card-pad">
           <h4 style="margin:0 0 6px">Which network?</h4>
-          <p class="sub">BNB Chain (BEP-20). You can add ATN to MetaMask using the "Add to Wallet" button.</p>
+          <p class="sub">BNB Chain (BEP-20). You can add ATN to MetaMask using the “Add to Wallet” button.</p>
           <h4 style="margin:12px 0 6px">Is the LP locked?</h4>
           <p class="sub">Yes. Locked with <a target="_blank" rel="noopener" href="https://pinksale.finance/pinklock/bsc/0x6a0ba3d48b25855bad2102796c837d9668ff8c18">PinkLock</a> until 31 Dec 2029. Always verify links.</p>
           <h4 style="margin:12px 0 6px">Where to trade?</h4>
@@ -401,27 +401,28 @@
     });
   </script>
 
-  <!-- Ethers v5 -->
-<script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js" crossorigin="anonymous"></script>
-<script>
-  if (!window.ethers) {
-    var s = document.createElement('script');
-    s.src = "https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js";
-    s.onload  = function(){ console.log("ethers fallback loaded"); };
-    s.onerror = function(){
-      var el = document.getElementById('msg');
-      if (el) el.textContent = "Không tải được ethers.js";
-    };
-    document.head.appendChild(s);
-  }
-</script>
+  <!-- Ethers v5 (UMD) -->
+  <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js" crossorigin="anonymous"></script>
+  <!-- Fallback ethers.js -->
+  <script>
+    if (!window.ethers) {
+      var s = document.createElement('script');
+      s.src = "https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js";
+      s.onload  = function(){ console.log("ethers fallback loaded"); };
+      s.onerror = function(){
+        var el = document.getElementById('msg');
+        if (el) el.textContent = "Failed to load ethers.js";
+      };
+      document.head.appendChild(s);
+    }
+  </script>
 
   <!-- Claim logic: countdown + stats + connect + claim -->
   <script>
 (() => {
-/*** ====== CẤU HÌNH CỦA BẠN ====== ***/
+/*** ====== YOUR CONFIG ====== ***/
 const X_HANDLE     = "Token_ATN";
-const AIRDROP_ADDR = "0xA395c7d4d4A864773D9141E3CDC61599DFea24c0"; // địa chỉ airdrop hiện tại của bạn
+const AIRDROP_ADDR = "0xA395c7d4d4A864773D9141E3CDC61599DFea24c0"; // your current airdrop contract
 const AIRDROP_ABI  = [
   {"inputs":[{"internalType":"address","name":"tokenAddress","type":"address"},{"internalType":"uint256","name":"_startTime","type":"uint256"},{"internalType":"uint256","name":"_amountPerWallet","type":"uint256"},{"internalType":"uint256","name":"_maxClaims","type":"uint256"}],"stateMutability":"nonpayable","type":"constructor"},
   {"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"account","type":"address"},{"indexed":false,"internalType":"uint256","name":"amount","type":"uint256"},{"indexed":true,"internalType":"uint256","name":"claimNo","type":"uint256"}],"name":"Claimed","type":"event"},
@@ -457,7 +458,7 @@ const RPCS = [
   "https://bsc-pokt.nodies.app"
 ];
 
-/*** ====== TIỆN ÍCH ====== ***/
+/*** ====== UTILS ====== ***/
 const $ = id => document.getElementById(id);
 const ZERO = "0x0000000000000000000000000000000000000000";
 const fmt  = (bn,dec=18)=>ethers.utils.formatUnits(bn,dec);
@@ -472,16 +473,17 @@ function setMsg(t, kind="info"){
 let provider, signer, airdrop, account=null, pollTimer=null, countdownTimer=null;
 let START_TS=0, PER_WALLET="0", MAX=0, COUNT=0, CLAIMED=false, BALANCE="0";
 
-/*** ====== CẬP NHẬT UI ====== ***/
+/*** ====== RENDER STATS ====== ***/
 function renderStats(){
   $("tokenSymbol") && ($("tokenSymbol").textContent = "ATN");
   $("perWallet")   && ($("perWallet").textContent   = `${fmt(PER_WALLET)} ATN`);
   $("maxClaims")   && ($("maxClaims").textContent   = String(MAX));
   $("claimedCount")&& ($("claimedCount").textContent= String(COUNT));
   $("contractBal") && ($("contractBal").textContent = `${fmt(BALANCE)} ATN`);
-  $("remaining")   && ($("remaining").textContent   = `• Còn lại: ${Math.max(Number(MAX)-Number(COUNT),0)} suất`);
+  $("remaining")   && ($("remaining").textContent   = `• Remaining: ${Math.max(Number(MAX)-Number(COUNT),0)} slots`);
 }
 
+/*** ====== ENABLE/DISABLE CLAIM + MESSAGES ====== ***/
 function updateClaimButton(){
   const nowOK = (START_TS>0) && (Math.floor(Date.now()/1000) >= START_TS);
   const hasWallet = !!account;
@@ -492,14 +494,14 @@ function updateClaimButton(){
   const enable = nowOK && hasWallet && hasFollow && left>0 && enough && !CLAIMED;
   $("claimBtn").disabled = !enable;
 
-  if (!nowOK) setMsg("Chưa tới thời gian claim.", "warn");
-  else if (!hasWallet) setMsg("Kết nối ví để claim.", "info");
-  else if (!hasFollow) setMsg(`Hãy follow @${X_HANDLE} và tick xác nhận.`, "warn");
-  else if (!enough) setMsg(left<=0 ? "Hết suất claim." : "Contract thiếu token để claim.", "warn");
+  if (!nowOK) setMsg("Claiming has not started yet.", "warn");
+  else if (!hasWallet) setMsg("Connect your wallet to claim.", "info");
+  else if (!hasFollow) setMsg(`Please follow @${X_HANDLE} and tick the checkbox.`, "warn");
+  else if (!enough) setMsg(left<=0 ? "All claim slots have been used." : "The contract has insufficient tokens for claiming.", "warn");
   else setMsg("");
 }
 
-/*** ====== ĐẾM NGƯỢC ====== ***/
+/*** ====== COUNTDOWN ====== ***/
 function startCountdown(){
   if (countdownTimer) clearInterval(countdownTimer);
   const el=$("countdown"), badge=$("openBadge");
@@ -517,7 +519,7 @@ function startCountdown(){
   countdownTimer = setInterval(tick,1000);
 }
 
-/*** ====== ĐỌC CHUỖI SỐ LIỆU TỪ info() ====== ***/
+/*** ====== READ INFO FROM CONTRACT ====== ***/
 async function fetchInfo(){
   const u = account || ZERO;
   const r = await airdrop.info(u);
@@ -531,7 +533,7 @@ async function fetchInfo(){
   updateClaimButton();
 }
 
-/*** ====== KẾT NỐI VÍ ====== ***/
+/*** ====== ENSURE BSC ON METAMASK ====== ***/
 async function ensureBSC(){
   const net = await provider.getNetwork();
   if (net.chainId !== 56) {
@@ -549,39 +551,40 @@ async function ensureBSC(){
   }
 }
 
+/*** ====== CONNECT WALLET ====== ***/
 async function connect(){
   try{
-    if(!window.ethereum){ setMsg("Vui lòng cài MetaMask.", "error"); return; }
+    if(!window.ethereum){ setMsg("Please install MetaMask.", "error"); return; }
     provider = new ethers.providers.Web3Provider(window.ethereum,"any");
     await provider.send("eth_requestAccounts",[]);
     await ensureBSC();
     signer   = provider.getSigner();
     account  = await signer.getAddress();
-    $("accountLabel").textContent = "Ví: " + short(account);
+    $("accountLabel").textContent = "Wallet: " + short(account);
     airdrop  = new ethers.Contract(AIRDROP_ADDR, AIRDROP_ABI, provider);
     await fetchInfo();
     updateClaimButton();
   }catch(e){ setMsg(e?.message || String(e), "error"); }
 }
 
-/*** ====== GỌI CLAIM ====== ***/
+/*** ====== DO CLAIM ====== ***/
 async function doClaim(){
   try{
-    if(!signer){ setMsg("Hãy kết nối ví trước.", "error"); return; }
-    if(!$("followChk").checked){ setMsg(`Hãy follow @${X_HANDLE} và tick xác nhận.`, "warn"); return; }
-    if(Math.floor(Date.now()/1000) < START_TS){ setMsg("Chưa tới thời gian claim.", "warn"); return; }
-    setMsg("Đang gửi giao dịch...");
+    if(!signer){ setMsg("Please connect your wallet first.", "error"); return; }
+    if(!$("followChk").checked){ setMsg(`Please follow @${X_HANDLE} and tick the checkbox.`, "warn"); return; }
+    if(Math.floor(Date.now()/1000) < START_TS){ setMsg("Claiming has not started yet.", "warn"); return; }
+    setMsg("Submitting transaction...");
     const tx = await airdrop.connect(signer).claim();
-    setMsg("Đang chờ xác nhận: " + tx.hash);
+    setMsg("Waiting for confirmation: " + tx.hash);
     await tx.wait();
-    setMsg("Claim thành công!", "success");
-    await fetchInfo(); // cập nhật các số liệu
+    setMsg("Claim successful!", "success");
+    await fetchInfo(); // refresh stats (claimed count / contract balance)
   }catch(e){
     setMsg((e && (e.error?.message || e.data?.message || e.message)) || "Claim failed", "error");
   }
 }
 
-/*** ====== KHỞI TẠO CHẾ ĐỘ CHỈ-ĐỌC (không cần ví) ====== ***/
+/*** ====== READ-ONLY INIT (no wallet) ====== ***/
 async function initReadonly(){
   let lastErr;
   for (const url of RPCS){
@@ -592,15 +595,15 @@ async function initReadonly(){
       await fetchInfo();
       startCountdown();
       startPolling();
-      setMsg("Kết nối ví để claim.", "info");
+      setMsg("Connect your wallet to claim.", "info");
       return;
     }catch(e){ lastErr = e; }
   }
-  setMsg("Không thể kết nối RPC BSC từ trình duyệt. Mở Console để xem lỗi.", "error");
+  setMsg("Unable to reach BSC RPC from this browser. Open Console to see the error.", "error");
   console.error("RPC errors:", lastErr);
 }
 
-/*** ====== POLL 15s ====== ***/
+/*** ====== POLL EVERY 15s ====== ***/
 function startPolling(){
   if (pollTimer) clearInterval(pollTimer);
   pollTimer = setInterval(async ()=>{
@@ -608,7 +611,7 @@ function startPolling(){
   }, 15000);
 }
 
-/*** ====== GẮN SỰ KIỆN ====== ***/
+/*** ====== EVENTS ====== ***/
 document.addEventListener("DOMContentLoaded", initReadonly);
 $("followChk") && $("followChk").addEventListener("change", updateClaimButton);
 $("connectBtn") && $("connectBtn").addEventListener("click", connect);
@@ -619,7 +622,7 @@ if (window.ethereum){
   window.ethereum.on("chainChanged",  ()=>location.reload());
 }
 })();
-</script>
+  </script>
 
   <!-- CUSTOM LIVE CHART + STATS (kept) -->
   <script>
@@ -699,6 +702,3 @@ if (window.ethereum){
   </script>
 </body>
 </html>
-
-
-

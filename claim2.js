@@ -1,22 +1,46 @@
 (() => {
-/*** CONFIG #2 (EARLY) ***/
+/*** CONFIG #2 (EARLY = Airdrop #1) ***/
 const X_HANDLE2      = "Token_ATN";
-const AIRDROP2_ADDR  = "0x1f597227BA91E60548c1F6573C86586EEC878f88";
-const AIRDROP2_ABI   = [{"inputs":[{"internalType":"address","name":"tokenAddress","type":"address"},{"internalType":"uint256","name":"_startTime","type":"uint256"},{"internalType":"uint256","name":"_amountPerWallet","type":"uint256"},{"internalType":"uint256","name":"_maxClaims","type":"uint256"}],"stateMutability":"nonpayable","type":"constructor"},{"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"account","type":"address"},{"indexed":false,"internalType":"uint256","name":"amount","type":"uint256"},{"indexed":true,"internalType":"uint256","name":"claimNo","type":"uint256"}],"name":"Claimed","type":"event"},{"anonymous":false,"inputs":[{"indexed":false,"internalType":"uint256","name":"amount","type":"uint256"}],"name":"Deposited","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"oldOwner","type":"address"},{"indexed":true,"internalType":"address","name":"newOwner","type":"address"}],"name":"OwnershipTransferred","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"to","type":"address"},{"indexed":false,"internalType":"uint256","name":"amount","type":"uint256"}],"name":"Withdrawn","type":"event"},{"inputs":[],"name":"amountPerWallet","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"claim","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"address","name":"","type":"address"}],"name":"claimed","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"claimsCount","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"user","type":"address"}],"name":"info","outputs":[{"internalType":"uint256","name":"_startTime","type":"uint256"},{"internalType":"uint256","name":"_amountPerWallet","type":"uint256"},{"internalType":"uint256","name":"_maxClaims","type":"uint256"},{"internalType":"uint256","name":"_claimsCount","type":"uint256"},{"internalType":"bool","name":"_claimed","type":"bool"},{"internalType":"uint256","name":"_contractBalance","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"maxClaims","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"owner","outputs":[{"internalType":"address","name":"","type":"address"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"startTime","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"token","outputs":[{"internalType":"contract IERC20","name":"","type":"address"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"newOwner","type":"address"}],"name":"transferOwnership","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"address","name":"to","type":"address"},{"internalType":"uint256","name":"amount","type":"uint256"}],"name":"withdrawLeftover","outputs":[],"stateMutability":"nonpayable","type":"function"}];
+const AIRDROP2_ADDR  = ethers.utils.getAddress("0x1f597227BA91E60548c1F6573C86586EEC878f88");
+const AIRDROP2_ABI   = [
+  {"inputs":[{"internalType":"address","name":"tokenAddress","type":"address"},{"internalType":"uint256","name":"_startTime","type":"uint256"},{"internalType":"uint256","name":"_amountPerWallet","type":"uint256"},{"internalType":"uint256","name":"_maxClaims","type":"uint256"}],"stateMutability":"nonpayable","type":"constructor"},
+  {"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"account","type":"address"},{"indexed":false,"internalType":"uint256","name":"amount","type":"uint256"},{"indexed":true,"internalType":"uint256","name":"claimNo","type":"uint256"}],"name":"Claimed","type":"event"},
+  {"anonymous":false,"inputs":[{"indexed":false,"internalType":"uint256","name":"amount","type":"uint256"}],"name":"Deposited","type":"event"},
+  {"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"oldOwner","type":"address"},{"indexed":true,"internalType":"address","name":"newOwner","type":"address"}],"name":"OwnershipTransferred","type":"event"},
+  {"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"to","type":"address"},{"indexed":false,"internalType":"uint256","name":"amount","type":"uint256"}],"name":"Withdrawn","type":"event"},
+  {"inputs":[],"name":"amountPerWallet","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
+  {"inputs":[],"name":"claim","outputs":[],"stateMutability":"nonpayable","type":"function"},
+  {"inputs":[{"internalType":"address","name":"","type":"address"}],"name":"claimed","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"view","type":"function"},
+  {"inputs":[],"name":"claimsCount","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
+  {"inputs":[{"internalType":"address","name":"user","type":"address"}],"name":"info","outputs":[
+    {"internalType":"uint256","name":"_startTime","type":"uint256"},
+    {"internalType":"uint256","name":"_amountPerWallet","type":"uint256"},
+    {"internalType":"uint256","name":"_maxClaims","type":"uint256"},
+    {"internalType":"uint256","name":"_claimsCount","type":"uint256"},
+    {"internalType":"bool","name":"_claimed","type":"bool"},
+    {"internalType":"uint256","name":"_contractBalance","type":"uint256"}
+  ],"stateMutability":"view","type":"function"},
+  {"inputs":[],"name":"maxClaims","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
+  {"inputs":[],"name":"owner","outputs":[{"internalType":"address","name":"","type":"address"}],"stateMutability":"view","type":"function"},
+  {"inputs":[],"name":"startTime","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
+  {"inputs":[],"name":"token","outputs":[{"internalType":"contract IERC20","name":"","type":"address"}],"stateMutability":"view","type":"function"},
+  {"inputs":[{"internalType":"address","name":"newOwner","type":"address"}],"name":"transferOwnership","outputs":[],"stateMutability":"nonpayable","type":"function"},
+  {"inputs":[{"internalType":"address","name":"to","type":"address"},{"internalType":"uint256","name":"amount","type":"uint256"}],"name":"withdrawLeftover","outputs":[],"stateMutability":"nonpayable","type":"function"}
+];
 
-/*** RPCs ***/
+/*** RPCs (khỏe) ***/
 const RPCS2 = [
-  "https://bsc-dataseed.binance.org/",
-  "https://bsc-dataseed1.defibit.io/",
-  "https://bsc-dataseed1.ninicoin.io/",
-  "https://bsc-dataseed4.bnbchain.org/",
-  "https://endpoints.omniatech.io/v1/bsc/mainnet/public",
-  "https://bsc-pokt.nodies.app"
+  "https://bsc.publicnode.com",
+  "https://rpc.ankr.com/bsc",
+  "https://1rpc.io/bnb",
+  "https://binance.llamarpc.com",
+  "https://bsc-dataseed.binance.org"
 ];
 
 /*** utils ***/
 const $ = id => document.getElementById(id);
-const fmt = (bn, dec=18) => ethers.utils.formatUnits(bn, dec);
+const short = a => a ? a.slice(0,6)+"…"+a.slice(-4) : "";
+const fmt   = (bn, dec=18) => ethers.utils.formatUnits(bn, dec);
 function setMsg2(t, kind="info"){
   const el = $("msg2"); if(!el) return;
   el.textContent = t || "";
@@ -80,17 +104,30 @@ function startCountdown2(){
   if (countdownTimer2) clearInterval(countdownTimer2);
   const dEl=$("cd-days2"), hEl=$("cd-hours2"), mEl=$("cd-mins2"), sEl=$("cd-secs2");
   const badge=$("openBadge2");
+  const openChip = $("openAtVN2")?.closest(".chip");
   const setAll=(a,b,c,d)=>{ if(dEl) dEl.textContent=a; if(hEl) hEl.textContent=b; if(mEl) mEl.textContent=c; if(sEl) sEl.textContent=d; };
 
   function tick(){
-    if (!START_TS2){ setAll("--","--","--","--"); if(badge) badge.style.display="none"; return; }
+    if (!START_TS2){
+      setAll("--","--","--","--");
+      badge && (badge.style.display="none");
+      openChip && openChip.classList.remove("hidden");
+      return;
+    }
     let diff = START_TS2 - nowSec2();
-    if (diff<=0){ setAll("00","00","00","00"); if(badge) badge.style.display="inline-block"; updateClaimButton2(); return; }
+    if (diff<=0){
+      setAll("00","00","00","00");
+      badge && (badge.style.display="inline-block"); // hiện OPEN
+      openChip && openChip.classList.add("hidden");  // ẩn Opens(VN)
+      updateClaimButton2();
+      return;
+    }
     const days=Math.floor(diff/86400); diff%=86400;
     const hrs=Math.floor(diff/3600);  diff%=3600;
     const mins=Math.floor(diff/60);   const secs=diff%60;
     setAll(String(days).padStart(2,"0"), String(hrs).padStart(2,"0"), String(mins).padStart(2,"0"), String(secs).padStart(2,"0"));
-    if (badge) badge.style.display="none";
+    badge && (badge.style.display="none");
+    openChip && openChip.classList.remove("hidden");
   }
   tick(); countdownTimer2=setInterval(tick,1000);
 }
@@ -131,7 +168,7 @@ async function connect2(){
     await ensureBSC2();
     signer2 = provider2.getSigner();
     account2= await signer2.getAddress();
-    $("accountLabel2").textContent="Wallet: "+(account2.slice(0,6)+"…"+account2.slice(-4));
+    $("accountLabel2").textContent="Wallet: "+short(account2);
     airdrop2=new ethers.Contract(AIRDROP2_ADDR,AIRDROP2_ABI,provider2);
 
     await syncChainTime2(); if(chainSyncTimer2) clearInterval(chainSyncTimer2);
@@ -163,8 +200,14 @@ async function initReadonly2(){
   let lastErr;
   for(const url of RPCS2){
     try{
-      provider2=new ethers.providers.JsonRpcProvider(url);
+      // provider kèm network cho chắc chắn
+      provider2=new ethers.providers.JsonRpcProvider(url, { name: "bnb", chainId: 56 });
       await provider2.getBlockNumber();
+
+      // cảnh báo sớm nếu trỏ nhầm địa chỉ
+      const code = await provider2.getCode(AIRDROP2_ADDR);
+      if (code === "0x"){ setMsg2("No contract code at " + AIRDROP2_ADDR, "error"); return; }
+
       airdrop2=new ethers.Contract(AIRDROP2_ADDR,AIRDROP2_ABI,provider2);
 
       await syncChainTime2(); if(chainSyncTimer2) clearInterval(chainSyncTimer2);
@@ -181,6 +224,9 @@ async function initReadonly2(){
     try {
       provider2 = new ethers.providers.Web3Provider(window.ethereum, "any");
       await provider2.getBlockNumber();
+      const code = await provider2.getCode(AIRDROP2_ADDR);
+      if (code === "0x"){ setMsg2("No contract code at " + AIRDROP2_ADDR, "error"); return; }
+
       airdrop2  = new ethers.Contract(AIRDROP2_ADDR, AIRDROP2_ABI, provider2);
 
       await syncChainTime2(); if (chainSyncTimer2) clearInterval(chainSyncTimer2);
@@ -192,13 +238,15 @@ async function initReadonly2(){
     } catch(e){ lastErr = e; }
   }
 
-  setMsg2("Unable to reach BSC RPC for Airdrop #2.", "error");
-  console.error("RPC errors #2:", lastErr);
+  setMsg2("Unable to reach BSC RPC for Airdrop #1.", "error");
+  console.error("RPC errors #1:", lastErr);
 }
 function startPolling2(){ if(pollTimer2) clearInterval(pollTimer2); pollTimer2=setInterval(async()=>{ try{ await fetchInfo2(); }catch{} },15000); }
 
 /*** events ***/
-document.addEventListener("DOMContentLoaded", initReadonly2);
+function runOnReady(fn){ document.readyState==="loading" ? document.addEventListener("DOMContentLoaded", fn, {once:true}) : fn(); }
+runOnReady(initReadonly2);
+
 $("followChk2") && $("followChk2").addEventListener("change", updateClaimButton2);
 $("connectBtn2") && $("connectBtn2").addEventListener("click", connect2);
 $("claimBtn2")   && $("claimBtn2").addEventListener("click", doClaim2);

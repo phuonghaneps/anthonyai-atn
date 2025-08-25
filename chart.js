@@ -127,101 +127,78 @@
         }
       });
 
-      var TOKEN = "0xb5C84953983931dd2C10C9b04a4379eE52697193";
-      var PAIR  = "0x6a0ba3d48b25855bad2102796c837d9668ff8c18";
+            // ====== DỮ LIỆU TỪ GECKOTERMINAL (thay cho Dexscreener) ======
+      var POOL = "0x6a0ba3d48b25855bad2102796c837d9668ff8c18"; // LP pool trên BSC
+      // Thông tin pool (price, liquidity, fdv, 24h volume)
+      var GT_POOL_URL  = "https://api.geckoterminal.com/api/v2/networks/bsc/pools/" + POOL;
+      // OHLCV để vẽ line (mỗi điểm 5 phút, 60 điểm ≈ 5 giờ)
+      var GT_OHLCV_URL = "https://api.geckoterminal.com/api/v2/networks/bsc/pools/" + POOL + "/ohlcv/minute?aggregate=5&limit=60";
 
-      var endpoints = [
-        "https://api.dexscreener.com/latest/dex/pairs/bsc/"  + PAIR,
-        "https://api.dexscreener.com/latest/dex/tokens/"     + TOKEN
-      ];
-
-      var priceEl = document.getElementById("statPrice");
-      var liqEl   = document.getElementById("statLiq");
-      var fdvEl   = document.getElementById("statFdv");
-      var volEl   = document.getElementById("statVol");
-
-      function fmtCompact(n) {
-        if (n === undefined || n === null) return "—";
-        var x = Number(n);
-        if (!isFinite(x)) return "—";
-        if (x >= 1e9) return (x/1e9).toFixed(2) + "B";
-        if (x >= 1e6) return (x/1e6).toFixed(2) + "M";
-        if (x >= 1e3) return (x/1e3).toFixed(2) + "K";
-        return x.toFixed(2);
+      // Lấy thuộc tính an toàn theo path (ES5)
+      function gtAttr(obj, path) {
+        try {
+          for (var i = 0; i < path.length; i++) obj = obj[path[i]];
+          return obj;
+        } catch (e) { return null; }
       }
 
-      var timer = null;
-      var abortCtrl = null;
-
-      function firstPair(obj) {
-        if (!obj || !obj.pairs || !obj.pairs.length) return null;
-        for (var i = 0; i < obj.pairs.length; i++) {
-          var pp = obj.pairs[i];
-          if (pp && pp.priceUsd) return pp;
-        }
-        return null;
-      }
-
-      function fetchFirstOk(urls) {
-        var idx = 0;
-        return new Promise(function (resolve) {
-          function next() {
-            if (idx >= urls.length) { resolve(null); return; }
-            var url = urls[idx++];
-            var opts = { cache: "no-store" };
-            if (abortCtrl && abortCtrl.signal) opts.signal = abortCtrl.signal;
-
-            fetch(url, opts).then(function (r) {
-              if (!r.ok) { next(); return; }
-              r.json().then(function (j) {
-                var p = firstPair(j);
-                if (p) { resolve(p); } else { next(); }
-              }).catch(function(){ next(); });
-            }).catch(function(){ next(); });
-          }
-          next();
-        });
-      }
-
-      function refreshDex(){
+      function refreshGT(){
         if (abortCtrl && abortCtrl.abort) abortCtrl.abort();
         abortCtrl = (typeof AbortController !== "undefined") ? new AbortController() : null;
+        var sig = abortCtrl ? { signal: abortCtrl.signal } : {};
 
-        fetchFirstOk(endpoints).then(function (p) {
-          if (!p) return;
+        // 1) Pool info: price / liq / fdv / 24h vol
+        fetch(GT_POOL_URL, sig).then(function(r){ return r.json(); })
+        .then(function(j){
+          var a = gtAttr(j, ["data","attributes"]) || {};
+          var priceUsd = Number(a.price_in_usd || a.base_token_price_usd || 0);
+          var liqUsd   = Number(a.reserve_in_usd || 0);
+          var fdvUsd   = Number(a.fdv_usd || 0);
+          var vol24    = Number(a.volume_usd_24h || (a.volume_usd && a.volume_usd.h24) || 0);
 
-          // cập nhật 4 chỉ số
-          if (priceEl) priceEl.textContent = "$" + Number(p.priceUsd).toFixed(6);
-          if (liqEl)   liqEl.textContent   = "$" + fmtCompact(p.liquidity && p.liquidity.usd);
-          if (fdvEl)   fdvEl.textContent   = "$" + fmtCompact(p.fdv);
-          if (volEl)   volEl.textContent   = "$" + fmtCompact(p.volume && p.volume.h24);
+          if (priceEl) priceEl.textContent = priceUsd ? ("$" + priceUsd.toFixed(6)) : "—";
+          if (liqEl)   liqEl.textContent   = liqUsd   ? ("$" + fmtCompact(liqUsd)) : "—";
+          if (fdvEl)   fdvEl.textContent   = fdvUsd   ? ("$" + fmtCompact(fdvUsd)) : "—";
+          if (volEl)   volEl.textContent   = vol24    ? ("$" + fmtCompact(vol24)) : "—";
 
-          // cập nhật chart
-          var y = Number(p.priceUsd);
-          if (isFinite(y) && y > 0) {
-            var label = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+          // 2) OHLCV để vẽ line
+          return fetch(GT_OHLCV_URL, sig).then(function(r){ return r.json(); });
+        })
+        .then(function(ohlc){
+          if (!ohlc) return;
+          var arr = gtAttr(ohlc, ["data","attributes","ohlcv_list"]) || []; // [[ts,open,high,low,close,vol],...]
+          if (!arr.length) return;
+
+          // Reset dữ liệu & ghi lại theo giá close
+          priceData.labels.length = 0;
+          priceData.datasets[0].data.length = 0;
+
+          for (var i = 0; i < arr.length; i++) {
+            var row = arr[i];
+            var ts = row[0];
+            var close = Number(row[4] || 0);
+            if (!isFinite(close) || close <= 0) continue;
+
+            var label = new Date(ts*1000).toLocaleTimeString([], { hour:"2-digit", minute:"2-digit" });
             priceData.labels.push(label);
-            priceData.datasets[0].data.push(y);
-
-            var MAX_POINTS = 180; // ~15 phút nếu 5s/lần
-            if (priceData.labels.length > MAX_POINTS) {
-              priceData.labels.shift();
-              priceData.datasets[0].data.shift();
-            }
-            priceChart.update("none");
+            priceData.datasets[0].data.push(close);
           }
-        });
+          priceChart.update("none");
+        })
+        .catch(function(e){ console.log("GT fetch error:", e && e.message ? e.message : e); });
       }
 
+      // ====== KHỞI ĐỘNG REFRESH (giữ nguyên timer 5s) ======
       function start() {
         if (timer) return;
-        refreshDex();
-        timer = setInterval(refreshDex, 5000);
+        refreshGT();
+        timer = setInterval(refreshGT, 5000);
       }
       function stop() {
         if (timer) { clearInterval(timer); timer = null; }
         if (abortCtrl && abortCtrl.abort) abortCtrl.abort();
       }
+
 
       start();
       document.addEventListener("visibilitychange", function(){ document.hidden ? stop() : start(); });

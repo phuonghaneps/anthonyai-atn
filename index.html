@@ -213,13 +213,37 @@
     <!-- CLAIM -->
 <section id="claim" class="section">
   <h2>Claim Airdrop</h2>
-  <p class="sub">Kết nối ví và bấm Claim để nhận 100 ATN miễn phí.</p>
+  <p class="sub">Kết nối ví BSC, follow @Token_ATN rồi claim.</p>
 
-  <div class="card card-pad">
-    <button id="claimBtn" class="btn primary">Claim 100 ATN</button>
-    <p id="claimStatus" style="margin-top:12px; color:var(--muted)"></p>
+  <div class="card card-pad" id="airdrop">
+    <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-bottom:10px">
+      <button id="connectBtn" class="btn">🔌 Kết nối ví (BSC)</button>
+      <span id="accountLabel" style="opacity:.8"></span>
+    </div>
+
+    <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-bottom:10px">
+      <a id="followLink" class="btn" target="_blank" rel="noopener" href="https://x.com/Token_ATN">🔔 Follow @Token_ATN</a>
+      <label><input type="checkbox" id="followChk"> Tôi đã follow @Token_ATN</label>
+    </div>
+
+    <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-bottom:10px">
+      <strong>Countdown:</strong> <span id="countdown">--:--:--:--</span>
+      <span id="openBadge" class="badge" style="display:none">ĐÃ MỞ CLAIM</span>
+    </div>
+
+    <div class="stats" style="display:flex; gap:16px; flex-wrap:wrap; margin-bottom:12px; opacity:.9">
+      <div>Token: <b id="tokenSymbol">ATN</b></div>
+      <div>• Mỗi ví: <b id="perWallet">-</b></div>
+      <div>• Đã claim: <b id="claimedCount">-</b>/<span id="maxClaims">-</span></div>
+      <div>• Số dư contract: <b id="contractBal">-</b></div>
+      <div id="remaining"></div>
+    </div>
+
+    <button id="claimBtn" class="btn primary" disabled>🎁 Claim</button>
+    <p id="msg" style="margin-top:12px; color:var(--muted)"></p>
   </div>
 </section>
+
     <!-- TOKENOMICS -->
     <section id="tokenomics" class="section">
       <h2>Tokenomics</h2>
@@ -377,6 +401,214 @@
       }
     });
   </script>
+  <script src="https://cdn.jsdelivr.net/npm/ethers@5/dist/ethers.min.js"></script>
+<script>
+(function () {
+  const CONTRACT_ADDR = "0xA395c7d4d4A864773D9141E3CDC61599DFea24c0";
+  const X_HANDLE = "Token_ATN";
+
+  const ABI = [
+    {"inputs":[],"name":"owner","outputs":[{"internalType":"address","name":"","type":"address"}],"stateMutability":"view","type":"function"},
+    {"inputs":[],"name":"startTime","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
+    {"inputs":[],"name":"token","outputs":[{"internalType":"address","name":"","type":"address"}],"stateMutability":"view","type":"function"},
+    {"inputs":[],"name":"amountPerWallet","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
+    {"inputs":[],"name":"maxClaims","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
+    {"inputs":[],"name":"claimsCount","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
+    {"inputs":[{"internalType":"address","name":"","type":"address"}],"name":"claimed","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"view","type":"function"},
+    {"inputs":[{"internalType":"address","name":"user","type":"address"}],
+     "name":"info",
+     "outputs":[
+       {"internalType":"uint256","name":"_startTime","type":"uint256"},
+       {"internalType":"uint256","name":"_amountPerWallet","type":"uint256"},
+       {"internalType":"uint256","name":"_maxClaims","type":"uint256"},
+       {"internalType":"uint256","name":"_claimsCount","type":"uint256"},
+       {"internalType":"bool","name":"_claimed","type":"bool"},
+       {"internalType":"uint256","name":"_contractBalance","type":"uint256"}],
+     "stateMutability":"view","type":"function"},
+    {"inputs":[],"name":"claim","outputs":[],"stateMutability":"nonpayable","type":"function"}
+  ];
+  const ERC20_ABI = [
+    {"constant":true,"inputs":[],"name":"decimals","outputs":[{"name":"","type":"uint8"}],"type":"function"},
+    {"constant":true,"inputs":[],"name":"symbol","outputs":[{"name":"","type":"string"}],"type":"function"},
+    {"constant":true,"inputs":[{"name":"account","type":"address"}],"name":"balanceOf","outputs":[{"name":"","type":"uint256"}],"type":"function"}
+  ];
+
+  // DOM
+  const connectBtn    = document.getElementById("connectBtn");
+  const accountLbl    = document.getElementById("accountLabel");
+  const followLink    = document.getElementById("followLink");
+  const followChk     = document.getElementById("followChk");
+  const countdownEl   = document.getElementById("countdown");
+  const openBadge     = document.getElementById("openBadge");
+  const claimBtn      = document.getElementById("claimBtn");
+  const msgBox        = document.getElementById("msg");
+  const tokenSymEl    = document.getElementById("tokenSymbol");
+  const perWalletEl   = document.getElementById("perWallet");
+  const claimedCountEl= document.getElementById("claimedCount");
+  const maxClaimsEl   = document.getElementById("maxClaims");
+  const contractBalEl = document.getElementById("contractBal");
+
+  // thêm 2 span vào phần stats nếu chưa có (remaining)
+  if (!document.getElementById("remaining")){
+    const stats = document.querySelector(".airdrop-card .stats");
+    const rem = document.createElement("div");
+    rem.id = "remaining";
+    stats && stats.appendChild(rem);
+  }
+  const remainingEl = document.getElementById("remaining");
+
+  followLink.href = `https://x.com/${X_HANDLE}`;
+
+  // state
+  let provider, signer, account, contract, token;
+  let tokenDecimals = 18, tokenSymbol = "ATN";
+  let START_TS = null, timer = null;
+  let perWalletBN = ethers.BigNumber.from(0);
+  let maxClaimsBN = ethers.BigNumber.from(0);
+  let claimsCountBN = ethers.BigNumber.from(0);
+  let contractBalBN = ethers.BigNumber.from(0);
+
+  const fmt = (bn,dec=18) => ethers.utils.formatUnits(bn, dec);
+  const short = (a)=> a ? a.slice(0,6)+"…"+a.slice(-4) : "";
+  function setMsg(t, type="info"){ msgBox.textContent=t; msgBox.className="msg "+type; }
+
+  async function ensureBSC() {
+    const net = await provider.getNetwork();
+    if (net.chainId !== 56) {
+      try {
+        await window.ethereum.request({ method:"wallet_switchEthereumChain", params:[{ chainId:"0x38" }]});
+      } catch {
+        await window.ethereum.request({
+          method:"wallet_addEthereumChain",
+          params:[{ chainId:"0x38", chainName:"BNB Smart Chain",
+            nativeCurrency:{ name:"BNB", symbol:"BNB", decimals:18 },
+            rpcUrls:["https://bsc-dataseed.binance.org/"], blockExplorerUrls:["https://bscscan.com/"]}]
+        });
+      }
+    }
+  }
+
+  async function loadStatics(){
+    const tokenAddr = await contract.token();
+    token = new ethers.Contract(tokenAddr, ERC20_ABI, provider);
+    try { tokenDecimals = await token.decimals(); } catch {}
+    try { tokenSymbol = await token.symbol(); tokenSymEl.textContent = tokenSymbol; } catch {}
+
+    perWalletBN   = await contract.amountPerWallet();
+    maxClaimsBN   = await contract.maxClaims();
+    claimsCountBN = await contract.claimsCount();
+    contractBalBN = await token.balanceOf(CONTRACT_ADDR);
+    START_TS      = (await contract.startTime()).toNumber();
+
+    perWalletEl.textContent    = `${fmt(perWalletBN, tokenDecimals)} ${tokenSymbol}`;
+    maxClaimsEl.textContent    = maxClaimsBN.toString();
+    claimedCountEl.textContent = claimsCountBN.toString();
+    contractBalEl.textContent  = `${fmt(contractBalBN, tokenDecimals)} ${tokenSymbol}`;
+    claimBtn.textContent       = `🎁 Claim ${fmt(perWalletBN, tokenDecimals)} ${tokenSymbol}`;
+
+    const remainingClaims = maxClaimsBN.sub(claimsCountBN).toNumber();
+    const remainingTokens = Number(fmt(contractBalBN, tokenDecimals));
+    remainingEl.textContent = `• Còn lại: ${remainingClaims} suất  • Còn token: ${remainingTokens} ${tokenSymbol}`;
+
+    startCountdown();
+    updateClaimState();
+  }
+
+  function updateClaimState(hasClaimed=false){
+    const now   = Math.floor(Date.now()/1000);
+    const okTime   = START_TS ? now >= START_TS : false;
+    const okWallet = !!account;
+    const okFollow = followChk.checked;
+
+    const remainingClaims = maxClaimsBN.sub(claimsCountBN);
+    const enoughStock = contractBalBN.gte(perWalletBN) && remainingClaims.gt(0);
+
+    openBadge.style.display = okTime ? "inline-block" : "none";
+    claimBtn.disabled = !(okTime && okWallet && okFollow && enoughStock) || hasClaimed;
+
+    if (!enoughStock) {
+      setMsg(remainingClaims.lte(0) ? "Hết suất claim." : "Contract thiếu token để claim.", "warn");
+    }
+  }
+
+  function startCountdown(){
+    if (timer) clearInterval(timer);
+    function tick(){
+      if (!START_TS){ countdownEl.textContent="--:--:--:--"; return; }
+      const now = Math.floor(Date.now()/1000);
+      let diff = START_TS - now;
+      if (diff <= 0){ countdownEl.textContent="00:00:00:00"; clearInterval(timer); timer=null; updateClaimState(); return; }
+      const d=Math.floor(diff/86400); diff%=86400;
+      const h=Math.floor(diff/3600);  diff%=3600;
+      const m=Math.floor(diff/60);    const s=diff%60;
+      countdownEl.textContent = `${String(d).padStart(2,"0")}:${String(h).padStart(2,"0")}:${String(m).padStart(2,"0")}:${String(s).padStart(2,"0")}`;
+      updateClaimState();
+    }
+    tick(); timer = setInterval(tick,1000);
+  }
+
+  async function connect(){
+    try{
+      if (!window.ethereum) return setMsg("Vui lòng cài MetaMask.", "error");
+      provider = new ethers.providers.Web3Provider(window.ethereum, "any");
+      await provider.send("eth_requestAccounts", []);
+      await ensureBSC();
+      signer  = provider.getSigner();
+      account = await signer.getAddress();
+      accountLbl.textContent = "Ví: "+short(account);
+
+      contract = new ethers.Contract(CONTRACT_ADDR, ABI, provider);
+      await loadStatics();
+
+      const claimed = await contract.claimed(account);
+      if (claimed) setMsg("Bạn đã claim trước đó.", "warn");
+      updateClaimState(claimed);
+    }catch(e){ setMsg(e?.message || String(e), "error"); }
+  }
+
+  async function doClaim(){
+    try{
+      if (!signer) return setMsg("Hãy kết nối ví trước.", "error");
+      if (!followChk.checked) return setMsg("Hãy follow @"+X_HANDLE+" và tick xác nhận.", "warn");
+
+      const now = Math.floor(Date.now()/1000);
+      if (now < START_TS) return setMsg("Chưa tới thời gian claim.", "warn");
+
+      const remainingClaims = maxClaimsBN.sub(claimsCountBN);
+      if (remainingClaims.lte(0)) return setMsg("Hết suất claim.", "warn");
+      if (contractBalBN.lt(perWalletBN)) return setMsg("Contract thiếu token để claim.", "warn");
+
+      setMsg("Đang gửi giao dịch...");
+      const tx = await contract.connect(signer).claim();
+      setMsg("Đang chờ xác nhận: "+tx.hash);
+      await tx.wait();
+      setMsg("Claim thành công! Tx: "+tx.hash, "success");
+
+      // reload số liệu
+      claimsCountBN = await contract.claimsCount();
+      contractBalBN = await token.balanceOf(CONTRACT_ADDR);
+      claimedCountEl.textContent = claimsCountBN.toString();
+      contractBalEl.textContent  = `${fmt(contractBalBN, tokenDecimals)} ${tokenSymbol}`;
+      remainingEl.textContent    = `• Còn lại: ${maxClaimsBN.sub(claimsCountBN).toNumber()} suất  • Còn token: ${Number(fmt(contractBalBN, tokenDecimals))} ${tokenSymbol}`;
+      claimBtn.disabled = true;
+    }catch(e){
+      const msg = (e && (e.error?.message || e.data?.message || e.message)) || String(e);
+      setMsg("Claim thất bại: "+msg, "error");
+    }
+  }
+
+  // bind
+  document.getElementById("followLink").textContent = `🔔 Follow @${X_HANDLE}`;
+  connectBtn.addEventListener("click", connect);
+  followChk.addEventListener("change", ()=>updateClaimState());
+  claimBtn.addEventListener("click", doClaim);
+  if (window.ethereum){
+    window.ethereum.on("accountsChanged", ()=>location.reload());
+    window.ethereum.on("chainChanged",  ()=>location.reload());
+  }
+})();
+</script>
+
 </body>
   <script>
 // ===== CUSTOM LIVE CHART + STATS =====
@@ -456,6 +688,7 @@ if (ctxLine) {
 }
 </script>
 </html>
+
 
 
 

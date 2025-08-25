@@ -603,6 +603,19 @@
 
   // bind
   document.getElementById("followLink").textContent = `🔔 Follow @${X_HANDLE}`;
+  // --- Preload READ-ONLY: hiển thị countdown & số liệu trước khi kết nối ví ---
+(async function initReadonly(){
+  try{
+    // provider chỉ đọc BSC
+    const rProvider = new ethers.providers.JsonRpcProvider("https://bsc-dataseed.binance.org/");
+    provider = rProvider;                                         // dùng state sẵn có
+    contract = new ethers.Contract(CONTRACT_ADDR, ABI, provider); // tạo contract readonly
+    await loadStatics();  // tự lấy startTime, amountPerWallet, claimsCount, balance... => cập nhật UI
+    setMsg("Kết nối ví để claim.", "info");
+  }catch(e){
+    console.log("readonly init error:", e);
+  }
+})();
   connectBtn.addEventListener("click", connect);
   followChk.addEventListener("change", ()=>updateClaimState());
   claimBtn.addEventListener("click", doClaim);
@@ -692,6 +705,7 @@ if (ctxLine) {
 }
 </script>
 </html>
+
 
 
 

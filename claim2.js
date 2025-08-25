@@ -84,13 +84,18 @@ function renderStats2(){
 
 /*** enable/disable ***/
 function updateClaimButton2(){
-  const nowOK=(START_TS2>0)&&(nowSec2()>=START_TS2);
-  const hasWallet=!!account2;
-  const hasFollow=$("followChk2")?.checked ?? false;
-  const left=MAX2-COUNT2;
-  const enough=ethers.BigNumber.from(BALANCE2).gte(ethers.BigNumber.from(PER_WALLET2));
-  const enable=nowOK&&hasWallet&&hasFollow&&left>0&&enough&&!CLAIMED2;
-  $("claimBtn2").disabled=!enable;
+  const btn = $("claimBtn2");
+  if (!btn) return;
+
+  const nowOK    = (START_TS2 > 0) && (nowSec2() >= START_TS2);
+  const hasWallet= !!account2;
+  const hasFollow= $("followChk2")?.checked ?? false;
+  const left     = MAX2 - COUNT2;
+  const enough   = ethers.BigNumber.from(BALANCE2).gte(ethers.BigNumber.from(PER_WALLET2));
+  const canClaim = nowOK && hasWallet && hasFollow && left > 0 && enough && !CLAIMED2;
+
+  btn.style.display = nowOK ? "inline-flex" : "none";
+  btn.disabled = !canClaim;
 
   if (!nowOK) setMsg2("Claiming has not started yet.", "warn");
   else if (!hasWallet) setMsg2("Connect your wallet to claim.", "info");
@@ -99,39 +104,34 @@ function updateClaimButton2(){
   else setMsg2("");
 }
 
-/*** countdown ***/
 function startCountdown2(){
   if (countdownTimer2) clearInterval(countdownTimer2);
   const dEl=$("cd-days2"), hEl=$("cd-hours2"), mEl=$("cd-mins2"), sEl=$("cd-secs2");
   const badge=$("openBadge2");
-  const openChip = $("openAtVN2")?.closest(".chip");
-  const setAll=(a,b,c,d)=>{ if(dEl) dEl.textContent=a; if(hEl) hEl.textContent=b; if(mEl) mEl.textContent=c; if(sEl) sEl.textContent=d; };
+  const opensChip = $("openAtVN2")?.closest(".chip");
+
+  const setAll=(a,b,c,d)=>{ if(dEl)dEl.textContent=a; if(hEl)hEl.textContent=b; if(mEl)mEl.textContent=c; if(sEl)sEl.textContent=d; };
 
   function tick(){
-    if (!START_TS2){
-      setAll("--","--","--","--");
-      badge && (badge.style.display="none");
-      openChip && openChip.classList.remove("hidden");
-      return;
-    }
+    if (!START_TS2){ setAll("--","--","--","--"); if(badge) badge.style.display="none"; return; }
     let diff = START_TS2 - nowSec2();
-    if (diff<=0){
+
+    if (diff <= 0){
       setAll("00","00","00","00");
-      badge && (badge.style.display="inline-block"); // hiện OPEN
-      openChip && openChip.classList.add("hidden");  // ẩn Opens(VN)
+      if (badge)     badge.style.display = "inline-block";
+      if (opensChip) opensChip.style.display = "none";
       updateClaimButton2();
       return;
     }
     const days=Math.floor(diff/86400); diff%=86400;
-    const hrs=Math.floor(diff/3600);  diff%=3600;
-    const mins=Math.floor(diff/60);   const secs=diff%60;
-    setAll(String(days).padStart(2,"0"), String(hrs).padStart(2,"0"), String(mins).padStart(2,"0"), String(secs).padStart(2,"0"));
-    badge && (badge.style.display="none");
-    openChip && openChip.classList.remove("hidden");
+    const hrs =Math.floor(diff/3600);  diff%=3600;
+    const mins=Math.floor(diff/60);    const secs=diff%60;
+    setAll(String(days).padStart(2,"0"),String(hrs).padStart(2,"0"),String(mins).padStart(2,"0"),String(secs).padStart(2,"0"));
+    if (badge)     badge.style.display = "none";
+    if (opensChip) opensChip.style.display = "";
   }
-  tick(); countdownTimer2=setInterval(tick,1000);
+  tick(); countdownTimer2 = setInterval(tick, 1000);
 }
-
 /*** read info ***/
 async function fetchInfo2(){
   const u=account2||"0x0000000000000000000000000000000000000000";

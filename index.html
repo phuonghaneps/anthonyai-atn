@@ -13,6 +13,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+
   <style>
     :root{
       --bg: #0b1220;
@@ -90,24 +91,8 @@
     .links a{padding:10px 12px; border:1px solid rgba(148,163,184,.18); border-radius:10px}
 
     .disclaimer{font-size:13.5px; color:#93a7c0}
-  </style>
-    <!-- === ATN favicon & social image === -->
-  <link rel="icon" href="/favicon-32.png" type="image/png" sizes="32x32">
-  <meta property="og:image" content="/og-image.png">
 
-  <!-- === Logo CSS (thêm style cho logo ảnh thật) === -->
-  <style>
-    .brand a{ display:flex; align-items:center; gap:10px; color:var(--text); text-decoration:none; }
-    .brand a:hover{ opacity:.9; }
-    .brand img{ height:34px; width:auto; border-radius:9px; box-shadow:var(--shadow); display:block; }
-  </style>
-  <style>
-    .btn.twitter{ background:#1da1f2; color:#fff; border:none }
-    #countdown{ font-weight:700; letter-spacing:.5px }
-  </style>
-</head>
-    <style>
-    /* Chart container */
+    /* Chart container (moved into <head>) */
     .chart-embed{
       position: relative;
       width: 100%;
@@ -122,20 +107,33 @@
       width: 100%; height: 100%;
       border: 0;
     }
+
+    /* Claim extras */
+    .btn.twitter{ background:#1da1f2; color:#fff; border:none }
+    #countdown{ font-weight:700; letter-spacing:.5px }
+    #claim { scroll-margin-top: 80px; }
   </style>
+
+  <!-- Real logo CSS -->
   <style>
-  #claim { scroll-margin-top: 80px; }
-</style>
+    .brand a{ display:flex; align-items:center; gap:10px; color:var(--text); text-decoration:none; }
+    .brand a:hover{ opacity:.9; }
+    .brand img{ height:34px; width:auto; border-radius:9px; box-shadow:var(--shadow); display:block; }
+  </style>
+
+  <!-- Icons / preview -->
+  <link rel="icon" href="/favicon-32.png" type="image/png" sizes="32x32">
+  <meta property="og:image" content="/og-image.png">
 </head>
 <body>
   <header>
     <div class="container nav">
       <div class="brand">
-  <a href="https://vnbot.ai.vn" target="_blank" rel="noopener" title="Go to official website">
-    <img src="/logo_atn.png" alt="Anthony AI (ATN) logo">
-    Anthony AI <span style="opacity:.7; font-weight:600">(ATN)</span>
-  </a>
-</div>
+        <a href="https://vnbot.ai.vn" target="_blank" rel="noopener" title="Go to official website">
+          <img src="/logo_atn.png" alt="Anthony AI (ATN) logo">
+          Anthony AI <span style="opacity:.7; font-weight:600">(ATN)</span>
+        </a>
+      </div>
       <div class="grow"></div>
       <a class="btn" href="#tokenomics">Tokenomics</a>
       <a class="btn" href="#roadmap">Roadmap</a>
@@ -150,9 +148,9 @@
     <!-- HERO -->
     <section class="hero">
       <div>
-        <span class="pill">BNB Chain · BEP‑20</span>
+        <span class="pill">BNB Chain · BEP-20</span>
         <h1>Anthony AI (ATN)</h1>
-        <p class="lead">Fixed <strong>2,000,000 ATN</strong> supply. Liquidity is <strong>locked until 31 Dec 2029</strong>. Transparent tokenomics, community‑first roadmap, and practical AI‑driven utility.</p>
+        <p class="lead">Fixed <strong>2,000,000 ATN</strong> supply. Liquidity is <strong>locked until 31 Dec 2029</strong>. Transparent tokenomics, community-first roadmap, and practical AI-driven utility.</p>
         <div class="section" style="padding:18px 0 0">
           <div class="token-stats">
             <div class="stat"><small>Total Supply</small><strong>2,000,000 ATN</strong></div>
@@ -176,77 +174,76 @@
             <button id="copy">Copy</button>
             <button id="watch">Add to Wallet</button>
           </div>
-          <small style="color:var(--muted)">LP Token (Cake‑LP): <a target="_blank" rel="noopener" href="https://bscscan.com/token/0x6a0ba3d48b25855bad2102796c837d9668ff8c18">0x6a0ba3…fF8c18</a></small>
+          <small style="color:var(--muted)">LP Token (Cake-LP): <a target="_blank" rel="noopener" href="https://bscscan.com/token/0x6a0ba3d48b25855bad2102796c837d9668ff8c18">0x6a0ba3…fF8c18</a></small>
         </div>
       </div>
     </section>
+
     <!-- CHART (Combined) -->
-<section id="chart" class="section">
-  <h2>Live Chart</h2>
-  <p class="sub">Custom line chart + realtime stats (Dexscreener API) & embedded GeckoTerminal.</p>
+    <section id="chart" class="section">
+      <h2>Live Chart</h2>
+      <p class="sub">Custom line chart + realtime stats (Dexscreener API) & embedded GeckoTerminal.</p>
 
-  <!-- A) Chart tùy biến + 4 ô thống kê -->
-  <div class="card card-pad" style="margin-bottom:16px">
-    <canvas id="priceLine" height="220" aria-label="ATN custom price chart"></canvas>
-    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:12px">
-      <div class="stat"><small>Price (USD)</small><strong id="statPrice">—</strong></div>
-      <div class="stat"><small>Liquidity</small><strong id="statLiq">—</strong></div>
-      <div class="stat"><small>FDV</small><strong id="statFdv">—</strong></div>
-      <div class="stat"><small>24h Volume</small><strong id="statVol">—</strong></div>
-    </div>
-  </div>
+      <div class="card card-pad" style="margin-bottom:16px">
+        <canvas id="priceLine" height="220" aria-label="ATN custom price chart"></canvas>
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:12px">
+          <div class="stat"><small>Price (USD)</small><strong id="statPrice">—</strong></div>
+          <div class="stat"><small>Liquidity</small><strong id="statLiq">—</strong></div>
+          <div class="stat"><small>FDV</small><strong id="statFdv">—</strong></div>
+          <div class="stat"><small>24h Volume</small><strong id="statVol">—</strong></div>
+        </div>
+      </div>
 
-  <!-- B) GeckoTerminal iframe -->
-  <div class="card card-pad">
-    <div class="chart-embed">
-      <iframe
-        src="https://www.geckoterminal.com/bsc/pools/0x6a0ba3d48b25855bad2102796c837d9668ff8c18?embed=1&theme=dark"
-        width="100%" height="600" style="border:0; border-radius:14px; overflow:hidden"
-        allowfullscreen loading="lazy"></iframe>
-    </div>
+      <div class="card card-pad">
+        <div class="chart-embed">
+          <iframe
+            src="https://www.geckoterminal.com/bsc/pools/0x6a0ba3d48b25855bad2102796c837d9668ff8c18?embed=1&theme=dark"
+            width="100%" height="600" style="border:0; border-radius:14px; overflow:hidden"
+            allowfullscreen loading="lazy"></iframe>
+        </div>
 
-    <div style="margin-top:12px; display:flex; gap:10px; flex-wrap:wrap">
-      <a class="btn" target="_blank" rel="noopener"
-         href="https://dexscreener.com/bsc/0x6a0ba3d48b25855bad2102796c837d9668ff8c18">Open on Dexscreener</a>
-      <a class="btn" target="_blank" rel="noopener"
-         href="https://www.geckoterminal.com/bsc/pools/0x6a0ba3d48b25855bad2102796c837d9668ff8c18?info=1">View on GeckoTerminal</a>
-    </div>
-  </div>
-</section>
+        <div style="margin-top:12px; display:flex; gap:10px; flex-wrap:wrap">
+          <a class="btn" target="_blank" rel="noopener"
+            href="https://dexscreener.com/bsc/0x6a0ba3d48b25855bad2102796c837d9668ff8c18">Open on Dexscreener</a>
+          <a class="btn" target="_blank" rel="noopener"
+            href="https://www.geckoterminal.com/bsc/pools/0x6a0ba3d48b25855bad2102796c837d9668ff8c18?info=1">View on GeckoTerminal</a>
+        </div>
+      </div>
+    </section>
 
     <!-- CLAIM -->
-<section id="claim" class="section">
-  <h2>Claim Airdrop</h2>
-  <p class="sub">Kết nối ví BSC, follow @Token_ATN rồi claim.</p>
+    <section id="claim" class="section">
+      <h2>Claim Airdrop</h2>
+      <p class="sub">Kết nối ví BSC, follow @Token_ATN rồi claim.</p>
 
-  <div class="card card-pad" id="airdrop">
-    <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-bottom:10px">
-      <button id="connectBtn" class="btn primary">🔌 Kết nối ví (BSC)</button>
-      <span id="accountLabel" style="opacity:.8"></span>
-    </div>
+      <div class="card card-pad" id="airdrop">
+        <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-bottom:10px">
+          <button id="connectBtn" class="btn primary">🔌 Kết nối ví (BSC)</button>
+          <span id="accountLabel" style="opacity:.8"></span>
+        </div>
 
-    <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-bottom:10px">
-      <a id="followLink" class="btn twitter" target="_blank" rel="noopener" href="https://x.com/Token_ATN">🔔 Follow @Token_ATN</a>
-      <label><input type="checkbox" id="followChk"> Tôi đã follow @Token_ATN</label>
-    </div>
+        <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-bottom:10px">
+          <a id="followLink" class="btn twitter" target="_blank" rel="noopener" href="https://x.com/Token_ATN">🔔 Follow @Token_ATN</a>
+          <label><input type="checkbox" id="followChk"> Tôi đã follow @Token_ATN</label>
+        </div>
 
-    <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-bottom:10px">
-      <strong>Countdown:</strong> <span id="countdown">--:--:--:--</span>
-      <span id="openBadge" class="badge" style="display:none">ĐÃ MỞ CLAIM</span>
-    </div>
+        <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-bottom:10px">
+          <strong>Countdown:</strong> <span id="countdown">--:--:--:--</span>
+          <span id="openBadge" class="badge" style="display:none">ĐÃ MỞ CLAIM</span>
+        </div>
 
-    <div class="stats" style="display:flex; gap:16px; flex-wrap:wrap; margin-bottom:12px; opacity:.9">
-      <div>Token: <b id="tokenSymbol">ATN</b></div>
-      <div>• Mỗi ví: <b id="perWallet">-</b></div>
-      <div>• Đã claim: <b id="claimedCount">-</b>/<span id="maxClaims">-</span></div>
-      <div>• Số dư contract: <b id="contractBal">-</b></div>
-      <div id="remaining"></div>
-    </div>
+        <div class="stats" style="display:flex; gap:16px; flex-wrap:wrap; margin-bottom:12px; opacity:.9">
+          <div>Token: <b id="tokenSymbol">ATN</b></div>
+          <div>• Mỗi ví: <b id="perWallet">-</b></div>
+          <div>• Đã claim: <b id="claimedCount">-</b>/<span id="maxClaims">-</span></div>
+          <div>• Số dư contract: <b id="contractBal">-</b></div>
+          <div id="remaining"></div>
+        </div>
 
-    <button id="claimBtn" class="btn primary" disabled>🎁 Claim</button>
-    <p id="msg" style="margin-top:12px; color:var(--muted)"></p>
-  </div>
-</section>
+        <button id="claimBtn" class="btn primary" disabled>🎁 Claim</button>
+        <p id="msg" style="margin-top:12px; color:var(--muted)"></p>
+      </div>
+    </section>
 
     <!-- TOKENOMICS -->
     <section id="tokenomics" class="section">
@@ -276,14 +273,14 @@
     <!-- ROADMAP -->
     <section id="roadmap" class="section">
       <h2>Roadmap</h2>
-      <p class="sub">A practical, execution‑first plan. Timelines may adjust as we prioritize security and real usage.</p>
+      <p class="sub">A practical, execution-first plan. Timelines may adjust as we prioritize security and real usage.</p>
       <div class="grid cols-3 road">
         <div class="step">
           <span class="badge">Phase 1</span>
           <h4>Relaunch & Foundations</h4>
           <ul>
             <li>Contract relaunch on BNB Chain</li>
-            <li>LP added & <strong>locked to 2029‑12‑31</strong></li>
+            <li>LP added & <strong>locked to 2029-12-31</strong></li>
             <li>Tokenomics & transparency hub</li>
             <li>Website + Brand refresh</li>
           </ul>
@@ -302,10 +299,10 @@
           <span class="badge">Phase 3</span>
           <h4>Utility & Scale</h4>
           <ul>
-            <li>AI‑assisted features (research / tools)</li>
+            <li>AI-assisted features (research / tools)</li>
             <li>Developer grants & integrations</li>
             <li>Ongoing audits & security reviews</li>
-            <li>DAO‑driven initiatives (subject to feasibility)</li>
+            <li>DAO-driven initiatives (subject to feasibility)</li>
           </ul>
         </div>
       </div>
@@ -317,7 +314,7 @@
       <div class="grid cols-2">
         <div class="card card-pad">
           <h4 style="margin:0 0 6px">Which network?</h4>
-          <p class="sub">BNB Chain (BEP‑20). You can add ATN to MetaMask using the "Add to Wallet" button.</p>
+          <p class="sub">BNB Chain (BEP-20). You can add ATN to MetaMask using the "Add to Wallet" button.</p>
           <h4 style="margin:12px 0 6px">Is the LP locked?</h4>
           <p class="sub">Yes. Locked with <a target="_blank" rel="noopener" href="https://pinksale.finance/pinklock/bsc/0x6a0ba3d48b25855bad2102796c837d9668ff8c18">PinkLock</a> until 31 Dec 2029. Always verify links.</p>
           <h4 style="margin:12px 0 6px">Where to trade?</h4>
@@ -327,7 +324,7 @@
           <h4 style="margin:0 0 6px">Contract address?</h4>
           <p class="sub"><code>0xb5C84953983931dd2C10C9b04a4379eE52697193</code> (BNB Chain). View on <a target="_blank" rel="noopener" href="https://bscscan.com/token/0xb5C84953983931dd2C10C9b04a4379eE52697193">BscScan</a>.</p>
           <h4 style="margin:12px 0 6px">Can supply change?</h4>
-          <p class="sub">No. Total supply is fixed at 2,000,000 ATN. Distribution is transparent and on‑chain.</p>
+          <p class="sub">No. Total supply is fixed at 2,000,000 ATN. Distribution is transparent and on-chain.</p>
           <h4 style="margin:12px 0 6px">Contacts</h4>
           <p class="sub">X: <a target="_blank" rel="noopener" href="https://x.com/Token_ATN">@Token_ATN</a> · Telegram: <a target="_blank" rel="noopener" href="#">Coming soon</a> · Email: <a href="mailto:info@atncrypto.com">info@atncrypto.com</a></p>
         </div>
@@ -363,19 +360,19 @@
         await window.ethereum.request({
           method: 'wallet_watchAsset',
           params: {
-            type: 'ERC20', // works for BEP20 within EVM wallets
+            type: 'ERC20', // BEP-20 is ERC-20 compatible
             options: {
               address: addr,
               symbol: 'ATN',
               decimals: 18,
-              image: location.origin + '/favicon.ico'
+              image: location.origin + '/favicon-32.png'
             }
           }
         });
       }catch(err){ console.log(err); }
     });
 
-    // Tokenomics chart
+    // Tokenomics donut
     const ctx = document.getElementById('pie');
     const data = {
       labels: [
@@ -398,312 +395,298 @@
       type: 'doughnut',
       data,
       options: {
-        plugins: {
-          legend: { position: 'bottom', labels: { color: '#cbd5e1' } }
-        },
+        plugins: { legend: { position: 'bottom', labels: { color: '#cbd5e1' } } },
         cutout: '55%'
       }
     });
   </script>
+
+  <!-- Ethers v5 -->
   <script src="https://cdn.jsdelivr.net/npm/ethers@5/dist/ethers.min.js"></script>
-<script>
-(function () {
-  const CONTRACT_ADDR = "0xA395c7d4d4A864773D9141E3CDC61599DFea24c0";
-  const X_HANDLE = "Token_ATN";
 
-  c const ABI = [
-    {"inputs":[],"name":"owner","outputs":[{"internalType":"address","name":"","type":"address"}],"stateMutability":"view","type":"function"},
-    {"inputs":[],"name":"startTime","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
-    {"inputs":[],"name":"token","outputs":[{"internalType":"address","name":"","type":"address"}],"stateMutability":"view","type":"function"},
-    {"inputs":[],"name":"amountPerWallet","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
-    {"inputs":[],"name":"maxClaims","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
-    {"inputs":[],"name":"claimsCount","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
-    {"inputs":[{"internalType":"address","name":"","type":"address"}],"name":"claimed","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"view","type":"function"},
-    {"inputs":[{"internalType":"address","name":"user","type":"address"}],
-     "name":"info",
-     "outputs":[
-       {"internalType":"uint256","name":"_startTime","type":"uint256"},
-       {"internalType":"uint256","name":"_amountPerWallet","type":"uint256"},
-       {"internalType":"uint256","name":"_maxClaims","type":"uint256"},
-       {"internalType":"uint256","name":"_claimsCount","type":"uint256"},
-       {"internalType":"bool","name":"_claimed","type":"bool"},
-       {"internalType":"uint256","name":"_contractBalance","type":"uint256"}],
-     "stateMutability":"view","type":"function"},
-    {"inputs":[],"name":"claim","outputs":[],"stateMutability":"nonpayable","type":"function"}
-  ];
-  const ERC20_ABI = [
-    {"constant":true,"inputs":[],"name":"decimals","outputs":[{"name":"","type":"uint8"}],"type":"function"},
-    {"constant":true,"inputs":[],"name":"symbol","outputs":[{"name":"","type":"string"}],"type":"function"},
-    {"constant":true,"inputs":[{"name":"account","type":"address"}],"name":"balanceOf","outputs":[{"name":"","type":"uint256"}],"type":"function"}
-  ];
-
-  // ===== DOM helpers =====
-  const $ = (id)=>document.getElementById(id);
-  const connectBtn=$("connectBtn"), accountLbl=$("accountLabel"),
-        followChk=$("followChk"), followLink=$("followLink"),
-        countdownEl=$("countdown"), openBadge=$("openBadge"),
-        claimBtn=$("claimBtn"), msgBox=$("msg"),
-        tokenSymEl=$("tokenSymbol"), perWalletEl=$("perWallet"),
-        claimedCountEl=$("claimedCount"), maxClaimsEl=$("maxClaims"),
-        contractBalEl=$("contractBal"), remainingEl=$("remaining");
-  followLink.href = `https://x.com/${X_HANDLE}`;
-
-  // ===== state =====
-  let provider, signer, account, contract, token;
-  let tokenDecimals = 18, tokenSymbol = "ATN";
-  let START_TS = 0, countdownTimer = null, pollTimer = null;
-  let perWalletBN, maxClaimsBN, claimsCountBN, contractBalBN;
-  const fmt = (bn,dec=18)=>ethers.utils.formatUnits(bn,dec);
-  const short = (a)=>a?a.slice(0,6)+"…"+a.slice(-4):"";
-  const setMsg=(t,type="info")=>{ msgBox.textContent=t; msgBox.className="msg "+type; };
-
-  // ===== core =====
-  async function fetchStatics(){
-    const tokenAddr = await contract.token();
-    token = new ethers.Contract(tokenAddr, ERC20_ABI, provider);
-    try { tokenDecimals = await token.decimals(); } catch {}
-    try { tokenSymbol = await token.symbol(); tokenSymEl.textContent = tokenSymbol; } catch {}
-
-    [perWalletBN, maxClaimsBN, claimsCountBN] = await Promise.all([
-      contract.amountPerWallet(),
-      contract.maxClaims(),
-      contract.claimsCount(),
-    ]);
-    contractBalBN = await token.balanceOf(CONTRACT_ADDR);
-    START_TS = (await contract.startTime()).toNumber();
-
-    // cập nhật UI
-    perWalletEl.textContent    = `${fmt(perWalletBN, tokenDecimals)} ${tokenSymbol}`;
-    maxClaimsEl.textContent    = maxClaimsBN.toString();
-    claimedCountEl.textContent = claimsCountBN.toString();
-    contractBalEl.textContent  = `${fmt(contractBalBN, tokenDecimals)} ${tokenSymbol}`;
-    claimBtn.textContent       = `🎁 Claim ${fmt(perWalletBN, tokenDecimals)} ${tokenSymbol}`;
-
-    const remainingClaims = maxClaimsBN.sub(claimsCountBN).toNumber();
-    remainingEl.textContent = `• Còn lại: ${remainingClaims} suất  • Còn token: ${Number(fmt(contractBalBN, tokenDecimals))} ${tokenSymbol}`;
-
-    updateClaimState();
-  }
-
-  function startCountdown(){
-    if (countdownTimer) clearInterval(countdownTimer);
-    function tick(){
-      if (!START_TS){ countdownEl.textContent="--:--:--:--"; return; }
-      let diff = START_TS - Math.floor(Date.now()/1000);
-      if (diff <= 0){
-        countdownEl.textContent = "00:00:00:00";
-        openBadge.style.display = "inline-block";
-        clearInterval(countdownTimer); countdownTimer=null;
-        updateClaimState();
-        return;
-      }
-      const d=Math.floor(diff/86400); diff%=86400;
-      const h=Math.floor(diff/3600);  diff%=3600;
-      const m=Math.floor(diff/60);    const s=diff%60;
-      countdownEl.textContent =
-        `${String(d).padStart(2,"0")}:${String(h).padStart(2,"0")}:${String(m).padStart(2,"0")}:${String(s).padStart(2,"0")}`;
-      openBadge.style.display = "none";
-    }
-    tick();
-    countdownTimer = setInterval(tick, 1000);
-  }
-
-  function updateClaimState(hasClaimed=false){
-    const now = Math.floor(Date.now()/1000);
-    const okTime = START_TS ? now >= START_TS : false;
-    const okWallet = !!account;
-    const okFollow = !!followChk.checked;
-    const remainingClaims = maxClaimsBN && claimsCountBN ? maxClaimsBN.sub(claimsCountBN) : ethers.BigNumber.from(0);
-    const enoughStock = contractBalBN && perWalletBN ? contractBalBN.gte(perWalletBN) : false;
-
-    claimBtn.disabled = !(okTime && okWallet && okFollow && enoughStock && remainingClaims.gt(0)) || hasClaimed;
-
-    if (!okTime) setMsg("Chưa tới thời gian claim.", "warn");
-    else if (!okWallet) setMsg("Kết nối ví để claim.", "info");
-    else if (!okFollow) setMsg("Hãy follow @"+X_HANDLE+" và tick xác nhận.", "warn");
-    else if (!enoughStock) setMsg(remainingClaims.lte(0) ? "Hết suất claim." : "Contract thiếu token để claim.", "warn");
-    else setMsg("", "info");
-  }
-
-  async function ensureBSC(){
-    const net = await provider.getNetwork();
-    if (net.chainId !== 56) {
-      try{
-        await window.ethereum.request({method:"wallet_switchEthereumChain",params:[{chainId:"0x38"}]});
-      }catch{
-        await window.ethereum.request({
-          method:"wallet_addEthereumChain",
-          params:[{ chainId:"0x38", chainName:"BNB Smart Chain",
-            nativeCurrency:{name:"BNB",symbol:"BNB",decimals:18},
-            rpcUrls:["https://bsc-dataseed.binance.org/"], blockExplorerUrls:["https://bscscan.com/"] }]}
-        );
-      }
-    }
-  }
-
-  async function connect(){
-    try{
-      if (!window.ethereum) return setMsg("Vui lòng cài MetaMask.", "error");
-      provider = new ethers.providers.Web3Provider(window.ethereum, "any");
-      await provider.send("eth_requestAccounts", []);
-      await ensureBSC();
-      signer  = provider.getSigner();
-      account = await signer.getAddress();
-      accountLbl.textContent = "Ví: "+short(account);
-
-      contract = new ethers.Contract(CONTRACT_ADDR, ABI, provider);
-      await fetchStatics();
-
-      const hasClaimed = await contract.claimed(account);
-      if (hasClaimed) setMsg("Bạn đã claim trước đó.", "warn");
-      updateClaimState(hasClaimed);
-    }catch(e){ setMsg(e?.message || String(e), "error"); }
-  }
-
-  async function doClaim(){
-    try{
-      if (!signer) return setMsg("Hãy kết nối ví trước.", "error");
-      if (!followChk.checked) return setMsg("Hãy follow @"+X_HANDLE+" và tick xác nhận.", "warn");
-      if (Math.floor(Date.now()/1000) < START_TS) return setMsg("Chưa tới thời gian claim.", "warn");
-
-      setMsg("Đang gửi giao dịch...");
-      const tx = await contract.connect(signer).claim();
-      setMsg("Đang chờ xác nhận: "+tx.hash);
-      await tx.wait();
-      setMsg("Claim thành công! Tx: "+tx.hash, "success");
-      claimBtn.disabled = true;
-
-      // refresh ngay & sau đó poll mỗi 15s để thấy số dư giảm dần
-      await fetchStatics();
-    }catch(e){
-      const msg = (e && (e.error?.message || e.data?.message || e.message)) || String(e);
-      setMsg("Claim thất bại: "+msg, "error");
-    }
-  }
-
-  function startPolling(){
-    if (pollTimer) clearInterval(pollTimer);
-    pollTimer = setInterval(async ()=>{
-      try{
-        if (!provider || !contract) return;
-        await fetchStatics();        // cập nhật Đã claim / Số dư contract theo thời gian thực
-      }catch{}
-    }, 15000); // 15s
-  }
-
-  // ===== init =====
-  // 1) KHỞI TẠO READ-ONLY: hiển thị countdown & số liệu NGAY khi mở trang (chưa cần kết nối ví)
-  async function initReadonly(){
-    try{
-      provider = new ethers.providers.JsonRpcProvider("https://bsc-dataseed.binance.org/");
-      contract = new ethers.Contract(CONTRACT_ADDR, ABI, provider);
-      await fetchStatics();
-      startCountdown();
-      startPolling();
-      setMsg("Kết nối ví để claim.", "info");
-    }catch(e){ console.log("readonly init error:", e); }
-  }
-
-  document.addEventListener("DOMContentLoaded", initReadonly);
-  followChk.addEventListener("change", ()=>updateClaimState());
-  connectBtn.addEventListener("click", connect);
-  claimBtn.addEventListener("click", doClaim);
-
-  if (window.ethereum){
-    window.ethereum.on("accountsChanged", ()=>location.reload());
-    window.ethereum.on("chainChanged",  ()=>location.reload());
-  }
-})();
-</script>
-
-</body>
+  <!-- Claim logic: countdown + stats + connect + claim -->
   <script>
-// ===== CUSTOM LIVE CHART + STATS =====
-const ctxLine = document.getElementById('priceLine')?.getContext('2d');
-if (ctxLine) {
-  const priceData = {
-    labels: [],
-    datasets: [{
-      label: 'ATN/USD',
-      data: [],
-      borderColor: 'rgba(34,197,94,1)',
-      borderWidth: 2,
-      backgroundColor: 'rgba(34,197,94,.12)',
-      tension: 0.25,
-      fill: true
-    }]
-  };
+  (function () {
+    const CONTRACT_ADDR = "0xA395c7d4d4A864773D9141E3CDC61599DFea24c0"; // Airdrop contract
+    const X_HANDLE = "Token_ATN";
 
-  const priceChart = new Chart(ctxLine, {
-    type: 'line',
-    data: priceData,
-    options: {
-      plugins: { legend: { display: false } },
-      scales: {
-        x: { ticks: { color: '#cbd5e1' }, grid: { color: 'rgba(148,163,184,.12)' } },
-        y: { ticks: { color: '#cbd5e1' }, grid: { color: 'rgba(148,163,184,.12)' } }
+    const ABI = [
+      {"inputs":[],"name":"owner","outputs":[{"internalType":"address","name":"","type":"address"}],"stateMutability":"view","type":"function"},
+      {"inputs":[],"name":"startTime","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
+      {"inputs":[],"name":"token","outputs":[{"internalType":"address","name":"","type":"address"}],"stateMutability":"view","type":"function"},
+      {"inputs":[],"name":"amountPerWallet","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
+      {"inputs":[],"name":"maxClaims","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
+      {"inputs":[],"name":"claimsCount","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
+      {"inputs":[{"internalType":"address","name":"","type":"address"}],"name":"claimed","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"view","type":"function"},
+      {"inputs":[{"internalType":"address","name":"user","type":"address"}],
+       "name":"info",
+       "outputs":[
+         {"internalType":"uint256","name":"_startTime","type":"uint256"},
+         {"internalType":"uint256","name":"_amountPerWallet","type":"uint256"},
+         {"internalType":"uint256","name":"_maxClaims","type":"uint256"},
+         {"internalType":"uint256","name":"_claimsCount","type":"uint256"},
+         {"internalType":"bool","name":"_claimed","type":"bool"},
+         {"internalType":"uint256","name":"_contractBalance","type":"uint256"}],
+       "stateMutability":"view","type":"function"},
+      {"inputs":[],"name":"claim","outputs":[],"stateMutability":"nonpayable","type":"function"}
+    ];
+    const ERC20_ABI = [
+      {"constant":true,"inputs":[],"name":"decimals","outputs":[{"name":"","type":"uint8"}],"type":"function"},
+      {"constant":true,"inputs":[],"name":"symbol","outputs":[{"name":"","type":"string"}],"type":"function"},
+      {"constant":true,"inputs":[{"name":"account","type":"address"}],"name":"balanceOf","outputs":[{"name":"","type":"uint256"}],"type":"function"}
+    ];
+
+    // DOM
+    const $ = (id)=>document.getElementById(id);
+    const connectBtn=$("connectBtn"), accountLbl=$("accountLabel"),
+          followChk=$("followChk"), followLink=$("followLink"),
+          countdownEl=$("countdown"), openBadge=$("openBadge"),
+          claimBtn=$("claimBtn"), msgBox=$("msg"),
+          tokenSymEl=$("tokenSymbol"), perWalletEl=$("perWallet"),
+          claimedCountEl=$("claimedCount"), maxClaimsEl=$("maxClaims"),
+          contractBalEl=$("contractBal"), remainingEl=$("remaining");
+    followLink.href = `https://x.com/${X_HANDLE}`;
+
+    // State
+    let provider, signer, account, contract, token;
+    let tokenDecimals = 18, tokenSymbol = "ATN";
+    let START_TS = 0, countdownTimer = null, pollTimer = null;
+    let perWalletBN, maxClaimsBN, claimsCountBN, contractBalBN;
+
+    const fmt = (bn,dec=18)=>ethers.utils.formatUnits(bn,dec);
+    const short = (a)=>a?a.slice(0,6)+"…"+a.slice(-4):"";
+    const setMsg=(t,type="info")=>{ msgBox.textContent=t; msgBox.className="msg "+type; };
+
+    async function fetchStatics(){
+      const tokenAddr = await contract.token();
+      token = new ethers.Contract(tokenAddr, ERC20_ABI, provider);
+      try { tokenDecimals = await token.decimals(); } catch {}
+      try { tokenSymbol  = await token.symbol(); tokenSymEl.textContent = tokenSymbol; } catch {}
+
+      [perWalletBN, maxClaimsBN, claimsCountBN] = await Promise.all([
+        contract.amountPerWallet(),
+        contract.maxClaims(),
+        contract.claimsCount(),
+      ]);
+      contractBalBN = await token.balanceOf(CONTRACT_ADDR);
+      START_TS      = (await contract.startTime()).toNumber();
+
+      perWalletEl.textContent    = `${fmt(perWalletBN, tokenDecimals)} ${tokenSymbol}`;
+      maxClaimsEl.textContent    = maxClaimsBN.toString();
+      claimedCountEl.textContent = claimsCountBN.toString();
+      contractBalEl.textContent  = `${fmt(contractBalBN, tokenDecimals)} ${tokenSymbol}`;
+      claimBtn.textContent       = `🎁 Claim ${fmt(perWalletBN, tokenDecimals)} ${tokenSymbol}`;
+
+      const remainingClaims = maxClaimsBN.sub(claimsCountBN).toNumber();
+      remainingEl.textContent = `• Còn lại: ${remainingClaims} suất  • Còn token: ${Number(fmt(contractBalBN, tokenDecimals))} ${tokenSymbol}`;
+
+      updateClaimState();
+    }
+
+    function startCountdown(){
+      if (countdownTimer) clearInterval(countdownTimer);
+      function tick(){
+        if (!START_TS){ countdownEl.textContent="--:--:--:--"; return; }
+        let diff = START_TS - Math.floor(Date.now()/1000);
+        if (diff <= 0){
+          countdownEl.textContent = "00:00:00:00";
+          openBadge.style.display = "inline-block";
+          clearInterval(countdownTimer); countdownTimer=null;
+          updateClaimState();
+          return;
+        }
+        const d=Math.floor(diff/86400); diff%=86400;
+        const h=Math.floor(diff/3600);  diff%=3600;
+        const m=Math.floor(diff/60);    const s=diff%60;
+        countdownEl.textContent =
+          `${String(d).padStart(2,"0")}:${String(h).padStart(2,"0")}:${String(m).padStart(2,"0")}:${String(s).padStart(2,"0")}`;
+        openBadge.style.display = "none";
+      }
+      tick();
+      countdownTimer = setInterval(tick, 1000);
+    }
+
+    function updateClaimState(hasClaimed=false){
+      const now = Math.floor(Date.now()/1000);
+      const okTime = START_TS ? now >= START_TS : false;
+      const okWallet = !!account;
+      const okFollow = !!followChk.checked;
+      const remainingClaims = (maxClaimsBN && claimsCountBN) ? maxClaimsBN.sub(claimsCountBN) : ethers.BigNumber.from(0);
+      const enoughStock = (contractBalBN && perWalletBN) ? contractBalBN.gte(perWalletBN) : false;
+
+      claimBtn.disabled = !(okTime && okWallet && okFollow && enoughStock && remainingClaims.gt(0)) || hasClaimed;
+
+      if (!okTime) setMsg("Chưa tới thời gian claim.", "warn");
+      else if (!okWallet) setMsg("Kết nối ví để claim.", "info");
+      else if (!okFollow) setMsg("Hãy follow @"+X_HANDLE+" và tick xác nhận.", "warn");
+      else if (!enoughStock) setMsg(remainingClaims.lte(0) ? "Hết suất claim." : "Contract thiếu token để claim.", "warn");
+      else setMsg("", "info");
+    }
+
+    async function ensureBSC(){
+      const net = await provider.getNetwork();
+      if (net.chainId !== 56) {
+        try{
+          await window.ethereum.request({method:"wallet_switchEthereumChain",params:[{chainId:"0x38"}]});
+        }catch{
+          await window.ethereum.request({
+            method:"wallet_addEthereumChain",
+            params:[{ chainId:"0x38", chainName:"BNB Smart Chain",
+              nativeCurrency:{name:"BNB",symbol:"BNB",decimals:18},
+              rpcUrls:["https://bsc-dataseed.binance.org/"], blockExplorerUrls:["https://bscscan.com/"] }]}
+          );
+        }
       }
     }
-  });
 
-  const PAIR = "0x6a0ba3d48b25855bad2102796c837d9668ff8c18";
-  const DS_URL = `https://api.dexscreener.com/latest/dex/pairs/bsc/${PAIR}`;
+    async function connect(){
+      try{
+        if (!window.ethereum) return setMsg("Vui lòng cài MetaMask.", "error");
+        provider = new ethers.providers.Web3Provider(window.ethereum, "any");
+        await provider.send("eth_requestAccounts", []);
+        await ensureBSC();
+        signer  = provider.getSigner();
+        account = await signer.getAddress();
+        accountLbl.textContent = "Ví: "+short(account);
 
-  const priceEl = document.getElementById('statPrice');
-  const liqEl   = document.getElementById('statLiq');
-  const fdvEl   = document.getElementById('statFdv');
-  const volEl   = document.getElementById('statVol');
+        contract = new ethers.Contract(CONTRACT_ADDR, ABI, provider);
+        await fetchStatics();
 
-  function fmt(n){
-    if(!n && n !== 0) return "—";
-    const x = Number(n);
-    if (x >= 1e9) return (x/1e9).toFixed(2) + "B";
-    if (x >= 1e6) return (x/1e6).toFixed(2) + "M";
-    if (x >= 1e3) return (x/1e3).toFixed(2) + "K";
-    return x.toFixed(2);
-  }
-
-  async function refreshDex(){
-    try{
-      const r = await fetch(DS_URL, { cache: 'no-store' });
-      const j = await r.json();
-      const p = j?.pairs?.[0];
-      if(!p) return;
-
-      if (priceEl) priceEl.textContent = "$" + Number(p.priceUsd || 0).toFixed(6);
-      if (liqEl)   liqEl.textContent   = "$" + fmt(p.liquidity?.usd);
-      if (fdvEl)   fdvEl.textContent   = "$" + fmt(p.fdv);
-      if (volEl)   volEl.textContent   = "$" + fmt(p.volume?.h24);
-
-      const label = new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
-      priceData.labels.push(label);
-      priceData.datasets[0].data.push(Number(p.priceUsd || 0));
-
-      if(priceData.labels.length > 50){
-        priceData.labels.shift();
-        priceData.datasets[0].data.shift();
-      }
-
-      priceChart.update();
-    }catch(e){
-      console.log("Dex fetch error:", e);
+        const hasClaimed = await contract.claimed(account);
+        if (hasClaimed) setMsg("Bạn đã claim trước đó.", "warn");
+        updateClaimState(hasClaimed);
+      }catch(e){ setMsg(e?.message || String(e), "error"); }
     }
-  }
 
-  refreshDex();
-  setInterval(refreshDex, 20000); // refresh mỗi 20s
-}
-</script>
+    async function doClaim(){
+      try{
+        if (!signer) return setMsg("Hãy kết nối ví trước.", "error");
+        if (!followChk.checked) return setMsg("Hãy follow @"+X_HANDLE+" và tick xác nhận.", "warn");
+        if (Math.floor(Date.now()/1000) < START_TS) return setMsg("Chưa tới thời gian claim.", "warn");
+
+        setMsg("Đang gửi giao dịch...");
+        const tx = await contract.connect(signer).claim();
+        setMsg("Đang chờ xác nhận: "+tx.hash);
+        await tx.wait();
+        setMsg("Claim thành công! Tx: "+tx.hash, "success");
+        claimBtn.disabled = true;
+
+        await fetchStatics(); // refresh after claim
+      }catch(e){
+        const msg = (e && (e.error?.message || e.data?.message || e.message)) || String(e);
+        setMsg("Claim thất bại: "+msg, "error");
+      }
+    }
+
+    function startPolling(){
+      if (pollTimer) clearInterval(pollTimer);
+      pollTimer = setInterval(async ()=>{
+        try{
+          if (!provider || !contract) return;
+          await fetchStatics(); // keep numbers up-to-date (claimed + balance)
+        }catch{}
+      }, 15000);
+    }
+
+    // Read-only init so countdown & stats show before connect
+    async function initReadonly(){
+      try{
+        provider = new ethers.providers.JsonRpcProvider("https://bsc-dataseed.binance.org/");
+        contract = new ethers.Contract(CONTRACT_ADDR, ABI, provider);
+        await fetchStatics();
+        startCountdown();
+        startPolling();
+        setMsg("Kết nối ví để claim.", "info");
+      }catch(e){ console.log("readonly init error:", e); }
+    }
+
+    document.addEventListener("DOMContentLoaded", initReadonly);
+    followChk.addEventListener("change", ()=>updateClaimState());
+    connectBtn.addEventListener("click", connect);
+    claimBtn.addEventListener("click", doClaim);
+
+    if (window.ethereum){
+      window.ethereum.on("accountsChanged", ()=>location.reload());
+      window.ethereum.on("chainChanged",  ()=>location.reload());
+    }
+  })();
+  </script>
+
+  <!-- CUSTOM LIVE CHART + STATS (kept) -->
+  <script>
+  const ctxLine = document.getElementById('priceLine')?.getContext('2d');
+  if (ctxLine) {
+    const priceData = {
+      labels: [],
+      datasets: [{
+        label: 'ATN/USD',
+        data: [],
+        borderColor: 'rgba(34,197,94,1)',
+        borderWidth: 2,
+        backgroundColor: 'rgba(34,197,94,.12)',
+        tension: 0.25,
+        fill: true
+      }]
+    };
+
+    const priceChart = new Chart(ctxLine, {
+      type: 'line',
+      data: priceData,
+      options: {
+        plugins: { legend: { display: false } },
+        scales: {
+          x: { ticks: { color: '#cbd5e1' }, grid: { color: 'rgba(148,163,184,.12)' } },
+          y: { ticks: { color: '#cbd5e1' }, grid: { color: 'rgba(148,163,184,.12)' } }
+        }
+      }
+    });
+
+    const PAIR = "0x6a0ba3d48b25855bad2102796c837d9668ff8c18";
+    const DS_URL = `https://api.dexscreener.com/latest/dex/pairs/bsc/${PAIR}`;
+
+    const priceEl = document.getElementById('statPrice');
+    const liqEl   = document.getElementById('statLiq');
+    const fdvEl   = document.getElementById('statFdv');
+    const volEl   = document.getElementById('statVol');
+
+    function fmt(n){
+      if(!n && n !== 0) return "—";
+      const x = Number(n);
+      if (x >= 1e9) return (x/1e9).toFixed(2) + "B";
+      if (x >= 1e6) return (x/1e6).toFixed(2) + "M";
+      if (x >= 1e3) return (x/1e3).toFixed(2) + "K";
+      return x.toFixed(2);
+    }
+
+    async function refreshDex(){
+      try{
+        const r = await fetch(DS_URL, { cache: 'no-store' });
+        const j = await r.json();
+        const p = j?.pairs?.[0];
+        if(!p) return;
+
+        if (priceEl) priceEl.textContent = "$" + Number(p.priceUsd || 0).toFixed(6);
+        if (liqEl)   liqEl.textContent   = "$" + fmt(p.liquidity?.usd);
+        if (fdvEl)   fdvEl.textContent   = "$" + fmt(p.fdv);
+        if (volEl)   volEl.textContent   = "$" + fmt(p.volume?.h24);
+
+        const label = new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+        priceData.labels.push(label);
+        priceData.datasets[0].data.push(Number(p.priceUsd || 0));
+
+        if(priceData.labels.length > 50){
+          priceData.labels.shift();
+          priceData.datasets[0].data.shift();
+        }
+        priceChart.update();
+      }catch(e){
+        console.log("Dex fetch error:", e);
+      }
+    }
+
+    refreshDex();
+    setInterval(refreshDex, 20000);
+  }
+  </script>
+</body>
 </html>
-
-
-
-
-
-
-
-
-
-
-
-

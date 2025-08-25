@@ -28,11 +28,20 @@ jobs:
         with:
           node-version: "20"
 
+      # ⚙️ Cài CLI với pin version + fallback registry khi 403
       - name: Install CLIs
+        shell: bash
         run: |
+          set -e
           npm config set fund false
           npm config set audit false
-          npm i -g javascript-obfuscator html-minifier-terser
+          npm config set registry https://registry.npmjs.org/
+          # thử cài từ registry chính
+          if ! npm i -g javascript-obfuscator@4.1.1 html-minifier-terser@7.2.0; then
+            echo "Primary registry failed (403?). Switching to mirror…"
+            npm config set registry https://registry.npmmirror.com/
+            npm i -g javascript-obfuscator@4.1.1 html-minifier-terser@7.2.0
+          fi
 
       - name: "Guard: ensure files exist"
         run: |

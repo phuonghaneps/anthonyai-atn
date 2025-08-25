@@ -23,20 +23,21 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Setup Node & CLIs
+      - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version: "20"
 
       - name: Install CLIs (global)
         run: |
+          set -euo pipefail
           npm config set fund false
           npm config set audit false
           npm i -g javascript-obfuscator html-minifier-terser
 
       - name: Guard: ensure files exist
         run: |
-          ls -la
+          set -euo pipefail
           test -f index.html
           test -f chart.js
           test -f claim1.js
@@ -44,7 +45,8 @@ jobs:
 
       - name: Obfuscate JS (no source maps)
         run: |
-          javascript-obfuscator chart.js  \
+          set -euo pipefail
+          javascript-obfuscator chart.js \
             --output chart.obf.js \
             --compact true \
             --self-defending true \
@@ -89,15 +91,16 @@ jobs:
       - name: Build index.min.html + thay link *.obf.js
         shell: bash
         run: |
-          # Lưu bản gốc lần đầu (nếu chưa có)
+          set -euo pipefail
+          # Lưu bản gốc nếu chưa có
           [ -f index.dev.html ] || cp index.html index.dev.html
 
-          # Tạo file tạm đã thay link sang *.obf.js
+          # Tạo file tạm rồi thay link JS sang *.obf.js
           cp index.html index.tmp.html
           sed -E -i \
-            's/src="claim1\.js"/src="claim1.obf.js"/g; \
-             s/src="claim2\.js"/src="claim2.obf.js"/g; \
-             s/src="chart\.js"/src="chart.obf.js"/g' index.tmp.html
+            -e 's/src="claim1\.js"/src="claim1.obf.js"/g' \
+            -e 's/src="claim2\.js"/src="claim2.obf.js"/g' \
+            -e 's/src="chart\.js"/src="chart.obf.js"/g' index.tmp.html
 
           # Minify HTML (không minify inline JS)
           html-minifier-terser \
@@ -107,13 +110,21 @@ jobs:
             --minify-js false \
             -o index.min.html index.tmp.html
 
-          # Dùng bản min làm index.html phát hành
+          # Dùng bản min làm index phát hành
           cp index.min.html index.html
 
       - name: Commit build artifacts
+        env:
+          GH_EMAIL: github-actions[bot]@users.noreply.github.com
+          GH_NAME:  github-actions[bot]
         run: |
-          git config user.name  "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add chart.obf.js claim1.obf.js claim2.obf.js index.min.html index.html index.dev.html
+          set -euo pipefail
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          git config user.email "$GH_EMAIL"
+          git config user.name  "$GH_NAME"
+
+          git add chart.obf.js claim1.obf.js claim2.obf.js index.min.html index.html index.dev.html || true
           git commit -m "build: obfuscate JS + minify index for release" || echo "No changes to commit"
-          git push
+          # Tránh non-fast-forward nếu có commit mới trong lúc chạy
+          git pull --rebase origin ${{ github.ref_name }} || true
+          git push origin HEAD:${{ github.ref_name }}

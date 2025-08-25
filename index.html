@@ -101,6 +101,10 @@
     .brand a:hover{ opacity:.9; }
     .brand img{ height:34px; width:auto; border-radius:9px; box-shadow:var(--shadow); display:block; }
   </style>
+  <style>
+    .btn.twitter{ background:#1da1f2; color:#fff; border:none }
+    #countdown{ font-weight:700; letter-spacing:.5px }
+  </style>
 </head>
     <style>
     /* Chart container */
@@ -217,12 +221,12 @@
 
   <div class="card card-pad" id="airdrop">
     <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-bottom:10px">
-      <button id="connectBtn" class="btn">🔌 Kết nối ví (BSC)</button>
+      <button id="connectBtn" class="btn primary">🔌 Kết nối ví (BSC)</button>
       <span id="accountLabel" style="opacity:.8"></span>
     </div>
 
     <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-bottom:10px">
-      <a id="followLink" class="btn" target="_blank" rel="noopener" href="https://x.com/Token_ATN">🔔 Follow @Token_ATN</a>
+      <a id="followLink" class="btn twitter" target="_blank" rel="noopener" href="https://x.com/Token_ATN">🔔 Follow @Token_ATN</a>
       <label><input type="checkbox" id="followChk"> Tôi đã follow @Token_ATN</label>
     </div>
 
@@ -688,6 +692,7 @@ if (ctxLine) {
 }
 </script>
 </html>
+
 
 
 

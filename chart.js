@@ -92,6 +92,11 @@
       var ctxLine = canvas ? canvas.getContext("2d") : null;
       if (!ctxLine) return;
 
+      // ✅ KHÓA kích thước để ngăn "bung vô hạn"
+      canvas.style.width  = "100%";
+      canvas.style.height = "320px";  // chỉnh độ cao bạn muốn
+      canvas.height       = 320;      // set height thật của canvas
+
       var priceData = {
         labels: [],
         datasets: [{
@@ -112,7 +117,8 @@
         options: {
           animation: false,
           responsive: true,
-          maintainAspectRatio: false,
+          maintainAspectRatio: false, // ok vì đã khóa height
+          resizeDelay: 200,            // ✅ chống vòng lặp resize
           plugins: { legend: { display: false } },
           scales: {
             x: { ticks: { color: "#cbd5e1" }, grid: { color: "rgba(148,163,184,.12)" } },
@@ -197,7 +203,7 @@
             priceData.labels.push(label);
             priceData.datasets[0].data.push(y);
 
-            var MAX_POINTS = 180; // ~15 phút nếu 5s/lần (5s * 180 = 900s)
+            var MAX_POINTS = 180; // ~15 phút nếu 5s/lần
             if (priceData.labels.length > MAX_POINTS) {
               priceData.labels.shift();
               priceData.datasets[0].data.shift();

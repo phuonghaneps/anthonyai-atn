@@ -1,18 +1,21 @@
-// chart.js — finalized ES2019-safe (no optional chaining), ready for obfuscation
-(() => {
+// chart.js — ES5-safe for strict obfuscators (no arrow, no const/let, no ?.)
+(function () {
   /* =================== Helpers =================== */
-  const onReady = (fn) =>
-    (document.readyState === "loading")
-      ? document.addEventListener("DOMContentLoaded", fn, { once: true })
-      : fn();
+  function onReady(fn) {
+    if (document.readyState === "loading") {
+      document.addEventListener("DOMContentLoaded", fn, { once: true });
+    } else {
+      fn();
+    }
+  }
 
-  const whenChartReady = (fn) => {
-    if (window.Chart) return fn();
-    const t = setInterval(() => {
+  function whenChartReady(fn) {
+    if (window.Chart) { fn(); return; }
+    var t = setInterval(function () {
       if (window.Chart) { clearInterval(t); fn(); }
     }, 50);
-    setTimeout(() => clearInterval(t), 5000); // tối đa 5s
-  };
+    setTimeout(function(){ clearInterval(t); }, 5000); // tối đa 5s
+  }
 
   /* =================== Year / Copy / Watch =================== */
   onReady(function () {
@@ -48,7 +51,8 @@
   });
 
   /* =================== Charts =================== */
-  onReady(() => whenChartReady(() => {
+  onReady(function () { whenChartReady(function () {
+
     // ----- Donut: Tokenomics -----
     (function initDonut(){
       var ctx = document.getElementById("pie");
@@ -146,8 +150,8 @@
       function firstPair(obj) {
         if (!obj || !obj.pairs || !obj.pairs.length) return null;
         for (var i = 0; i < obj.pairs.length; i++) {
-          var p = obj.pairs[i];
-          if (p && p.priceUsd) return p;
+          var pp = obj.pairs[i];
+          if (pp && pp.priceUsd) return pp;
         }
         return null;
       }
@@ -165,7 +169,7 @@
               if (!r.ok) { next(); return; }
               r.json().then(function (j) {
                 var p = firstPair(j);
-                if (p) resolve(p); else next();
+                if (p) { resolve(p); } else { next(); }
               }).catch(function(){ next(); });
             }).catch(function(){ next(); });
           }
@@ -193,7 +197,7 @@
             priceData.labels.push(label);
             priceData.datasets[0].data.push(y);
 
-            var MAX_POINTS = 180; // ~15 phút nếu 5s/lần
+            var MAX_POINTS = 180; // ~15 phút nếu 5s/lần (5s * 180 = 900s)
             if (priceData.labels.length > MAX_POINTS) {
               priceData.labels.shift();
               priceData.datasets[0].data.shift();
@@ -216,6 +220,7 @@
       start();
       document.addEventListener("visibilitychange", function(){ document.hidden ? stop() : start(); });
       window.addEventListener("pagehide", stop);
-    })(); // ← đóng IIFE initLiveChart
-  }));    // ← đóng: onReady(() => whenChartReady(() => { ... }))
-})();     // ← đóng IIFE ngoài cùng
+    })(); // end initLiveChart
+
+  }); });  // end whenChartReady & onReady
+})();       // end IIFE

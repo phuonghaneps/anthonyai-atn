@@ -293,6 +293,7 @@
         <div class="row">
           <span class="chip"><strong>Countdown:</strong> <span id="countdown" style="margin-left:6px">--:--:--:--</span></span>
           <span id="openBadge" class="chip" style="display:none">CLAIM OPEN</span>
+          <span class="chip">Opens (VN): <span id="openAtVN">—</span></span>
         </div>
 
         <!-- stats -->
@@ -499,7 +500,7 @@
 (() => {
 /*** ====== YOUR CONFIG ====== ***/
 const X_HANDLE     = "Token_ATN";
-const AIRDROP_ADDR = "0xA395c7d4d4A864773D9141E3CDC61599DFea24c0"; // your current airdrop contract
+const AIRDROP_ADDR = "0xA395c7d4d4A864773D9141E3CDC61599DFea24c0";
 const AIRDROP_ABI  = [
   {"inputs":[{"internalType":"address","name":"tokenAddress","type":"address"},{"internalType":"uint256","name":"_startTime","type":"uint256"},{"internalType":"uint256","name":"_amountPerWallet","type":"uint256"},{"internalType":"uint256","name":"_maxClaims","type":"uint256"}],"stateMutability":"nonpayable","type":"constructor"},
   {"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"account","type":"address"},{"indexed":false,"internalType":"uint256","name":"amount","type":"uint256"},{"indexed":true,"internalType":"uint256","name":"claimNo","type":"uint256"}],"name":"Claimed","type":"event"},
@@ -526,6 +527,7 @@ const AIRDROP_ABI  = [
   {"inputs":[{"internalType":"address","name":"to","type":"address"},{"internalType":"uint256","name":"amount","type":"uint256"}],"name":"withdrawLeftover","outputs":[],"stateMutability":"nonpayable","type":"function"}
 ];
 
+/*** ====== RPCs ====== ***/
 const RPCS = [
   "https://bsc-dataseed.binance.org/",
   "https://bsc-dataseed1.defibit.io/",
@@ -550,6 +552,20 @@ function setMsg(t, kind="info"){
 let provider, signer, airdrop, account=null, pollTimer=null, countdownTimer=null;
 let START_TS=0, PER_WALLET="0", MAX=0, COUNT=0, CLAIMED=false, BALANCE="0";
 
+/* NEW: on-chain time sync to make countdown 100% true */
+let CHAIN_NOW=0, SYNCED_AT_MS=0, chainSyncTimer=null;
+async function syncChainTime(){
+  const b = await provider.getBlock('latest');
+  CHAIN_NOW = Number(b.timestamp);
+  SYNCED_AT_MS = Date.now();
+}
+function nowSec(){
+  // if already synced to chain time, advance from that snapshot; otherwise fall back to local clock
+  return CHAIN_NOW
+    ? Math.floor(CHAIN_NOW + (Date.now() - SYNCED_AT_MS)/1000)
+    : Math.floor(Date.now()/1000);
+}
+
 /*** ====== RENDER STATS ====== ***/
 function renderStats(){
   $("tokenSymbol") && ($("tokenSymbol").textContent = "ATN");
@@ -559,18 +575,27 @@ function renderStats(){
   $("contractBal") && ($("contractBal").textContent = `${fmt(BALANCE)} ATN`);
   $("remaining")   && ($("remaining").textContent   = `Remaining: ${Math.max(Number(MAX)-Number(COUNT),0)} slots`);
 
-  /* NEW: progress bar + label */
+  /* progress bar + label (giữ như lần trước) */
   const pb = $("claimProgress"), lbl = $("claimProgressLabel");
   if (pb && MAX > 0) {
     const pct = Math.min(100, Math.round((COUNT / MAX) * 100));
     pb.style.setProperty("--pct", pct + "%");
     lbl && (lbl.textContent = `${COUNT}/${MAX} claimed (${pct}%)`);
   }
+
+  /* NEW: show opening time in Vietnam (GMT+7) if phần tử tồn tại */
+  const openVN = $("openAtVN");
+  if (openVN && START_TS > 0){
+    openVN.textContent = new Date(START_TS*1000).toLocaleString(
+      "vi-VN",
+      { timeZone:"Asia/Ho_Chi_Minh", hour12:false, year:"numeric", month:"2-digit", day:"2-digit", hour:"2-digit", minute:"2-digit", second:"2-digit" }
+    ) + " GMT+7";
+  }
 }
 
 /*** ====== ENABLE/DISABLE CLAIM + MESSAGES ====== ***/
 function updateClaimButton(){
-  const nowOK = (START_TS>0) && (Math.floor(Date.now()/1000) >= START_TS);
+  const nowOK = (START_TS>0) && (nowSec() >= START_TS);
   const hasWallet = !!account;
   const hasFollow = $("followChk")?.checked ?? false;
   const left = MAX - COUNT;
@@ -586,19 +611,19 @@ function updateClaimButton(){
   else setMsg("");
 }
 
-/*** ====== COUNTDOWN ====== ***/
+/*** ====== COUNTDOWN (uses on-chain time) ====== ***/
 function startCountdown(){
   if (countdownTimer) clearInterval(countdownTimer);
   const el=$("countdown"), badge=$("openBadge");
   function tick(){
-    if (!START_TS){ el.textContent="--:--:--:--"; badge.style.display="none"; return; }
-    let diff = START_TS - Math.floor(Date.now()/1000);
-    if (diff <= 0){ el.textContent = "00:00:00:00"; badge.style.display="inline-block"; updateClaimButton(); return; }
+    if (!START_TS){ el.textContent="--:--:--:--"; if(badge) badge.style.display="none"; return; }
+    let diff = START_TS - nowSec();
+    if (diff <= 0){ el.textContent = "00:00:00:00"; if(badge) badge.style.display="inline-block"; updateClaimButton(); return; }
     const d=Math.floor(diff/86400); diff%=86400;
     const h=Math.floor(diff/3600);  diff%=3600;
     const m=Math.floor(diff/60);    const s=diff%60;
     el.textContent = `${String(d).padStart(2,"0")}:${String(h).padStart(2,"0")}:${String(m).padStart(2,"0")}:${String(s).padStart(2,"0")}`;
-    badge.style.display="none";
+    if(badge) badge.style.display="none";
   }
   tick();
   countdownTimer = setInterval(tick,1000);
@@ -647,7 +672,14 @@ async function connect(){
     account  = await signer.getAddress();
     $("accountLabel").textContent = "Wallet: " + short(account);
     airdrop  = new ethers.Contract(AIRDROP_ADDR, AIRDROP_ABI, provider);
+
+    // NEW: sync chain time ngay sau khi có provider/signer
+    await syncChainTime();
+    if (chainSyncTimer) clearInterval(chainSyncTimer);
+    chainSyncTimer = setInterval(syncChainTime, 30000);
+
     await fetchInfo();
+    startCountdown();
     updateClaimButton();
   }catch(e){ setMsg(e?.message || String(e), "error"); }
 }
@@ -657,13 +689,13 @@ async function doClaim(){
   try{
     if(!signer){ setMsg("Please connect your wallet first.", "error"); return; }
     if(!$("followChk").checked){ setMsg(`Please follow @${X_HANDLE} and tick the checkbox.`, "warn"); return; }
-    if(Math.floor(Date.now()/1000) < START_TS){ setMsg("Claiming has not started yet.", "warn"); return; }
+    if(nowSec() < START_TS){ setMsg("Claiming has not started yet.", "warn"); return; }
     setMsg("Submitting transaction...");
     const tx = await airdrop.connect(signer).claim();
     setMsg("Waiting for confirmation: " + tx.hash);
     await tx.wait();
     setMsg("Claim successful!", "success");
-    await fetchInfo(); // refresh stats (claimed count / contract balance)
+    await fetchInfo(); // refresh stats
   }catch(e){
     setMsg((e && (e.error?.message || e.data?.message || e.message)) || "Claim failed", "error");
   }
@@ -677,6 +709,12 @@ async function initReadonly(){
       provider = new ethers.providers.JsonRpcProvider(url);
       await provider.getBlockNumber(); // ping
       airdrop  = new ethers.Contract(AIRDROP_ADDR, AIRDROP_ABI, provider);
+
+      // NEW: sync chain time khi chỉ-đọc
+      await syncChainTime();
+      if (chainSyncTimer) clearInterval(chainSyncTimer);
+      chainSyncTimer = setInterval(syncChainTime, 30000);
+
       await fetchInfo();
       startCountdown();
       startPolling();
@@ -707,8 +745,7 @@ if (window.ethereum){
   window.ethereum.on("chainChanged",  ()=>location.reload());
 }
 })();
-  </script>
-
+</script>
   <!-- CUSTOM LIVE CHART + STATS (kept) -->
   <script>
   const ctxLine = document.getElementById('priceLine')?.getContext('2d');
@@ -787,3 +824,4 @@ if (window.ethereum){
   </script>
 </body>
 </html>
+

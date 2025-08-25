@@ -326,11 +326,25 @@
         </div>
 
         <!-- countdown -->
-        <div class="row">
-          <span class="chip"><strong>Countdown:</strong> <span id="countdown" style="margin-left:6px">--:--:--:--</span></span>
-          <span id="openBadge" class="chip" style="display:none">CLAIM OPEN</span>
-          <span class="chip">Opens (VN): <span id="openAtVN">—</span></span>
-        </div>
+        <!-- countdown -->
+<div class="row">
+  <div class="countdown">
+    <span class="cd-label">Countdown:</span>
+    <div class="cd-grid">
+      <div class="cd-seg"><div id="cd-days">00</div><small>Days</small></div>
+      <span class="cd-sep">:</span>
+      <div class="cd-seg"><div id="cd-hours">00</div><small>Hours</small></div>
+      <span class="cd-sep">:</span>
+      <div class="cd-seg"><div id="cd-mins">00</div><small>Minutes</small></div>
+      <span class="cd-sep">:</span>
+      <div class="cd-seg"><div id="cd-secs">00</div><small>Seconds</small></div>
+    </div>
+  </div>
+
+  <span id="openBadge" class="chip" style="display:none">CLAIM OPEN</span>
+  <span class="chip">Opens (VN): <span id="openAtVN">—</span></span>
+</div>
+
 
         <!-- stats -->
         <div class="stats-grid">
@@ -887,5 +901,6 @@ if (window.ethereum){
   </script>
 </body>
 </html>
+
 
 

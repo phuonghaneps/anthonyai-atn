@@ -93,8 +93,10 @@
       if (!ctxLine) return;
 
       // ✅ KHÓA kích thước để ngăn "bung vô hạn"
+      var w = (canvas.parentNode && canvas.parentNode.clientWidth) ? canvas.parentNode.clientWidth : 900;
       canvas.style.width  = "100%";
       canvas.style.height = "320px";  // chỉnh độ cao bạn muốn
+      canvas.width        = w;   
       canvas.height       = 320;      // set height thật của canvas
 
       var priceData = {
@@ -116,9 +118,7 @@
         data: priceData,
         options: {
           animation: false,
-          responsive: true,
-          maintainAspectRatio: false, // ok vì đã khóa height
-          resizeDelay: 200,            // ✅ chống vòng lặp resize
+          responsive: false,
           plugins: { legend: { display: false } },
           scales: {
             x: { ticks: { color: "#cbd5e1" }, grid: { color: "rgba(148,163,184,.12)" } },

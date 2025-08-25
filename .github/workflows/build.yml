@@ -9,7 +9,7 @@ on:
       - "claim1.js"
       - "claim2.js"
       - ".github/workflows/build.yml"
-  workflow_dispatch: {}
+  workflow_dispatch:
 
 permissions:
   contents: write
@@ -28,16 +28,15 @@ jobs:
         with:
           node-version: "20"
 
-      - name: Install CLIs (global)
+      - name: Install CLIs
         run: |
-          set -euo pipefail
           npm config set fund false
           npm config set audit false
           npm i -g javascript-obfuscator html-minifier-terser
 
       - name: Guard: ensure files exist
         run: |
-          set -euo pipefail
+          ls -la
           test -f index.html
           test -f chart.js
           test -f claim1.js
@@ -45,86 +44,24 @@ jobs:
 
       - name: Obfuscate JS (no source maps)
         run: |
-          set -euo pipefail
-          javascript-obfuscator chart.js \
-            --output chart.obf.js \
-            --compact true \
-            --self-defending true \
-            --control-flow-flattening true \
-            --control-flow-flattening-threshold 0.9 \
-            --dead-code-injection true \
-            --dead-code-injection-threshold 0.2 \
-            --string-array true \
-            --string-array-encoding base64 \
-            --string-array-threshold 0.9 \
-            --unicode-escape-sequence true \
-            --source-map false
-
-          javascript-obfuscator claim1.js \
-            --output claim1.obf.js \
-            --compact true \
-            --self-defending true \
-            --control-flow-flattening true \
-            --control-flow-flattening-threshold 0.9 \
-            --dead-code-injection true \
-            --dead-code-injection-threshold 0.2 \
-            --string-array true \
-            --string-array-encoding base64 \
-            --string-array-threshold 0.9 \
-            --unicode-escape-sequence true \
-            --source-map false
-
-          javascript-obfuscator claim2.js \
-            --output claim2.obf.js \
-            --compact true \
-            --self-defending true \
-            --control-flow-flattening true \
-            --control-flow-flattening-threshold 0.9 \
-            --dead-code-injection true \
-            --dead-code-injection-threshold 0.2 \
-            --string-array true \
-            --string-array-encoding base64 \
-            --string-array-threshold 0.9 \
-            --unicode-escape-sequence true \
-            --source-map false
+          javascript-obfuscator chart.js  --output chart.obf.js  --compact true --self-defending true --control-flow-flattening true --control-flow-flattening-threshold 0.9 --dead-code-injection true --dead-code-injection-threshold 0.2 --string-array true --string-array-encoding base64 --string-array-threshold 0.9 --unicode-escape-sequence true --source-map false
+          javascript-obfuscator claim1.js --output claim1.obf.js --compact true --self-defending true --control-flow-flattening true --control-flow-flattening-threshold 0.9 --dead-code-injection true --dead-code-injection-threshold 0.2 --string-array true --string-array-encoding base64 --string-array-threshold 0.9 --unicode-escape-sequence true --source-map false
+          javascript-obfuscator claim2.js --output claim2.obf.js --compact true --self-defending true --control-flow-flattening true --control-flow-flattening-threshold 0.9 --dead-code-injection true --dead-code-injection-threshold 0.2 --string-array true --string-array-encoding base64 --string-array-threshold 0.9 --unicode-escape-sequence true --source-map false
 
       - name: Build index.min.html + thay link *.obf.js
         shell: bash
         run: |
-          set -euo pipefail
-          # Lưu bản gốc nếu chưa có
           [ -f index.dev.html ] || cp index.html index.dev.html
-
-          # Tạo file tạm rồi thay link JS sang *.obf.js
           cp index.html index.tmp.html
-          sed -E -i \
-            -e 's/src="claim1\.js"/src="claim1.obf.js"/g' \
-            -e 's/src="claim2\.js"/src="claim2.obf.js"/g' \
-            -e 's/src="chart\.js"/src="chart.obf.js"/g' index.tmp.html
-
-          # Minify HTML (không minify inline JS)
-          html-minifier-terser \
-            --collapse-whitespace \
-            --remove-comments \
-            --minify-css true \
-            --minify-js false \
-            -o index.min.html index.tmp.html
-
-          # Dùng bản min làm index phát hành
+          sed -E -i 's/src="claim1\.js"/src="claim1.obf.js"/g; s/src="claim2\.js"/src="claim2.obf.js"/g; s/src="chart\.js"/src="chart.obf.js"/g' index.tmp.html
+          html-minifier-terser --collapse-whitespace --remove-comments --minify-css true --minify-js false -o index.min.html index.tmp.html
           cp index.min.html index.html
 
       - name: Commit build artifacts
-        env:
-          GH_EMAIL: github-actions[bot]@users.noreply.github.com
-          GH_NAME:  github-actions[bot]
         run: |
-          set -euo pipefail
+          git config --global user.name  "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
           git config --global --add safe.directory "$GITHUB_WORKSPACE"
-          git config user.email "$GH_EMAIL"
-          git config user.name  "$GH_NAME"
-
-          git add chart.obf.js claim1.obf.js claim2.obf.js index.min.html index.html index.dev.html || true
+          git add chart.obf.js claim1.obf.js claim2.obf.js index.min.html index.html index.dev.html
           git commit -m "build: obfuscate JS + minify index for release" || echo "No changes to commit"
-          # Tránh non-fast-forward nếu có commit mới trong lúc chạy
-          git pull --rebase origin ${{ github.ref_name }} || true
-          git push origin HEAD:${{ github.ref_name }}
+          git push

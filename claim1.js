@@ -1,3 +1,4 @@
+// claim1.js
 (() => {
 /*** CONFIG (Airdrop #2) ***/
 const X_HANDLE     = "Token_ATN";
@@ -83,24 +84,7 @@ function renderStats(){
   }
 }
 
-/*** enable/disable ***/
-function updateClaimButton(){
-  const nowOK=(START_TS>0)&&(nowSec()>=START_TS);
-  const hasWallet=!!account;
-  const hasFollow=$("followChk")?.checked ?? false;
-  const left=MAX-COUNT;
-  const enough=ethers.BigNumber.from(BALANCE).gte(ethers.BigNumber.from(PER_WALLET));
-  const enable=nowOK&&hasWallet&&hasFollow&&left>0&&enough&&!CLAIMED;
-  $("claimBtn").disabled=!enable;
-
-  if (!nowOK) setMsg("Claiming has not started yet.", "warn");
-  else if (!hasWallet) setMsg("Connect your wallet to claim.", "info");
-  else if (!hasFollow) setMsg(`Please follow @${X_HANDLE} and tick the checkbox.`, "warn");
-  else if (!enough) setMsg(left<=0 ? "All claim slots have been used." : "The contract has insufficient tokens for claiming.", "warn");
-  else setMsg("");
-}
-
-/*** countdown ***/
+/*** enable/disable + ẩn/hiện nút ***/
 function updateClaimButton(){
   const btn = $("claimBtn");
   if (!btn) return;
@@ -112,9 +96,7 @@ function updateClaimButton(){
   const enough   = ethers.BigNumber.from(BALANCE).gte(ethers.BigNumber.from(PER_WALLET));
   const canClaim = nowOK && hasWallet && hasFollow && left > 0 && enough && !CLAIMED;
 
-  // Ẩn khi CHƯA tới giờ; Hiện khi đã tới giờ
   btn.style.display = nowOK ? "inline-flex" : "none";
-  // Khi đã tới giờ, vẫn có thể disabled nếu thiếu điều kiện
   btn.disabled = !canClaim;
 
   if (!nowOK) setMsg("Claiming has not started yet.", "warn");
@@ -124,14 +106,13 @@ function updateClaimButton(){
   else setMsg("");
 }
 
-// 2) Đếm ngược + ẩn chip “Opens (VN)” khi mở
+/*** countdown (ẩn chip “Opens (VN)” khi mở) ***/
 function startCountdown(){
   if (countdownTimer) clearInterval(countdownTimer);
   const dEl=$("cd-days"), hEl=$("cd-hours"), mEl=$("cd-mins"), sEl=$("cd-secs");
   const badge=$("openBadge");
   const opensChip = $("openAtVN")?.closest(".chip");
-
-  function setAll(a,b,c,d){ if(dEl)dEl.textContent=a; if(hEl)hEl.textContent=b; if(mEl)mEl.textContent=c; if(sEl)sEl.textContent=d; }
+  const setAll=(a,b,c,d)=>{ if(dEl)dEl.textContent=a; if(hEl)hEl.textContent=b; if(mEl)mEl.textContent=c; if(sEl)sEl.textContent=d; };
 
   function tick(){
     if(!START_TS){ setAll("--","--","--","--"); if(badge) badge.style.display="none"; return; }
@@ -140,7 +121,7 @@ function startCountdown(){
     if (diff <= 0){
       setAll("00","00","00","00");
       if (badge)     badge.style.display = "inline-block";
-      if (opensChip) opensChip.style.display = "none";  // ẩn “Opens (VN)”
+      if (opensChip) opensChip.style.display = "none";
       updateClaimButton();
       return;
     }
@@ -149,11 +130,10 @@ function startCountdown(){
     const mins=Math.floor(diff/60);    const secs=diff%60;
     setAll(String(days).padStart(2,"0"),String(hrs).padStart(2,"0"),String(mins).padStart(2,"0"),String(secs).padStart(2,"0"));
     if (badge)     badge.style.display = "none";
-    if (opensChip) opensChip.style.display = "";        // hiện lại khi chưa mở
+    if (opensChip) opensChip.style.display = "";
   }
   tick(); countdownTimer = setInterval(tick, 1000);
 }
-
 
 /*** read info ***/
 async function fetchInfo(){

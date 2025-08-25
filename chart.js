@@ -86,98 +86,121 @@
     })();
 
     // ----- Line: Live price + stats (Dexscreener) -----
-    (function initLiveChart(){
-      const ctxLine = document.getElementById("priceLine")?.getContext("2d");
-      if (!ctxLine) return;
+(function initLiveChart(){
+  const ctxLine = document.getElementById("priceLine")?.getContext("2d");
+  if (!ctxLine) return;
 
-      const priceData = {
-        labels: [],
-        datasets: [{
-          label: "ATN/USD",
-          data: [],
-          borderColor: "rgba(34,197,94,1)",
-          borderWidth: 2,
-          backgroundColor: "rgba(34,197,94,.12)",
-          tension: 0.25,
-          fill: true
-        }]
-      };
+  const priceData = {
+    labels: [],
+    datasets: [{
+      label: "ATN/USD",
+      data: [],
+      borderColor: "rgba(34,197,94,1)",
+      borderWidth: 2,
+      backgroundColor: "rgba(34,197,94,.12)",
+      tension: 0.25,
+      fill: true,
+      pointRadius: 0
+    }]
+  };
 
-      const priceChart = new Chart(ctxLine, {
-        type: "line",
-        data: priceData,
-        options: {
-          plugins: { legend: { display: false } },
-          scales: {
-            x: { ticks: { color: "#cbd5e1" }, grid: { color: "rgba(148,163,184,.12)" } },
-            y: { ticks: { color: "#cbd5e1" }, grid: { color: "rgba(148,163,184,.12)" } }
-          }
-        }
-      });
-
-      const PAIR   = "0x6a0ba3d48b25855bad2102796c837d9668ff8c18";
-      const DS_URL = `https://api.dexscreener.com/latest/dex/pairs/bsc/${PAIR}`;
-
-      const priceEl = document.getElementById("statPrice");
-      const liqEl   = document.getElementById("statLiq");
-      const fdvEl   = document.getElementById("statFdv");
-      const volEl   = document.getElementById("statVol");
-
-      const fmt = (n) => {
-        if (!n && n !== 0) return "—";
-        const x = Number(n);
-        if (x >= 1e9) return (x/1e9).toFixed(2) + "B";
-        if (x >= 1e6) return (x/1e6).toFixed(2) + "M";
-        if (x >= 1e3) return (x/1e3).toFixed(2) + "K";
-        return x.toFixed(2);
-      };
-
-      let timer = null;
-      let abortCtrl = null;
-
-      async function refreshDex(){
-        // tránh request chồng nhau
-        if (abortCtrl) abortCtrl.abort();
-        abortCtrl = new AbortController();
-
-        try {
-          const r = await fetch(DS_URL, { cache: "no-store", signal: abortCtrl.signal });
-          const j = await r.json();
-          const p = j?.pairs?.[0];
-          if (!p) return;
-
-          priceEl && (priceEl.textContent = "$" + Number(p.priceUsd || 0).toFixed(6));
-          liqEl   && (liqEl.textContent   = "$" + fmt(p.liquidity?.usd));
-          fdvEl   && (fdvEl.textContent   = "$" + fmt(p.fdv));
-          volEl   && (volEl.textContent   = "$" + fmt(p.volume?.h24));
-
-          const label = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
-          priceData.labels.push(label);
-          priceData.datasets[0].data.push(Number(p.priceUsd || 0));
-
-          if (priceData.labels.length > 50) {
-            priceData.labels.shift();
-            priceData.datasets[0].data.shift();
-          }
-          priceChart.update();
-        } catch (e) {
-          if (e?.name !== "AbortError") console.log("Dex fetch error:", e);
-        }
+  const priceChart = new Chart(ctxLine, {
+    type: "line",
+    data: priceData,
+    options: {
+      animation: false,
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { ticks: { color: "#cbd5e1" }, grid: { color: "rgba(148,163,184,.12)" } },
+        y: { ticks: { color: "#cbd5e1" }, grid: { color: "rgba(148,163,184,.12)" } }
       }
+    }
+  });
 
-      const start = () => {
-        if (timer) return;
-        refreshDex();
-        timer = setInterval(refreshDex, 20000);
-      };
-      const stop = () => {
-        if (timer) { clearInterval(timer); timer = null; }
-        if (abortCtrl) abortCtrl.abort();
-      };
+  const TOKEN = "0xb5C84953983931dd2C10C9b04a4379eE52697193";
+  const PAIR  = "0x6a0ba3d48b25855bad2102796c837d9668ff8c18";
 
-      start();
-      document.addEventListener("visibilitychange", () => document.hidden ? stop() : start());
-      window.addEventListener("pagehide", stop);
-    })();
-  }));
+  const endpoints = [
+    `https://api.dexscreener.com/latest/dex/pairs/bsc/${PAIR}`,
+    `https://api.dexscreener.com/latest/dex/tokens/${TOKEN}`
+  ];
+
+  const priceEl = document.getElementById("statPrice");
+  const liqEl   = document.getElementById("statLiq");
+  const fdvEl   = document.getElementById("statFdv");
+  const volEl   = document.getElementById("statVol");
+
+  const fmtCompact = (n) => {
+    if (n == null) return "—";
+    const x = Number(n);
+    if (!isFinite(x)) return "—";
+    if (x >= 1e9) return (x/1e9).toFixed(2) + "B";
+    if (x >= 1e6) return (x/1e6).toFixed(2) + "M";
+    if (x >= 1e3) return (x/1e3).toFixed(2) + "K";
+    return x.toFixed(2);
+  };
+
+  let timer = null;
+  let abortCtrl = null;
+
+  async function fetchFirstOk(urls) {
+    for (const url of urls) {
+      try {
+        const r = await fetch(url, { cache: "no-store", signal: abortCtrl?.signal });
+        if (!r.ok) continue;
+        const j = await r.json();
+        const p = j?.pairs?.find(Boolean);
+        if (p && p.priceUsd) return p;
+      } catch (e) {
+        if (e?.name !== "AbortError") console.debug("[Dex] fail:", e.message || e);
+      }
+    }
+    return null;
+  }
+
+  async function refreshDex(){
+    // tránh request chồng nhau
+    if (abortCtrl) abortCtrl.abort();
+    abortCtrl = new AbortController();
+
+    const p = await fetchFirstOk(endpoints);
+    if (!p) return; // không có dữ liệu → bỏ qua lần này
+
+    // Cập nhật 4 chỉ số
+    priceEl && (priceEl.textContent = "$" + Number(p.priceUsd).toFixed(6));
+    liqEl   && (liqEl.textContent   = "$" + fmtCompact(p.liquidity?.usd));
+    fdvEl   && (fdvEl.textContent   = "$" + fmtCompact(p.fdv));
+    volEl   && (volEl.textContent   = "$" + fmtCompact(p.volume?.h24));
+
+    // Cập nhật chart
+    const y = Number(p.priceUsd);
+    if (isFinite(y) && y > 0) {
+      const label = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+      priceData.labels.push(label);
+      priceData.datasets[0].data.push(y);
+
+      const MAX_POINTS = 180; // ~15 phút nếu 5s/lần
+      if (priceData.labels.length > MAX_POINTS) {
+        priceData.labels.shift();
+        priceData.datasets[0].data.shift();
+      }
+      priceChart.update("none");
+    }
+  }
+
+  const start = () => {
+    if (timer) return;
+    refreshDex();
+    timer = setInterval(refreshDex, 5000); // 5s/lần
+  };
+  const stop = () => {
+    if (timer) { clearInterval(timer); timer = null; }
+    if (abortCtrl) abortCtrl.abort();
+  };
+
+  start();
+  document.addEventListener("visibilitychange", () => document.hidden ? stop() : start());
+  window.addEventListener("pagehide", stop);
 })();

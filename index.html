@@ -895,36 +895,9 @@ if (window.ethereum){
     setInterval(refreshDex, 20000);
   }
   </script>
-<script>
-// Force-enable Claim button for DEMO only (no on-chain tx)
-(function () {
-  const btn = document.getElementById("claimBtn");
-  const msg = document.getElementById("msg");
-  if (!btn) return;
-
-  // Tự tick "đã follow" cho tiện test
-  const chk = document.getElementById("followChk");
-  if (chk) chk.checked = true;
-
-  // Liên tục ép bật nút vì script gốc sẽ tắt lại
-  const enabler = setInterval(() => { btn.disabled = false; }, 400);
-
-  btn.addEventListener("click", (e) => {
-    e.preventDefault();
-    clearInterval(enabler); // sau khi click thì thôi ép nữa
-    if (msg) {
-      msg.textContent = "✅ Claim test thành công (demo, chưa gửi tx).";
-      msg.style.color = "#22c55e";
-    } else {
-      alert("Claim test thành công (demo).");
-    }
-  });
-})();
-</script>
-
-
 </body>
 </html>
+
 
 
 

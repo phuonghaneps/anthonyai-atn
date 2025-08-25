@@ -895,8 +895,32 @@ if (window.ethereum){
     setInterval(refreshDex, 20000);
   }
   </script>
+  <script>
+// === TEST CLAIM DEMO ===
+// Dùng để kiểm tra UI nút Claim có chạy hay không, không gọi contract thật.
+document.addEventListener("DOMContentLoaded", () => {
+  const btn = document.getElementById("claimBtn");
+  const msg = document.getElementById("msg");
+  if (btn) {
+    btn.addEventListener("click", (e) => {
+      e.preventDefault();
+      // Hiển thị kết quả giả lập
+      if (msg) {
+        msg.textContent = "✅ Claim test thành công (demo, chưa gửi tx).";
+        msg.style.color = "#22c55e";
+      } else {
+        alert("Claim test thành công (demo).");
+      }
+    });
+    // Cho phép click luôn (bỏ disabled để test)
+    btn.disabled = false;
+  }
+});
+</script>
+
 </body>
 </html>
+
 
 
 

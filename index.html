@@ -406,225 +406,209 @@
 
   <!-- Claim logic: countdown + stats + connect + claim -->
   <script>
-(function () {
-  // ===== ĐỊA CHỈ & ABI =====
-  const AIRDROP_ADDR = "0xA395c7d4d4A864773D9141E3CDC61599DFea24c0";
-  const AIRDROP_ABI = [{"inputs":[{"internalType":"address","name":"tokenAddress","type":"address"},{"internalType":"uint256","name":"_startTime","type":"uint256"},{"internalType":"uint256","name":"_amountPerWallet","type":"uint256"},{"internalType":"uint256","name":"_maxClaims","type":"uint256"}],"stateMutability":"nonpayable","type":"constructor"},{"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"account","type":"address"},{"indexed":false,"internalType":"uint256","name":"amount","type":"uint256"},{"indexed":true,"internalType":"uint256","name":"claimNo","type":"uint256"}],"name":"Claimed","type":"event"},{"anonymous":false,"inputs":[{"indexed":false,"internalType":"uint256","name":"amount","type":"uint256"}],"name":"Deposited","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"oldOwner","type":"address"},{"indexed":true,"internalType":"address","name":"newOwner","type":"address"}],"name":"OwnershipTransferred","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"to","type":"address"},{"indexed":false,"internalType":"uint256","name":"amount","type":"uint256"}],"name":"Withdrawn","type":"event"},{"inputs":[],"name":"amountPerWallet","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"claim","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"address","name":"","type":"address"}],"name":"claimed","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"claimsCount","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"user","type":"address"}],"name":"info","outputs":[{"internalType":"uint256","name":"_startTime","type":"uint256"},{"internalType":"uint256","name":"_amountPerWallet","type":"uint256"},{"internalType":"uint256","name":"_maxClaims","type":"uint256"},{"internalType":"uint256","name":"_claimsCount","type":"uint256"},{"internalType":"bool","name":"_claimed","type":"bool"},{"internalType":"uint256","name":"_contractBalance","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"maxClaims","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"owner","outputs":[{"internalType":"address","name":"","type":"address"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"startTime","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"token","outputs":[{"internalType":"contract IERC20","name":"","type":"address"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"newOwner","type":"address"}],"name":"transferOwnership","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"address","name":"to","type":"address"},{"internalType":"uint256","name":"amount","type":"uint256"}],"name":"withdrawLeftover","outputs":[],"stateMutability":"nonpayable","type":"function"}];
+(() => {
+/*** ====== CẤU HÌNH CỦA BẠN ====== ***/
+const X_HANDLE     = "Token_ATN";
+const AIRDROP_ADDR = "0xA395c7d4d4A864773D9141E3CDC61599DFea24c0"; // địa chỉ airdrop hiện tại của bạn
+const AIRDROP_ABI  = [
+  {"inputs":[{"internalType":"address","name":"tokenAddress","type":"address"},{"internalType":"uint256","name":"_startTime","type":"uint256"},{"internalType":"uint256","name":"_amountPerWallet","type":"uint256"},{"internalType":"uint256","name":"_maxClaims","type":"uint256"}],"stateMutability":"nonpayable","type":"constructor"},
+  {"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"account","type":"address"},{"indexed":false,"internalType":"uint256","name":"amount","type":"uint256"},{"indexed":true,"internalType":"uint256","name":"claimNo","type":"uint256"}],"name":"Claimed","type":"event"},
+  {"anonymous":false,"inputs":[{"indexed":false,"internalType":"uint256","name":"amount","type":"uint256"}],"name":"Deposited","type":"event"},
+  {"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"oldOwner","type":"address"},{"indexed":true,"internalType":"address","name":"newOwner","type":"address"}],"name":"OwnershipTransferred","type":"event"},
+  {"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"to","type":"address"},{"indexed":false,"internalType":"uint256","name":"amount","type":"uint256"}],"name":"Withdrawn","type":"event"},
+  {"inputs":[],"name":"amountPerWallet","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
+  {"inputs":[],"name":"claim","outputs":[],"stateMutability":"nonpayable","type":"function"},
+  {"inputs":[{"internalType":"address","name":"","type":"address"}],"name":"claimed","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"view","type":"function"},
+  {"inputs":[],"name":"claimsCount","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
+  {"inputs":[{"internalType":"address","name":"user","type":"address"}],"name":"info","outputs":[
+    {"internalType":"uint256","name":"_startTime","type":"uint256"},
+    {"internalType":"uint256","name":"_amountPerWallet","type":"uint256"},
+    {"internalType":"uint256","name":"_maxClaims","type":"uint256"},
+    {"internalType":"uint256","name":"_claimsCount","type":"uint256"},
+    {"internalType":"bool","name":"_claimed","type":"bool"},
+    {"internalType":"uint256","name":"_contractBalance","type":"uint256"}
+  ],"stateMutability":"view","type":"function"},
+  {"inputs":[],"name":"maxClaims","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
+  {"inputs":[],"name":"owner","outputs":[{"internalType":"address","name":"","type":"address"}],"stateMutability":"view","type":"function"},
+  {"inputs":[],"name":"startTime","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
+  {"inputs":[],"name":"token","outputs":[{"internalType":"contract IERC20","name":"","type":"address"}],"stateMutability":"view","type":"function"},
+  {"inputs":[{"internalType":"address","name":"newOwner","type":"address"}],"name":"transferOwnership","outputs":[],"stateMutability":"nonpayable","type":"function"},
+  {"inputs":[{"internalType":"address","name":"to","type":"address"},{"internalType":"uint256","name":"amount","type":"uint256"}],"name":"withdrawLeftover","outputs":[],"stateMutability":"nonpayable","type":"function"}
+];
 
-  // Token ATN ABI (đúng theo bạn gửi – decimals là uint256)
-  const TOKEN_ABI_MIN = [
-    {"inputs":[],"name":"decimals","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
-    {"inputs":[],"name":"symbol","outputs":[{"internalType":"string","name":"","type":"string"}],"stateMutability":"view","type":"function"},
-    {"inputs":[{"internalType":"address","name":"_owner","type":"address"}],"name":"balanceOf","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"}
-  ];
+const RPCS = [
+  "https://bsc-dataseed.binance.org/",
+  "https://bsc-dataseed1.defibit.io/",
+  "https://bsc-dataseed1.ninicoin.io/",
+  "https://bsc-dataseed4.bnbchain.org/",
+  "https://endpoints.omniatech.io/v1/bsc/mainnet/public",
+  "https://bsc-pokt.nodies.app"
+];
 
-  // RPC fallback
-  const RPCS = [
-    "https://bsc.publicnode.com",
-    "https://binance.llamarpc.com",
-    "https://rpc.ankr.com/bsc",
-    "https://bsc-dataseed.binance.org/"
-  ];
+/*** ====== TIỆN ÍCH ====== ***/
+const $ = id => document.getElementById(id);
+const ZERO = "0x0000000000000000000000000000000000000000";
+const fmt  = (bn,dec=18)=>ethers.utils.formatUnits(bn,dec);
+const short= a => a ? a.slice(0,6)+"…"+a.slice(-4) : "";
+function setMsg(t, kind="info"){
+  const el=$("msg"); if(!el) return;
+  el.textContent = t || "";
+  el.style.color = kind==="error" ? "#ef4444" : kind==="warn" ? "#f59e0b" : "var(--muted)";
+}
 
-  // ===== DOM =====
-  const $ = (id)=>document.getElementById(id);
-  const connectBtn=$("connectBtn"), accountLbl=$("accountLabel"),
-        followChk=$("followChk"), followLink=$("followLink"),
-        countdownEl=$("countdown"), openBadge=$("openBadge"),
-        claimBtn=$("claimBtn"), msgBox=$("msg"),
-        tokenSymEl=$("tokenSymbol"), perWalletEl=$("perWallet"),
-        claimedCountEl=$("claimedCount"), maxClaimsEl=$("maxClaims"),
-        contractBalEl=$("contractBal"), remainingEl=$("remaining");
-  const X_HANDLE = "Token_ATN";
-  if (followLink) followLink.href = `https://x.com/${X_HANDLE}`;
+/*** ====== STATE ====== ***/
+let provider, signer, airdrop, account=null, pollTimer=null, countdownTimer=null;
+let START_TS=0, PER_WALLET="0", MAX=0, COUNT=0, CLAIMED=false, BALANCE="0";
 
-  // ===== State =====
-  let provider, signer, account, airdrop, token;
-  let tokenDecimals = 18, tokenSymbol = "ATN";
-  let START_TS = 0, countdownTimer = null, pollTimer = null;
-  let perWalletBN, maxClaimsBN, claimsCountBN, contractBalBN;
+/*** ====== CẬP NHẬT UI ====== ***/
+function renderStats(){
+  $("tokenSymbol") && ($("tokenSymbol").textContent = "ATN");
+  $("perWallet")   && ($("perWallet").textContent   = `${fmt(PER_WALLET)} ATN`);
+  $("maxClaims")   && ($("maxClaims").textContent   = String(MAX));
+  $("claimedCount")&& ($("claimedCount").textContent= String(COUNT));
+  $("contractBal") && ($("contractBal").textContent = `${fmt(BALANCE)} ATN`);
+  $("remaining")   && ($("remaining").textContent   = `• Còn lại: ${Math.max(Number(MAX)-Number(COUNT),0)} suất`);
+}
 
-  const fmt = (bn, dec=18)=>ethers.utils.formatUnits(bn, dec);
-  const short = (a)=>a?a.slice(0,6)+"…"+a.slice(-4):"";
-  const setMsg=(t,type="info")=>{ if(msgBox){ msgBox.textContent=t; msgBox.className="msg "+type; }};
+function updateClaimButton(){
+  const nowOK = (START_TS>0) && (Math.floor(Date.now()/1000) >= START_TS);
+  const hasWallet = !!account;
+  const hasFollow = $("followChk")?.checked ?? false;
+  const left = MAX - COUNT;
+  const enough = ethers.BigNumber.from(BALANCE).gte(ethers.BigNumber.from(PER_WALLET));
 
-  async function fetchStatics(){
-    // tạo contract
-    if (!airdrop) airdrop = new ethers.Contract(AIRDROP_ADDR, AIRDROP_ABI, provider);
+  const enable = nowOK && hasWallet && hasFollow && left>0 && enough && !CLAIMED;
+  $("claimBtn").disabled = !enable;
 
-    // info(zero) để lấy số liệu chung; _claimed chỉ dùng khi đã kết nối ví sẽ gọi riêng
-    const ZERO = "0x0000000000000000000000000000000000000000";
-    const info = await airdrop.info(ZERO);
+  if (!nowOK) setMsg("Chưa tới thời gian claim.", "warn");
+  else if (!hasWallet) setMsg("Kết nối ví để claim.", "info");
+  else if (!hasFollow) setMsg(`Hãy follow @${X_HANDLE} và tick xác nhận.`, "warn");
+  else if (!enough) setMsg(left<=0 ? "Hết suất claim." : "Contract thiếu token để claim.", "warn");
+  else setMsg("");
+}
 
-    START_TS       = info._startTime.toNumber();
-    perWalletBN    = info._amountPerWallet;
-    maxClaimsBN    = info._maxClaims;
-    claimsCountBN  = info._claimsCount;
-    contractBalBN  = info._contractBalance;
-
-    // token metadata
-    const tokenAddr = await airdrop.token();
-    if (!token) token = new ethers.Contract(tokenAddr, TOKEN_ABI_MIN, provider);
-
-    try {
-      let d = await token.decimals();       // uint256
-      if (d && d._isBigNumber) d = d.toString();
-      tokenDecimals = Number(d);
-    } catch {}
-    try {
-      const s = await token.symbol();
-      if (s) tokenSymbol = s;
-    } catch {}
-    if (tokenSymEl) tokenSymEl.textContent = tokenSymbol;
-
-    // cập nhật UI
-    if (perWalletEl)    perWalletEl.textContent    = `${fmt(perWalletBN, tokenDecimals)} ${tokenSymbol}`;
-    if (maxClaimsEl)    maxClaimsEl.textContent    = maxClaimsBN.toString();
-    if (claimedCountEl) claimedCountEl.textContent = claimsCountBN.toString();
-    if (contractBalEl)  contractBalEl.textContent  = `${fmt(contractBalBN, tokenDecimals)} ${tokenSymbol}`;
-    if (claimBtn)       claimBtn.textContent       = `🎁 Claim ${fmt(perWalletBN, tokenDecimals)} ${tokenSymbol}`;
-
-    const remaining = maxClaimsBN.sub(claimsCountBN).toNumber();
-    if (remainingEl) remainingEl.textContent = `• Còn lại: ${remaining} suất  • Còn token: ${Number(fmt(contractBalBN, tokenDecimals))} ${tokenSymbol}`;
-
-    updateClaimState();
+/*** ====== ĐẾM NGƯỢC ====== ***/
+function startCountdown(){
+  if (countdownTimer) clearInterval(countdownTimer);
+  const el=$("countdown"), badge=$("openBadge");
+  function tick(){
+    if (!START_TS){ el.textContent="--:--:--:--"; badge.style.display="none"; return; }
+    let diff = START_TS - Math.floor(Date.now()/1000);
+    if (diff <= 0){ el.textContent = "00:00:00:00"; badge.style.display="inline-block"; updateClaimButton(); return; }
+    const d=Math.floor(diff/86400); diff%=86400;
+    const h=Math.floor(diff/3600);  diff%=3600;
+    const m=Math.floor(diff/60);    const s=diff%60;
+    el.textContent = `${String(d).padStart(2,"0")}:${String(h).padStart(2,"0")}:${String(m).padStart(2,"0")}:${String(s).padStart(2,"0")}`;
+    badge.style.display="none";
   }
+  tick();
+  countdownTimer = setInterval(tick,1000);
+}
 
-  function startCountdown(){
-    if (countdownTimer) clearInterval(countdownTimer);
-    function tick(){
-      if (!START_TS){ if(countdownEl) countdownEl.textContent="--:--:--:--"; return; }
-      let diff = START_TS - Math.floor(Date.now()/1000);
-      if (diff <= 0){
-        if(countdownEl) countdownEl.textContent = "00:00:00:00";
-        if(openBadge) openBadge.style.display = "inline-block";
-        clearInterval(countdownTimer); countdownTimer=null;
-        updateClaimState();
-        return;
-      }
-      const d=Math.floor(diff/86400); diff%=86400;
-      const h=Math.floor(diff/3600);  diff%=3600;
-      const m=Math.floor(diff/60);    const s=diff%60;
-      if(countdownEl)
-        countdownEl.textContent =
-          `${String(d).padStart(2,"0")}:${String(h).padStart(2,"0")}:${String(m).padStart(2,"0")}:${String(s).padStart(2,"0")}`;
-      if(openBadge) openBadge.style.display = "none";
-    }
-    tick();
-    countdownTimer = setInterval(tick, 1000);
-  }
+/*** ====== ĐỌC CHUỖI SỐ LIỆU TỪ info() ====== ***/
+async function fetchInfo(){
+  const u = account || ZERO;
+  const r = await airdrop.info(u);
+  START_TS     = Number(r._startTime);
+  PER_WALLET   = r._amountPerWallet.toString();
+  MAX          = Number(r._maxClaims);
+  COUNT        = Number(r._claimsCount);
+  CLAIMED      = Boolean(r._claimed);
+  BALANCE      = r._contractBalance.toString();
+  renderStats();
+  updateClaimButton();
+}
 
-  function updateClaimState(hasClaimed=false){
-    const now = Math.floor(Date.now()/1000);
-    const okTime = START_TS ? now >= START_TS : false;
-    const okWallet = !!account;
-    const okFollow = !!(followChk && followChk.checked);
-    const remaining = (maxClaimsBN && claimsCountBN) ? maxClaimsBN.sub(claimsCountBN) : ethers.BigNumber.from(0);
-    const enough = (contractBalBN && perWalletBN) ? contractBalBN.gte(perWalletBN) : false;
-
-    if (claimBtn) claimBtn.disabled = !(okTime && okWallet && okFollow && enough && remaining.gt(0)) || hasClaimed;
-
-    if (!okTime) setMsg("Chưa tới thời gian claim.", "warn");
-    else if (!okWallet) setMsg("Kết nối ví để claim.", "info");
-    else if (!okFollow) setMsg("Hãy follow @"+X_HANDLE+" và tick xác nhận.", "warn");
-    else if (!enough) setMsg(remaining.lte(0) ? "Hết suất claim." : "Contract thiếu token để claim.", "warn");
-    else setMsg("", "info");
-  }
-
-  async function ensureBSC(){
-    const net = await provider.getNetwork();
-    if (net.chainId !== 56) {
-      try{
-        await window.ethereum.request({method:"wallet_switchEthereumChain",params:[{chainId:"0x38"}]});
-      }catch{
-        await window.ethereum.request({
-          method:"wallet_addEthereumChain",
-          params:[{ chainId:"0x38", chainName:"BNB Smart Chain",
-            nativeCurrency:{name:"BNB",symbol:"BNB",decimals:18},
-            rpcUrls:["https://bsc.publicnode.com"], blockExplorerUrls:["https://bscscan.com/"] }]}
-        );
-      }
-    }
-  }
-
-  async function connect(){
+/*** ====== KẾT NỐI VÍ ====== ***/
+async function ensureBSC(){
+  const net = await provider.getNetwork();
+  if (net.chainId !== 56) {
     try{
-      if (!window.ethereum) return setMsg("Vui lòng cài MetaMask.", "error");
-      provider = new ethers.providers.Web3Provider(window.ethereum, "any");
-      await provider.send("eth_requestAccounts", []);
-      await ensureBSC();
-      signer  = provider.getSigner();
-      account = await signer.getAddress();
-      if (accountLbl) accountLbl.textContent = "Ví: "+short(account);
-
-      airdrop = new ethers.Contract(AIRDROP_ADDR, AIRDROP_ABI, provider);
-      await fetchStatics();
-
-      const hasClaimed = await airdrop.claimed(account);
-      if (hasClaimed) setMsg("Bạn đã claim trước đó.", "warn");
-      updateClaimState(hasClaimed);
-    }catch(e){ setMsg(e?.message || String(e), "error"); }
+      await window.ethereum.request({method:"wallet_switchEthereumChain",params:[{chainId:"0x38"}]});
+    }catch{
+      await window.ethereum.request({
+        method:"wallet_addEthereumChain",
+        params:[{ chainId:"0x38", chainName:"BNB Smart Chain",
+          nativeCurrency:{name:"BNB",symbol:"BNB",decimals:18},
+          rpcUrls:["https://bsc-dataseed.binance.org/"],
+          blockExplorerUrls:["https://bscscan.com/"] }]}
+      );
+    }
   }
+}
 
-  async function doClaim(){
+async function connect(){
+  try{
+    if(!window.ethereum){ setMsg("Vui lòng cài MetaMask.", "error"); return; }
+    provider = new ethers.providers.Web3Provider(window.ethereum,"any");
+    await provider.send("eth_requestAccounts",[]);
+    await ensureBSC();
+    signer   = provider.getSigner();
+    account  = await signer.getAddress();
+    $("accountLabel").textContent = "Ví: " + short(account);
+    airdrop  = new ethers.Contract(AIRDROP_ADDR, AIRDROP_ABI, provider);
+    await fetchInfo();
+    updateClaimButton();
+  }catch(e){ setMsg(e?.message || String(e), "error"); }
+}
+
+/*** ====== GỌI CLAIM ====== ***/
+async function doClaim(){
+  try{
+    if(!signer){ setMsg("Hãy kết nối ví trước.", "error"); return; }
+    if(!$("followChk").checked){ setMsg(`Hãy follow @${X_HANDLE} và tick xác nhận.`, "warn"); return; }
+    if(Math.floor(Date.now()/1000) < START_TS){ setMsg("Chưa tới thời gian claim.", "warn"); return; }
+    setMsg("Đang gửi giao dịch...");
+    const tx = await airdrop.connect(signer).claim();
+    setMsg("Đang chờ xác nhận: " + tx.hash);
+    await tx.wait();
+    setMsg("Claim thành công!", "success");
+    await fetchInfo(); // cập nhật các số liệu
+  }catch(e){
+    setMsg((e && (e.error?.message || e.data?.message || e.message)) || "Claim failed", "error");
+  }
+}
+
+/*** ====== KHỞI TẠO CHẾ ĐỘ CHỈ-ĐỌC (không cần ví) ====== ***/
+async function initReadonly(){
+  let lastErr;
+  for (const url of RPCS){
     try{
-      if (!signer) return setMsg("Hãy kết nối ví trước.", "error");
-      if (!(followChk && followChk.checked)) return setMsg("Hãy follow @"+X_HANDLE+" và tick xác nhận.", "warn");
-      if (Math.floor(Date.now()/1000) < START_TS) return setMsg("Chưa tới thời gian claim.", "warn");
-
-      setMsg("Đang gửi giao dịch...");
-      const tx = await airdrop.connect(signer).claim();
-      setMsg("Đang chờ xác nhận: "+tx.hash);
-      await tx.wait();
-      setMsg("Claim thành công! Tx: "+tx.hash, "success");
-      if (claimBtn) claimBtn.disabled = true;
-
-      await fetchStatics(); // cập nhật lại số liệu ngay sau khi claim
-    }catch(e){
-      const msg = (e && (e.error?.message || e.data?.message || e.message)) || String(e);
-      setMsg("Claim thất bại: "+msg, "error");
-    }
+      provider = new ethers.providers.JsonRpcProvider(url);
+      await provider.getBlockNumber(); // ping
+      airdrop  = new ethers.Contract(AIRDROP_ADDR, AIRDROP_ABI, provider);
+      await fetchInfo();
+      startCountdown();
+      startPolling();
+      setMsg("Kết nối ví để claim.", "info");
+      return;
+    }catch(e){ lastErr = e; }
   }
+  setMsg("Không thể kết nối RPC BSC từ trình duyệt. Mở Console để xem lỗi.", "error");
+  console.error("RPC errors:", lastErr);
+}
 
-  function startPolling(){
-    if (pollTimer) clearInterval(pollTimer);
-    pollTimer = setInterval(async ()=>{
-      try{
-        if (!provider) return;
-        await fetchStatics();
-      }catch{}
-    }, 15000);
-  }
+/*** ====== POLL 15s ====== ***/
+function startPolling(){
+  if (pollTimer) clearInterval(pollTimer);
+  pollTimer = setInterval(async ()=>{
+    try{ await fetchInfo(); }catch{}
+  }, 15000);
+}
 
-  // Khởi tạo read-only với RPC dự phòng
-  async function initReadonly(){
-    let lastErr;
-    for (const url of RPCS){
-      try{
-        provider = new ethers.providers.JsonRpcProvider(url);
-        airdrop  = new ethers.Contract(AIRDROP_ADDR, AIRDROP_ABI, provider);
-        await fetchStatics();
-        startCountdown();
-        startPolling();
-        setMsg("Kết nối ví để claim.", "info");
-        return;
-      }catch(e){ lastErr = e; }
-    }
-    setMsg("Không thể kết nối RPC BSC từ trình duyệt. Mở Console để xem lỗi.", "error");
-    console.error("RPC errors:", lastErr);
-  }
+/*** ====== GẮN SỰ KIỆN ====== ***/
+document.addEventListener("DOMContentLoaded", initReadonly);
+$("followChk") && $("followChk").addEventListener("change", updateClaimButton);
+$("connectBtn") && $("connectBtn").addEventListener("click", connect);
+$("claimBtn")   && $("claimBtn").addEventListener("click", doClaim);
 
-  document.addEventListener("DOMContentLoaded", initReadonly);
-  if (followChk) followChk.addEventListener("change", ()=>updateClaimState());
-  if (connectBtn) connectBtn.addEventListener("click", connect);
-  if (claimBtn)   claimBtn.addEventListener("click", doClaim);
-
-  if (window.ethereum){
-    window.ethereum.on("accountsChanged", ()=>location.reload());
-    window.ethereum.on("chainChanged",  ()=>location.reload());
-  }
+if (window.ethereum){
+  window.ethereum.on("accountsChanged", ()=>location.reload());
+  window.ethereum.on("chainChanged",  ()=>location.reload());
+}
 })();
 </script>
+
   <!-- CUSTOM LIVE CHART + STATS (kept) -->
   <script>
   const ctxLine = document.getElementById('priceLine')?.getContext('2d');
@@ -703,4 +687,5 @@
   </script>
 </body>
 </html>
+
 

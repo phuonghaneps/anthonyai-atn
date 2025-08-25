@@ -1,1 +1,55 @@
+name: Build & Obfuscate
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - "index.html"
+      - "chart.js"
+      - "claim1.js"
+      - "claim2.js"
+      - ".github/workflows/build.yml"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install CLI tools
+        run: |
+          npm i -g javascript-obfuscator html-minifier-terser
+
+      - name: Obfuscate JS (no source maps)
+        run: |
+          javascript-obfuscator chart.js  --output chart.obf.js  --compact true --self-defending true --control-flow-flattening true --control-flow-flattening-threshold 0.9 --dead-code-injection true --dead-code-injection-threshold 0.2 --string-array true --string-array-encoding base64 --string-array-threshold 0.9 --unicode-escape-sequence true --source-map false
+          javascript-obfuscator claim1.js --output claim1.obf.js --compact true --self-defending true --control-flow-flattening true --control-flow-flattening-threshold 0.9 --dead-code-injection true --dead-code-injection-threshold 0.2 --string-array true --string-array-encoding base64 --string-array-threshold 0.9 --unicode-escape-sequence true --source-map false
+          javascript-obfuscator claim2.js --output claim2.obf.js --compact true --self-defending true --control-flow-flattening true --control-flow-flattening-threshold 0.9 --dead-code-injection true --dead-code-injection-threshold 0.2 --string-array true --string-array-encoding base64 --string-array-threshold 0.9 --unicode-escape-sequence true --source-map false
+
+      - name: Build index.min.html + thay link *.obf.js
+        shell: bash
+        run: |
+          # Lưu bản gốc một lần (nếu chưa có)
+          [ -f index.dev.html ] || cp index.html index.dev.html
+          # Tạo bản min từ bản gốc
+          cp index.dev.html index.min.html
+          sed -i 's/claim1\.js/claim1.obf.js/g; s/claim2\.js/claim2.obf.js/g; s/chart\.js/chart.obf.js/g' index.min.html
+          html-minifier-terser index.min.html -o index.min.html --collapse-whitespace --remove-comments --minify-css true --minify-js true
+          # Phát hành: ghi đè index.html bằng bản minified
+          cp index.min.html index.html
+
+      - name: Commit build artifacts
+        uses: EndBug/add-and-commit@v9
+        with:
+          add: "chart.obf.js claim1.obf.js claim2.obf.js index.min.html index.html index.dev.html"
+          message: "[build] Obfuscate JS + Minify index for release"
+          default_author: github_actions
 

@@ -1,7 +1,7 @@
 (() => {
-/*** CONFIG #2 ***/
+/*** CONFIG (Airdrop #2) ***/
 const X_HANDLE     = "Token_ATN";
-const AIRDROP_ADDR = "0xA395c7d4d4A864773D9141E3CDC61599DFea24c0";
+const AIRDROP_ADDR = ethers.utils.getAddress("0xA395c7d4d4A864773D9141E3CDC61599DFea24c0");
 const AIRDROP_ABI  = [
   {"inputs":[{"internalType":"address","name":"tokenAddress","type":"address"},{"internalType":"uint256","name":"_startTime","type":"uint256"},{"internalType":"uint256","name":"_amountPerWallet","type":"uint256"},{"internalType":"uint256","name":"_maxClaims","type":"uint256"}],"stateMutability":"nonpayable","type":"constructor"},
   {"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"account","type":"address"},{"indexed":false,"internalType":"uint256","name":"amount","type":"uint256"},{"indexed":true,"internalType":"uint256","name":"claimNo","type":"uint256"}],"name":"Claimed","type":"event"},
@@ -28,21 +28,20 @@ const AIRDROP_ABI  = [
   {"inputs":[{"internalType":"address","name":"to","type":"address"},{"internalType":"uint256","name":"amount","type":"uint256"}],"name":"withdrawLeftover","outputs":[],"stateMutability":"nonpayable","type":"function"}
 ];
 
-/*** RPCs ***/
+/*** RPCs (khỏe) ***/
 const RPCS = [
-  "https://bsc-dataseed.binance.org/",
-  "https://bsc-dataseed1.defibit.io/",
-  "https://bsc-dataseed1.ninicoin.io/",
-  "https://bsc-dataseed4.bnbchain.org/",
-  "https://endpoints.omniatech.io/v1/bsc/mainnet/public",
-  "https://bsc-pokt.nodies.app"
+  "https://bsc.publicnode.com",
+  "https://rpc.ankr.com/bsc",
+  "https://1rpc.io/bnb",
+  "https://binance.llamarpc.com",
+  "https://bsc-dataseed.binance.org"
 ];
 
 /*** utils ***/
 const $ = id => document.getElementById(id);
-const ZERO = "0x0000000000000000000000000000000000000000";
-const fmt  = (bn,dec=18)=>ethers.utils.formatUnits(bn,dec);
-const short= a => a ? a.slice(0,6)+"…"+a.slice(-4) : "";
+const short = a => a ? a.slice(0,6)+"…"+a.slice(-4) : "";
+const ZERO  = "0x0000000000000000000000000000000000000000";
+const fmt   = (bn,dec=18)=>ethers.utils.formatUnits(bn,dec);
 function setMsg(t, kind="info"){
   const el=$("msg"); if(!el) return;
   el.textContent = t || "";
@@ -53,17 +52,14 @@ function setMsg(t, kind="info"){
 let provider, signer, airdrop, account=null, pollTimer=null, countdownTimer=null;
 let START_TS=0, PER_WALLET="0", MAX=0, COUNT=0, CLAIMED=false, BALANCE="0";
 
-/* chain-time sync */
+/*** chain-time sync ***/
 let CHAIN_NOW=0, SYNCED_AT_MS=0, chainSyncTimer=null;
 async function syncChainTime(){
   const b = await provider.getBlock('latest');
   CHAIN_NOW = Number(b.timestamp);
   SYNCED_AT_MS = Date.now();
 }
-function nowSec(){
-  return CHAIN_NOW ? Math.floor(CHAIN_NOW + (Date.now()-SYNCED_AT_MS)/1000)
-                   : Math.floor(Date.now()/1000);
-}
+const nowSec = () => CHAIN_NOW ? Math.floor(CHAIN_NOW + (Date.now()-SYNCED_AT_MS)/1000) : Math.floor(Date.now()/1000);
 
 /*** render ***/
 function renderStats(){
@@ -109,16 +105,30 @@ function startCountdown(){
   if (countdownTimer) clearInterval(countdownTimer);
   const dEl=$("cd-days"), hEl=$("cd-hours"), mEl=$("cd-mins"), sEl=$("cd-secs");
   const badge=$("openBadge");
+  const openChip = $("openAtVN")?.closest(".chip");
   function setAll(a,b,c,d){ if(dEl)dEl.textContent=a; if(hEl)hEl.textContent=b; if(mEl)mEl.textContent=c; if(sEl)sEl.textContent=d; }
+
   function tick(){
-    if(!START_TS){ setAll("--","--","--","--"); if(badge) badge.style.display="none"; return; }
+    if(!START_TS){
+      setAll("--","--","--","--");
+      badge && (badge.style.display="none");
+      openChip && openChip.classList.remove("hidden");
+      return;
+    }
     let diff=START_TS-nowSec();
-    if(diff<=0){ setAll("00","00","00","00"); if(badge) badge.style.display="inline-block"; updateClaimButton(); return; }
+    if(diff<=0){
+      setAll("00","00","00","00");
+      badge && (badge.style.display="inline-block"); // OPEN
+      openChip && openChip.classList.add("hidden");  // ẩn Opens(VN)
+      updateClaimButton();
+      return;
+    }
     const days=Math.floor(diff/86400); diff%=86400;
     const hrs=Math.floor(diff/3600);  diff%=3600;
     const mins=Math.floor(diff/60);   const secs=diff%60;
     setAll(String(days).padStart(2,"0"),String(hrs).padStart(2,"0"),String(mins).padStart(2,"0"),String(secs).padStart(2,"0"));
-    if (badge) badge.style.display="none";
+    badge && (badge.style.display="none");
+    openChip && openChip.classList.remove("hidden");
   }
   tick(); countdownTimer=setInterval(tick,1000);
 }
@@ -191,8 +201,12 @@ async function initReadonly(){
   let lastErr;
   for(const url of RPCS){
     try{
-      provider=new ethers.providers.JsonRpcProvider(url);
+      provider=new ethers.providers.JsonRpcProvider(url, { name: "bnb", chainId: 56 });
       await provider.getBlockNumber();
+
+      const code = await provider.getCode(AIRDROP_ADDR);
+      if (code === "0x"){ setMsg("No contract code at " + AIRDROP_ADDR, "error"); return; }
+
       airdrop=new ethers.Contract(AIRDROP_ADDR,AIRDROP_ABI,provider);
 
       await syncChainTime(); if(chainSyncTimer) clearInterval(chainSyncTimer);
@@ -203,13 +217,34 @@ async function initReadonly(){
       return;
     }catch(e){ lastErr=e; }
   }
-  setMsg("Unable to reach BSC RPC from this browser. Open Console to see the error.","error");
-  console.error("RPC errors:",lastErr);
+
+  if (window.ethereum) {
+    try {
+      provider = new ethers.providers.Web3Provider(window.ethereum, "any");
+      await provider.getBlockNumber();
+      const code = await provider.getCode(AIRDROP_ADDR);
+      if (code === "0x"){ setMsg("No contract code at " + AIRDROP_ADDR, "error"); return; }
+
+      airdrop  = new ethers.Contract(AIRDROP_ADDR, AIRDROP_ABI, provider);
+
+      await syncChainTime(); if (chainSyncTimer) clearInterval(chainSyncTimer);
+      chainSyncTimer = setInterval(syncChainTime, 30000);
+
+      await fetchInfo(); startCountdown();
+      startPolling(); setMsg("Connect your wallet to claim.", "info");
+      return;
+    } catch(e){ lastErr = e; }
+  }
+
+  setMsg("Unable to reach BSC RPC for Airdrop #2.", "error");
+  console.error("RPC errors #2:", lastErr);
 }
 function startPolling(){ if(pollTimer) clearInterval(pollTimer); pollTimer=setInterval(async()=>{ try{ await fetchInfo(); }catch{} },15000); }
 
 /*** events ***/
-document.addEventListener("DOMContentLoaded", initReadonly);
+function runOnReady(fn){ document.readyState==="loading" ? document.addEventListener("DOMContentLoaded", fn, {once:true}) : fn(); }
+runOnReady(initReadonly);
+
 $("followChk") && $("followChk").addEventListener("change", updateClaimButton);
 $("connectBtn") && $("connectBtn").addEventListener("click", connect);
 $("claimBtn")   && $("claimBtn").addEventListener("click", doClaim);

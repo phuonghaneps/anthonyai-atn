@@ -9,6 +9,11 @@ on:
       - "claim1.js"
       - "claim2.js"
       - ".github/workflows/build.yml"
+  workflow_dispatch: {}   # Cho phép Run workflow thủ công
+
+# CHO PHÉP GITHUB_TOKEN ĐƯỢC PUSH
+permissions:
+  contents: write
 
 jobs:
   build:
@@ -26,7 +31,17 @@ jobs:
 
       - name: Install CLI tools
         run: |
+          npm config set fund false
+          npm config set audit false
           npm i -g javascript-obfuscator html-minifier-terser
+
+      - name: Guard: ensure files exist
+        run: |
+          ls -la
+          test -f index.html
+          test -f chart.js
+          test -f claim1.js
+          test -f claim2.js
 
       - name: Obfuscate JS (no source maps)
         run: |
@@ -37,19 +52,16 @@ jobs:
       - name: Build index.min.html + thay link *.obf.js
         shell: bash
         run: |
-          # Lưu bản gốc một lần (nếu chưa có)
           [ -f index.dev.html ] || cp index.html index.dev.html
-          # Tạo bản min từ bản gốc
           cp index.dev.html index.min.html
           sed -i 's/claim1\.js/claim1.obf.js/g; s/claim2\.js/claim2.obf.js/g; s/chart\.js/chart.obf.js/g' index.min.html
           html-minifier-terser index.min.html -o index.min.html --collapse-whitespace --remove-comments --minify-css true --minify-js true
-          # Phát hành: ghi đè index.html bằng bản minified
           cp index.min.html index.html
 
       - name: Commit build artifacts
-        uses: EndBug/add-and-commit@v9
-        with:
-          add: "chart.obf.js claim1.obf.js claim2.obf.js index.min.html index.html index.dev.html"
-          message: "[build] Obfuscate JS + Minify index for release"
-          default_author: github_actions
-
+        run: |
+          git config user.name  "github-actions"
+          git config user.email "actions@github.com"
+          git add chart.obf.js claim1.obf.js claim2.obf.js index.min.html index.html index.dev.html
+          git commit -m "[build] Obfuscate JS + Minify index for release" || echo "No changes to commit"
+          git push

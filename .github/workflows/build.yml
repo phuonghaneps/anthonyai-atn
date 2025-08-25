@@ -9,7 +9,7 @@ on:
       - "claim1.js"
       - "claim2.js"
       - ".github/workflows/build.yml"
-  workflow_dispatch:
+  workflow_dispatch: {}
 
 permissions:
   contents: write
@@ -34,7 +34,7 @@ jobs:
           npm config set audit false
           npm i -g javascript-obfuscator html-minifier-terser
 
-      - name: Guard: ensure files exist
+      - name: "Guard: ensure files exist"
         run: |
           ls -la
           test -f index.html
@@ -48,7 +48,7 @@ jobs:
           javascript-obfuscator claim1.js --output claim1.obf.js --compact true --self-defending true --control-flow-flattening true --control-flow-flattening-threshold 0.9 --dead-code-injection true --dead-code-injection-threshold 0.2 --string-array true --string-array-encoding base64 --string-array-threshold 0.9 --unicode-escape-sequence true --source-map false
           javascript-obfuscator claim2.js --output claim2.obf.js --compact true --self-defending true --control-flow-flattening true --control-flow-flattening-threshold 0.9 --dead-code-injection true --dead-code-injection-threshold 0.2 --string-array true --string-array-encoding base64 --string-array-threshold 0.9 --unicode-escape-sequence true --source-map false
 
-      - name: Build index.min.html + thay link *.obf.js
+      - name: "Build index.min.html + thay link *.obf.js"
         shell: bash
         run: |
           [ -f index.dev.html ] || cp index.html index.dev.html

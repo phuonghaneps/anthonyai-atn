@@ -15,40 +15,38 @@
   };
 
   /* =================== Year / Copy / Watch =================== */
-  onReady(() => {
-    // Năm hiện tại
-    const y = document.getElementById("year");
-    if (y) y.textContent = new Date().getFullYear();
+onReady(function () {
+  // Năm hiện tại
+  var y = document.getElementById("year");
+  if (y) y.textContent = new Date().getFullYear();
 
-    // Copy & add asset vào ví
-    const addr = "0xb5C84953983931dd2C10C9b04a4379eE52697193";
-    const copyBtn  = document.getElementById("copy");
-    const watchBtn = document.getElementById("watch");
+  // Copy & add asset vào ví
+  var addr = "0xb5C84953983931dd2C10C9b04a4379eE52697193";
+  var copyBtn  = document.getElementById("copy");
+  var watchBtn = document.getElementById("watch");
 
-    copyBtn?.addEventListener("click", async () => {
-      try {
-        await navigator.clipboard.writeText(addr);
-        alert("Contract copied to clipboard");
-      } catch {
-        alert("Copy failed");
-      }
+  if (copyBtn) {
+    copyBtn.addEventListener("click", function () {
+      navigator.clipboard.writeText(addr)
+        .then(function(){ alert("Contract copied to clipboard"); })
+        .catch(function(){ alert("Copy failed"); });
     });
+  }
 
-    watchBtn?.addEventListener("click", async () => {
+  if (watchBtn) {
+    watchBtn.addEventListener("click", function () {
       if (!window.ethereum) { alert("Wallet not detected"); return; }
-      try {
-        await window.ethereum.request({
-          method: "wallet_watchAsset",
-          params: {
-            type: "ERC20",
-            options: { address: addr, symbol: "ATN", decimals: 18, image: location.origin + "/favicon-32.png" }
-          }
-        });
-      } catch (err) {
-        console.log(err);
-      }
+      window.ethereum.request({
+        method: "wallet_watchAsset",
+        params: {
+          type: "ERC20",
+          options: { address: addr, symbol: "ATN", decimals: 18, image: location.origin + "/favicon-32.png" }
+        }
+      }).catch(function(e){ console.log(e); });
     });
-  });
+  }
+});
+
 
   /* =================== Charts =================== */
   onReady(() => whenChartReady(() => {
@@ -87,10 +85,11 @@
 
     // ----- Line: Live price + stats (Dexscreener) -----
 (function initLiveChart(){
-  const ctxLine = document.getElementById("priceLine")?.getContext("2d");
+  var canvas = document.getElementById("priceLine");
+  var ctxLine = canvas ? canvas.getContext("2d") : null;
   if (!ctxLine) return;
 
-  const priceData = {
+  var priceData = {
     labels: [],
     datasets: [{
       label: "ATN/USD",
@@ -104,7 +103,7 @@
     }]
   };
 
-  const priceChart = new Chart(ctxLine, {
+  var priceChart = new Chart(ctxLine, {
     type: "line",
     data: priceData,
     options: {
@@ -119,88 +118,105 @@
     }
   });
 
-  const TOKEN = "0xb5C84953983931dd2C10C9b04a4379eE52697193";
-  const PAIR  = "0x6a0ba3d48b25855bad2102796c837d9668ff8c18";
+  var TOKEN = "0xb5C84953983931dd2C10C9b04a4379eE52697193";
+  var PAIR  = "0x6a0ba3d48b25855bad2102796c837d9668ff8c18";
 
-  const endpoints = [
-    `https://api.dexscreener.com/latest/dex/pairs/bsc/${PAIR}`,
-    `https://api.dexscreener.com/latest/dex/tokens/${TOKEN}`
+  var endpoints = [
+    "https://api.dexscreener.com/latest/dex/pairs/bsc/"  + PAIR,
+    "https://api.dexscreener.com/latest/dex/tokens/"     + TOKEN
   ];
 
-  const priceEl = document.getElementById("statPrice");
-  const liqEl   = document.getElementById("statLiq");
-  const fdvEl   = document.getElementById("statFdv");
-  const volEl   = document.getElementById("statVol");
+  var priceEl = document.getElementById("statPrice");
+  var liqEl   = document.getElementById("statLiq");
+  var fdvEl   = document.getElementById("statFdv");
+  var volEl   = document.getElementById("statVol");
 
-  const fmtCompact = (n) => {
-    if (n == null) return "—";
-    const x = Number(n);
+  function fmtCompact(n) {
+    if (n === undefined || n === null) return "—";
+    var x = Number(n);
     if (!isFinite(x)) return "—";
     if (x >= 1e9) return (x/1e9).toFixed(2) + "B";
     if (x >= 1e6) return (x/1e6).toFixed(2) + "M";
     if (x >= 1e3) return (x/1e3).toFixed(2) + "K";
     return x.toFixed(2);
-  };
+  }
 
-  let timer = null;
-  let abortCtrl = null;
+  var timer = null;
+  var abortCtrl = null;
 
-  async function fetchFirstOk(urls) {
-    for (const url of urls) {
-      try {
-        const r = await fetch(url, { cache: "no-store", signal: abortCtrl?.signal });
-        if (!r.ok) continue;
-        const j = await r.json();
-        const p = j?.pairs?.find(Boolean);
-        if (p && p.priceUsd) return p;
-      } catch (e) {
-        if (e?.name !== "AbortError") console.debug("[Dex] fail:", e.message || e);
-      }
+  function firstPair(obj) {
+    if (!obj || !obj.pairs || !obj.pairs.length) return null;
+    // lấy cặp đầu có dữ liệu priceUsd
+    for (var i = 0; i < obj.pairs.length; i++) {
+      var p = obj.pairs[i];
+      if (p && p.priceUsd) return p;
     }
     return null;
   }
 
-  async function refreshDex(){
-    // tránh request chồng nhau
-    if (abortCtrl) abortCtrl.abort();
-    abortCtrl = new AbortController();
+  function fetchFirstOk(urls) {
+    // trả về Promise pair đầu tiên có dữ liệu
+    var idx = 0;
+    return new Promise(function (resolve) {
+      function next() {
+        if (idx >= urls.length) { resolve(null); return; }
+        var url = urls[idx++];
+        var opts = { cache: "no-store" };
+        if (abortCtrl && abortCtrl.signal) opts.signal = abortCtrl.signal;
 
-    const p = await fetchFirstOk(endpoints);
-    if (!p) return; // không có dữ liệu → bỏ qua lần này
-
-    // Cập nhật 4 chỉ số
-    priceEl && (priceEl.textContent = "$" + Number(p.priceUsd).toFixed(6));
-    liqEl   && (liqEl.textContent   = "$" + fmtCompact(p.liquidity?.usd));
-    fdvEl   && (fdvEl.textContent   = "$" + fmtCompact(p.fdv));
-    volEl   && (volEl.textContent   = "$" + fmtCompact(p.volume?.h24));
-
-    // Cập nhật chart
-    const y = Number(p.priceUsd);
-    if (isFinite(y) && y > 0) {
-      const label = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" });
-      priceData.labels.push(label);
-      priceData.datasets[0].data.push(y);
-
-      const MAX_POINTS = 180; // ~15 phút nếu 5s/lần
-      if (priceData.labels.length > MAX_POINTS) {
-        priceData.labels.shift();
-        priceData.datasets[0].data.shift();
+        fetch(url, opts).then(function (r) {
+          if (!r.ok) { next(); return; }
+          r.json().then(function (j) {
+            var p = firstPair(j);
+            if (p) resolve(p); else next();
+          }).catch(function(){ next(); });
+        }).catch(function(){ next(); });
       }
-      priceChart.update("none");
-    }
+      next();
+    });
   }
 
-  const start = () => {
+  function refreshDex(){
+    if (abortCtrl && abortCtrl.abort) abortCtrl.abort();
+    abortCtrl = (typeof AbortController !== "undefined") ? new AbortController() : null;
+
+    fetchFirstOk(endpoints).then(function (p) {
+      if (!p) return;
+
+      // cập nhật 4 chỉ số
+      if (priceEl) priceEl.textContent = "$" + Number(p.priceUsd).toFixed(6);
+      if (liqEl)   liqEl.textContent   = "$" + fmtCompact(p.liquidity && p.liquidity.usd);
+      if (fdvEl)   fdvEl.textContent   = "$" + fmtCompact(p.fdv);
+      if (volEl)   volEl.textContent   = "$" + fmtCompact(p.volume && p.volume.h24);
+
+      // cập nhật chart
+      var y = Number(p.priceUsd);
+      if (isFinite(y) && y > 0) {
+        var label = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+        priceData.labels.push(label);
+        priceData.datasets[0].data.push(y);
+
+        var MAX_POINTS = 180; // ~15 phút nếu 5s/lần
+        if (priceData.labels.length > MAX_POINTS) {
+          priceData.labels.shift();
+          priceData.datasets[0].data.shift();
+        }
+        priceChart.update("none");
+      }
+    });
+  }
+
+  function start() {
     if (timer) return;
     refreshDex();
-    timer = setInterval(refreshDex, 5000); // 5s/lần
-  };
-  const stop = () => {
+    timer = setInterval(refreshDex, 5000);
+  }
+  function stop() {
     if (timer) { clearInterval(timer); timer = null; }
-    if (abortCtrl) abortCtrl.abort();
-  };
+    if (abortCtrl && abortCtrl.abort) abortCtrl.abort();
+  }
 
   start();
-  document.addEventListener("visibilitychange", () => document.hidden ? stop() : start());
+  document.addEventListener("visibilitychange", function(){ document.hidden ? stop() : start(); });
   window.addEventListener("pagehide", stop);
 })();

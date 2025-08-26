@@ -377,4 +377,41 @@
   document.addEventListener("visibilitychange", function(){ if (document.hidden) stop(); else if (!timer) timer = setInterval(refresh, 20000); });
   window.addEventListener("pagehide", stop);
 })();
+(function(){
+  async function loadATNStats() {
+    try {
+      const poolAddress = "0x6a0ba3d48b25855bad2102796c837d9668ff8c18";
+      const url = `https://api.dexscreener.com/latest/dex/pairs/bsc/${poolAddress}`;
+      const res = await fetch(url);
+      const data = await res.json();
+      if (!data.pair) return;
+      const p = data.pair;
 
+      // Giá + % thay đổi
+      const priceEl = document.getElementById("thPrice");
+      const thChange = document.getElementById("thChange");
+      if (priceEl) priceEl.textContent = `$${parseFloat(p.priceUsd).toFixed(6)}`;
+      if (thChange) {
+        const chg = parseFloat(p.priceChange.h24);
+        thChange.textContent = `${chg > 0 ? "+" : ""}${chg.toFixed(2)}%`;
+        thChange.className = "th-change " + (chg >= 0 ? "up" : "down");
+      }
+
+      // Market cap, FDV, Volume, Liquidity
+      if (document.getElementById("thMC"))   document.getElementById("thMC").textContent   = p.marketCap ? `$${Number(p.marketCap).toLocaleString()}` : "—";
+      if (document.getElementById("thFDV"))  document.getElementById("thFDV").textContent  = p.fdv ? `$${Number(p.fdv).toLocaleString()}` : "—";
+      if (document.getElementById("thVol"))  document.getElementById("thVol").textContent  = p.volume ? `$${Number(p.volume.h24).toLocaleString()}` : "—";
+      if (document.getElementById("thLiq"))  document.getElementById("thLiq").textContent  = p.liquidity ? `$${Number(p.liquidity.usd).toLocaleString()}` : "—";
+
+      // Tổng cung & lưu hành
+      if (document.getElementById("thTotal")) document.getElementById("thTotal").textContent = "2,000,000 ATN";
+      if (document.getElementById("thCirc"))  document.getElementById("thCirc").textContent  = "≈ 1,900,000 ATN";
+    } catch (e) {
+      console.error("Load ATN stats error", e);
+    }
+  }
+
+  // Chạy ngay + lặp mỗi 60s
+  loadATNStats();
+  setInterval(loadATNStats, 60000);
+})();

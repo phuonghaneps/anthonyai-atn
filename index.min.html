@@ -193,18 +193,33 @@
   }
 
   function initTip(){
-    const btn=document.getElementById('kpiInfoBtn');
-    const tip=document.getElementById('kpiTip');
-    if(!btn||!tip) return;
-    btn.addEventListener('click',(ev)=>{ev.stopPropagation();tip.hidden=!tip.hidden;});
-    document.addEventListener('click',()=>{tip.hidden=true;});
-  }
+  const btn = document.getElementById('kpiInfoBtn');
+  const tip = document.getElementById('kpiTip');
+  if(!btn || !tip) return;
+
+  // Hiện tooltip khi hover
+  btn.addEventListener('mouseenter', ()=>{ tip.hidden = false; });
+  btn.addEventListener('mouseleave', ()=>{ tip.hidden = true; });
+
+  // Toggle khi click (click để giữ tooltip mở/đóng)
+  btn.addEventListener('click', (ev)=>{
+    ev.stopPropagation();
+    tip.hidden = !tip.hidden;
+  });
+
+  // Click ra ngoài để ẩn tooltip
+  document.addEventListener('click', ()=>{
+    tip.hidden = true;
+  });
+}
+
 
   document.addEventListener('DOMContentLoaded',()=>{
     loadStats();
     setInterval(loadStats,60000);
     initTip();
   });
+
 
 
 })();</script><script src="./claim1.js" defer="defer"></script><script src="./claim2.js" defer="defer"></script><script src="./chart.js" defer="defer"></script></body></html>

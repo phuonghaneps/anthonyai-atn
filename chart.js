@@ -414,7 +414,7 @@
 
         // Total & Circulating (tĩnh theo tokenomics)
         setText("thTotal", "2,000,000 ATN");
-        setText("thCirc",  "≈ 1,900,000 ATN");
+        setText("thCirc",  "100.000 ATN");
 
         // % change: GT không trả trực tiếp -> để “—” (hoặc bạn có thể tính từ OHLCV nếu muốn)
         // setText("thChange", "—");

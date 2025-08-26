@@ -60,15 +60,15 @@
 
       var data = {
         labels: [
-          "Development (25%)",
-          "Community & Airdrop (20%)",
-          "Team – locked (20%)",
-          "Marketing (15%)",
-          "Partnerships & Listing (15%)",
-          "Reserve (5%)"
-        ],
+  "Development (17.1%)",
+  "Community & Airdrop (27.9%)",
+  "Team – locked (20.0%)",
+  "Marketing (15%)",
+  "Partnerships & Listing (15%)",
+  "Reserve (5%)"
+],
         datasets: [{
-          data: [25, 20, 20, 15, 15, 5],
+          data: [17.1, 27.9, 20.0, 15, 15, 5],
           backgroundColor: ["#22c55e","#60a5fa","#f59e0b","#ef4444","#06b6d4","#a78bfa"],
           borderColor: "rgba(15,23,42,.8)",
           borderWidth: 2,

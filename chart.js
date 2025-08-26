@@ -377,63 +377,84 @@
   document.addEventListener("visibilitychange", function(){ if (document.hidden) stop(); else if (!timer) timer = setInterval(refresh, 20000); });
   window.addEventListener("pagehide", stop);
 })();
-// ===== Dexscreener card (ES5-safe) =====
+// ===== KPI card: lấy chính từ GeckoTerminal, fallback Dexscreener (ES5-safe) =====
 (function () {
-  function fmtUSD(n) {
-    var x = Number(n);
-    if (!isFinite(x)) return "—";
+  var POOL = "0x6a0ba3d48b25855bad2102796c837d9668ff8c18";
+  var GT_POOL_URL  = "https://api.geckoterminal.com/api/v2/networks/bsc/pools/" + POOL;
+  var DS_URL       = "https://api.dexscreener.com/latest/dex/pairs/bsc/" + POOL;
+
+  function setText(id, v) { var el = document.getElementById(id); if (el) el.textContent = v; }
+  function usd(n) {
+    var x = Number(n); if (!isFinite(x)) return "—";
     return "$" + x.toLocaleString();
   }
 
-  function updateDex() {
-    var poolAddress = "0x6a0ba3d48b25855bad2102796c837d9668ff8c18";
-    var url = "https://api.dexscreener.com/latest/dex/pairs/bsc/" + poolAddress;
-
-    fetch(url)
+  function updateFromGT() {
+    return fetch(GT_POOL_URL)
       .then(function (r) { return r.json(); })
-      .then(function (data) {
-        var p = data && data.pairs && data.pairs[0];
-        if (!p) return;
+      .then(function (j) {
+        var a = j && j.data && j.data.attributes ? j.data.attributes : null;
+        if (!a) throw new Error("GT empty");
 
-        // Giá + % thay đổi
-        var priceEl = document.getElementById("thPrice");
-        if (priceEl && isFinite(Number(p.priceUsd))) {
-          priceEl.textContent = "$" + Number(p.priceUsd).toFixed(6);
-        }
+        var priceUsd = Number(a.price_in_usd || a.base_token_price_usd || 0);
+        var liqUsd   = Number(a.reserve_in_usd || 0);
+        var fdvUsd   = Number(a.fdv_usd || 0);
+        var vol24    = Number(a.volume_usd_24h || (a.volume_usd && a.volume_usd.h24) || 0);
 
-        var thChange = document.getElementById("thChange");
-        if (thChange && p.priceChange && isFinite(Number(p.priceChange.h24))) {
-          var chg = Number(p.priceChange.h24);
-          thChange.textContent = (chg >= 0 ? "+" : "") + chg.toFixed(2) + "%";
-          thChange.className = "th-change " + (chg >= 0 ? "up" : "down");
-        }
+        // Hiển thị
+        if (isFinite(priceUsd) && priceUsd > 0) setText("thPrice", "$" + priceUsd.toFixed(6));
+        setText("thLiq",  liqUsd ? usd(liqUsd) : "—");
+        setText("thFDV",  fdvUsd ? usd(fdvUsd) : "—");
+        setText("thVol",  vol24 ? usd(vol24) : "—");
 
-        // Market cap, FDV, Volume 24h, Liquidity
-        var mc = document.getElementById("thMC");
-        if (mc) mc.textContent = p.marketCap ? fmtUSD(p.marketCap) : "—";
+        // Market cap ≈ price * circulating (giả định ~1.9M)
+        var circ = 1900000; // chỉnh nếu bạn đổi
+        var mc = priceUsd * circ;
+        setText("thMC", mc ? usd(mc) : "—");
 
-        var fdv = document.getElementById("thFDV");
-        if (fdv) fdv.textContent = p.fdv ? fmtUSD(p.fdv) : "—";
+        // Total & Circulating (tĩnh theo tokenomics)
+        setText("thTotal", "2,000,000 ATN");
+        setText("thCirc",  "≈ 1,900,000 ATN");
 
-        var vol = document.getElementById("thVol");
-        if (vol) vol.textContent =
-          (p.volume && isFinite(Number(p.volume.h24))) ? fmtUSD(p.volume.h24) : "—";
-
-        var liq = document.getElementById("thLiq");
-        if (liq) liq.textContent =
-          (p.liquidity && isFinite(Number(p.liquidity.usd))) ? fmtUSD(p.liquidity.usd) : "—";
-
-        // Tổng cung & lưu hành (tĩnh theo tokenomics)
-        var total = document.getElementById("thTotal");
-        if (total) total.textContent = "2,000,000 ATN";
-        var circ = document.getElementById("thCirc");
-        if (circ) circ.textContent = "≈ 1,900,000 ATN";
-      })
-      .catch(function (e) {
-        console.log("Dexscreener load error:", e);
+        // % change: GT không trả trực tiếp -> để “—” (hoặc bạn có thể tính từ OHLCV nếu muốn)
+        // setText("thChange", "—");
       });
   }
 
-  updateDex();
-  setInterval(updateDex, 60000);
+  function updateFromDexscreener() {
+    return fetch(DS_URL)
+      .then(function (r) { return r.json(); })
+      .then(function (d) {
+        var p = d && d.pairs && d.pairs[0] ? d.pairs[0] : null;
+        if (!p) throw new Error("DS empty");
+
+        if (isFinite(Number(p.priceUsd))) setText("thPrice", "$" + Number(p.priceUsd).toFixed(6));
+
+        if (p.priceChange && isFinite(Number(p.priceChange.h24))) {
+          var chg = Number(p.priceChange.h24);
+          var el = document.getElementById("thChange");
+          if (el) {
+            el.textContent = (chg >= 0 ? "+" : "") + chg.toFixed(2) + "%";
+            el.className = "th-change " + (chg >= 0 ? "up" : "down");
+          }
+        }
+
+        setText("thMC",  p.marketCap ? usd(p.marketCap) : "—");
+        setText("thFDV", p.fdv ? usd(p.fdv) : "—");
+        setText("thVol", (p.volume && isFinite(Number(p.volume.h24))) ? usd(p.volume.h24) : "—");
+        setText("thLiq", (p.liquidity && isFinite(Number(p.liquidity.usd))) ? usd(p.liquidity.usd) : "—");
+        setText("thTotal", "2,000,000 ATN");
+        setText("thCirc",  "≈ 1,900,000 ATN");
+      });
+  }
+
+  function updateKPI() {
+    updateFromGT()
+      .catch(function () { return updateFromDexscreener(); })
+      .catch(function (e) { console.log("KPI update failed:", e); });
+  }
+
+  updateKPI();
+  setInterval(updateKPI, 60000);
 })();
+

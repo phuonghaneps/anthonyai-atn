@@ -249,40 +249,63 @@
     return x.toFixed(2);
   }
 
+  // Gắn ngày-giờ VN dưới tiêu đề
+  var vn = document.getElementById("legacyDateVN");
+  if (vn) {
+    var now = new Date();
+    var fmt = new Intl.DateTimeFormat("vi-VN", {
+      timeZone: "Asia/Ho_Chi_Minh",
+      dateStyle: "full",
+      timeStyle: "short"
+    });
+    vn.textContent = "• " + fmt.format(now);
+  }
+
   var canvas = document.getElementById("priceLine_legacy");
   if (!canvas || !window.Chart) return;
 
-  // lock size
+  // ==== Tăng độ nét (hiDPI) & kích thước ổn định ====
+  var cssH = 320; // chiều cao hiển thị
   var w = (canvas.parentNode && canvas.parentNode.clientWidth) ? canvas.parentNode.clientWidth : 900;
+  var dpr = window.devicePixelRatio || 1;
   canvas.style.width  = "100%";
-  canvas.style.height = "320px";
-  canvas.width  = w;
-  canvas.height = 320;
+  canvas.style.height = cssH + "px";
+  canvas.width  = Math.round(w * dpr);
+  canvas.height = Math.round(cssH * dpr);
+  var ctx = canvas.getContext("2d");
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0); // scale để razor-sharp
 
   var data = {
     labels: [],
     datasets: [{
       label: "ATN/USD (legacy)",
       data: [],
-      borderColor: "rgba(34,197,94,1)",
-      borderWidth: 2,
-      backgroundColor: "rgba(34,197,94,.12)",
+      // tăng tương phản
+      borderColor: "#00e396",
+      borderWidth: 3,
+      fill: false,              // bỏ nền mờ
       tension: 0.25,
-      fill: true,
-      pointRadius: 0
+      pointRadius: 1.5,
+      pointHitRadius: 6
     }]
   };
 
-  var chart = new Chart(canvas.getContext("2d"), {
+  var chart = new Chart(ctx, {
     type: "line",
     data: data,
     options: {
       animation: false,
-      responsive: false,
+      responsive: false,       // ta tự quản kích thước + dpr
       plugins: { legend: { display: false } },
       scales: {
-        x: { ticks: { color: "#cbd5e1" }, grid: { color: "rgba(148,163,184,.12)" } },
-        y: { ticks: { color: "#cbd5e1" }, grid: { color: "rgba(148,163,184,.12)" } }
+        x: {
+          ticks: { color: "#e2e8f0" },             // chữ sáng hơn
+          grid:  { color: "rgba(148,163,184,.25)" } // grid rõ hơn
+        },
+        y: {
+          ticks: { color: "#e2e8f0" },
+          grid:  { color: "rgba(148,163,184,.25)" }
+        }
       }
     }
   });

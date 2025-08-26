@@ -414,7 +414,7 @@
 
         // Total & Circulating (tĩnh theo tokenomics)
         setText("thTotal", "2,000,000 ATN");
-        setText("thCirc",  "≈ 100,000 ATN");
+        setText("thCirc",  "≈ 1,900,000 ATN");
 
         // % change: GT không trả trực tiếp -> để “—” (hoặc bạn có thể tính từ OHLCV nếu muốn)
         // setText("thChange", "—");
@@ -444,7 +444,7 @@
         setText("thVol", (p.volume && isFinite(Number(p.volume.h24))) ? usd(p.volume.h24) : "—");
         setText("thLiq", (p.liquidity && isFinite(Number(p.liquidity.usd))) ? usd(p.liquidity.usd) : "—");
         setText("thTotal", "2,000,000 ATN");
-        setText("thCirc",  "≈ 100,000 ATN");
+        setText("thCirc",  "≈ 1,900,000 ATN");
       });
   }
 

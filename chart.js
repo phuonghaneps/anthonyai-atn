@@ -237,3 +237,121 @@
   }); }); // <-- đóng whenChartReady và onReady
 
 })(); // <-- đóng IIFE ngoài cùng
+// ===== Extra: Legacy ATN pool (separate new blocks) =====
+(function(){
+  function fmtCompact(n){
+    if (n === undefined || n === null) return "—";
+    var x = Number(n);
+    if (!isFinite(x)) return "—";
+    if (x >= 1e9) return (x/1e9).toFixed(2)+"B";
+    if (x >= 1e6) return (x/1e6).toFixed(2)+"M";
+    if (x >= 1e3) return (x/1e3).toFixed(2)+"K";
+    return x.toFixed(2);
+  }
+
+  var canvas = document.getElementById("priceLine_legacy");
+  if (!canvas || !window.Chart) return;
+
+  // lock size
+  var w = (canvas.parentNode && canvas.parentNode.clientWidth) ? canvas.parentNode.clientWidth : 900;
+  canvas.style.width  = "100%";
+  canvas.style.height = "320px";
+  canvas.width  = w;
+  canvas.height = 320;
+
+  var data = {
+    labels: [],
+    datasets: [{
+      label: "ATN/USD (legacy)",
+      data: [],
+      borderColor: "rgba(34,197,94,1)",
+      borderWidth: 2,
+      backgroundColor: "rgba(34,197,94,.12)",
+      tension: 0.25,
+      fill: true,
+      pointRadius: 0
+    }]
+  };
+
+  var chart = new Chart(canvas.getContext("2d"), {
+    type: "line",
+    data: data,
+    options: {
+      animation: false,
+      responsive: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { ticks: { color: "#cbd5e1" }, grid: { color: "rgba(148,163,184,.12)" } },
+        y: { ticks: { color: "#cbd5e1" }, grid: { color: "rgba(148,163,184,.12)" } }
+      }
+    }
+  });
+
+  var priceEl = document.getElementById("statPrice_legacy");
+  var liqEl   = document.getElementById("statLiq_legacy");
+  var fdvEl   = document.getElementById("statFdv_legacy");
+  var volEl   = document.getElementById("statVol_legacy");
+
+  var POOL = "0xb1138c44d381994956c22f8f7c15fa68b1b2b64d";
+  var GT_POOL_URL  = "https://api.geckoterminal.com/api/v2/networks/bsc/pools/" + POOL;
+  var GT_OHLCV_URL = "https://api.geckoterminal.com/api/v2/networks/bsc/pools/" + POOL + "/ohlcv/minute?aggregate=5&limit=60";
+
+  function pick(o, path){ try{ for(var i=0;i<path.length;i++) o=o[path[i]]; return o; } catch(e){ return null; } }
+
+  function seed(){
+    return fetch(GT_OHLCV_URL, { cache:"no-store" })
+      .then(function(r){ return r.json(); })
+      .then(function(j){
+        var arr = pick(j, ["data","attributes","ohlcv_list"]) || [];
+        data.labels.length = 0; data.datasets[0].data.length = 0;
+        for (var i=0;i<arr.length;i++){
+          var row = arr[i], ts=row[0], close=Number(row[4]||0);
+          if (!isFinite(close) || close<=0) continue;
+          var label = new Date(ts*1000).toLocaleTimeString([], {hour:"2-digit", minute:"2-digit"});
+          data.labels.push(label);
+          data.datasets[0].data.push(close);
+        }
+        chart.update("none");
+      })
+      .catch(function(e){ console.log("legacy seed error:", e); });
+  }
+
+  var abortCtrl=null, timer=null;
+  function refresh(){
+    if (abortCtrl && abortCtrl.abort) abortCtrl.abort();
+    abortCtrl = (typeof AbortController!=="undefined") ? new AbortController() : null;
+    var sig = abortCtrl ? { signal: abortCtrl.signal } : {};
+
+    fetch(GT_POOL_URL, sig)
+      .then(function(r){ return r.json(); })
+      .then(function(j){
+        var a = pick(j, ["data","attributes"]) || {};
+        var priceUsd = Number(a.price_in_usd || a.base_token_price_usd || 0);
+        var liqUsd   = Number(a.reserve_in_usd || 0);
+        var fdvUsd   = Number(a.fdv_usd || 0);
+        var vol24    = Number(a.volume_usd_24h || (a.volume_usd && a.volume_usd.h24) || 0);
+
+        if (priceEl) priceEl.textContent = priceUsd ? ("$"+priceUsd.toFixed(6)) : "—";
+        if (liqEl)   liqEl.textContent   = liqUsd   ? ("$"+fmtCompact(liqUsd)) : "—";
+        if (fdvEl)   fdvEl.textContent   = fdvUsd   ? ("$"+fmtCompact(fdvUsd)) : "—";
+        if (volEl)   volEl.textContent   = vol24    ? ("$"+fmtCompact(vol24)) : "—";
+
+        if (isFinite(priceUsd) && priceUsd>0){
+          var label = new Date().toLocaleTimeString([], {hour:"2-digit", minute:"2-digit"});
+          data.labels.push(label);
+          data.datasets[0].data.push(priceUsd);
+          if (data.labels.length>50){ data.labels.shift(); data.datasets[0].data.shift(); }
+          chart.update("none");
+        }
+      })
+      .catch(function(e){ console.log("legacy refresh error:", e); });
+  }
+
+  seed().then(function(){ refresh(); });
+  timer = setInterval(refresh, 20000);
+
+  function stop(){ if (timer){ clearInterval(timer); timer=null; } if (abortCtrl && abortCtrl.abort) abortCtrl.abort(); }
+  document.addEventListener("visibilitychange", function(){ if (document.hidden) stop(); else if (!timer) timer = setInterval(refresh, 20000); });
+  window.addEventListener("pagehide", stop);
+})();
+

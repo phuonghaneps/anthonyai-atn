@@ -408,13 +408,13 @@
         setText("thVol",  vol24 ? usd(vol24) : "—");
 
         // Market cap ≈ price * circulating (giả định ~1.9M)
-        var circ = 1900000; // chỉnh nếu bạn đổi
+        var circ = 100000; // chỉnh nếu bạn đổi
         var mc = priceUsd * circ;
         setText("thMC", mc ? usd(mc) : "—");
 
         // Total & Circulating (tĩnh theo tokenomics)
         setText("thTotal", "2,000,000 ATN");
-        setText("thCirc",  "≈ 100,000 ATN");
+        setText("thCirc",  "≈ 1,900,000 ATN");
 
         // % change: GT không trả trực tiếp -> để “—” (hoặc bạn có thể tính từ OHLCV nếu muốn)
         // setText("thChange", "—");
@@ -444,7 +444,7 @@
         setText("thVol", (p.volume && isFinite(Number(p.volume.h24))) ? usd(p.volume.h24) : "—");
         setText("thLiq", (p.liquidity && isFinite(Number(p.liquidity.usd))) ? usd(p.liquidity.usd) : "—");
         setText("thTotal", "2,000,000 ATN");
-        setText("thCirc",  "≈ 100,000 ATN");
+        setText("thCirc",  "≈ 1,900,000 ATN");
       });
   }
 

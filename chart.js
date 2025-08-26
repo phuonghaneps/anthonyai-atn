@@ -383,6 +383,9 @@
   var GT_POOL_URL  = "https://api.geckoterminal.com/api/v2/networks/bsc/pools/" + POOL;
   var DS_URL       = "https://api.dexscreener.com/latest/dex/pairs/bsc/" + POOL;
 
+  // circulating cố định theo yêu cầu
+  var CIRC = 100000;
+
   function setText(id, v) { var el = document.getElementById(id); if (el) el.textContent = v; }
   function usd(n) {
     var x = Number(n); if (!isFinite(x)) return "—";
@@ -401,23 +404,24 @@
         var fdvUsd   = Number(a.fdv_usd || 0);
         var vol24    = Number(a.volume_usd_24h || (a.volume_usd && a.volume_usd.h24) || 0);
 
-        // Hiển thị
+        // Giá
         if (isFinite(priceUsd) && priceUsd > 0) setText("thPrice", "$" + priceUsd.toFixed(6));
+
+        // BỎ dấu "—" của change
+        setText("thChange", "");
+
+        // KPIs
         setText("thLiq",  liqUsd ? usd(liqUsd) : "—");
         setText("thFDV",  fdvUsd ? usd(fdvUsd) : "—");
         setText("thVol",  vol24 ? usd(vol24) : "—");
 
-        // Market cap ≈ price * circulating (giả định ~1.9M)
-        var circ = 100000; // chỉnh nếu bạn đổi
-        var mc = priceUsd * circ;
+        // Market cap = price * circulating(100k)
+        var mc = isFinite(priceUsd) ? priceUsd * CIRC : 0;
         setText("thMC", mc ? usd(mc) : "—");
 
-        // Total & Circulating (tĩnh theo tokenomics)
+        // Total & Circulating
         setText("thTotal", "2,000,000 ATN");
-        setText("thCirc",  "≈ 1,900,000 ATN");
-
-        // % change: GT không trả trực tiếp -> để “—” (hoặc bạn có thể tính từ OHLCV nếu muốn)
-        // setText("thChange", "—");
+        setText("thCirc",  CIRC.toLocaleString() + " ATN");
       });
   }
 
@@ -428,23 +432,21 @@
         var p = d && d.pairs && d.pairs[0] ? d.pairs[0] : null;
         if (!p) throw new Error("DS empty");
 
+        // Giá
         if (isFinite(Number(p.priceUsd))) setText("thPrice", "$" + Number(p.priceUsd).toFixed(6));
 
-        if (p.priceChange && isFinite(Number(p.priceChange.h24))) {
-          var chg = Number(p.priceChange.h24);
-          var el = document.getElementById("thChange");
-          if (el) {
-            el.textContent = (chg >= 0 ? "+" : "") + chg.toFixed(2) + "%";
-            el.className = "th-change " + (chg >= 0 ? "up" : "down");
-          }
-        }
+        // KHÔNG hiển thị % thay đổi => bỏ hẳn dấu "—"
+        setText("thChange", "");
 
-        setText("thMC",  p.marketCap ? usd(p.marketCap) : "—");
-        setText("thFDV", p.fdv ? usd(p.fdv) : "—");
-        setText("thVol", (p.volume && isFinite(Number(p.volume.h24))) ? usd(p.volume.h24) : "—");
-        setText("thLiq", (p.liquidity && isFinite(Number(p.liquidity.usd))) ? usd(p.liquidity.usd) : "—");
+        // Nếu muốn lấy luôn MC/FDV/Liq/Vol từ DS:
+        if (p.marketCap) setText("thMC", usd(p.marketCap));  // hoặc tính lại theo CIRC, tùy bạn
+        if (p.fdv)       setText("thFDV", usd(p.fdv));
+        if (p.volume && isFinite(Number(p.volume.h24))) setText("thVol", usd(p.volume.h24));
+        if (p.liquidity && isFinite(Number(p.liquidity.usd))) setText("thLiq", usd(p.liquidity.usd));
+
+        // Total & Circulating
         setText("thTotal", "2,000,000 ATN");
-        setText("thCirc",  "≈ 1,900,000 ATN");
+        setText("thCirc",  CIRC.toLocaleString() + " ATN");
       });
   }
 
@@ -457,4 +459,3 @@
   updateKPI();
   setInterval(updateKPI, 60000);
 })();
-

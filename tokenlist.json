@@ -1,1 +1,21 @@
+{
+  "name": "Anthony AI Tokenlist",
+  "logoURI": "https://atncrypto.com/logo_atn.png",
+  "timestamp": "2025-08-26T00:00:00Z",
+  "version": { "major": 1, "minor": 0, "patch": 0 },
+  "tags": {
+    "ai": { "name": "AI", "description": "AI-related token" }
+  },
+  "tokens": [
+    {
+      "chainId": 56,
+      "address": "0xb5C84953983931dd2C10C9b04a4379eE52697193",
+      "name": "Anthony AI",
+      "symbol": "ATN",
+      "decimals": 18,
+      "logoURI": "https://atncrypto.com/logo_atn.png",
+      "tags": ["ai"]
+    }
+  ]
+}
 

@@ -1,8 +1,8 @@
 {
   "name": "Anthony AI Tokenlist",
-  "logoURI": "https://phuonganheps.github.io/anthonyai-atn/logo_atn.png",
+  "logoURI": "https://phuonghaneps.github.io/anthonyai-atn/logo_atn.png",
   "timestamp": "2025-08-26T00:00:00Z",
-  "version": { "major": 1, "minor": 0, "patch": 1 },
+  "version": { "major": 1, "minor": 0, "patch": 2 },
   "tags": {
     "ai": { "name": "AI", "description": "AI-related token" }
   },
@@ -13,7 +13,7 @@
       "name": "Anthony AI",
       "symbol": "ATN",
       "decimals": 18,
-      "logoURI": "https://phuonganheps.github.io/anthonyai-atn/logo_atn.png",
+      "logoURI": "https://phuonghaneps.github.io/anthonyai-atn/logo_atn.png",
       "tags": ["ai"]
     }
   ]

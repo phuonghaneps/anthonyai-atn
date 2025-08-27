@@ -402,28 +402,65 @@
     return x.toFixed(2);
   }
 
-  // ----- Gauge: hỗ trợ 3 kiểu (CSS var, conic-gradient, SVG) -----
   function updateCircGauge(circ){
   var p = 0;
   if (isFinite(circ) && circ > 0 && isFinite(TOTAL_SUPPLY) && TOTAL_SUPPLY > 0) {
     p = Math.max(0, Math.min(100, (circ / TOTAL_SUPPLY) * 100));
   }
 
+  // 1) Nếu có phần tử CSS ring (#circGauge) thì cập nhật biến
   var g = document.getElementById("circGauge");
   if (g && g.style) {
-    // Hỗ trợ mọi kiểu CSS bạn có thể đang dùng
-    g.style.setProperty("--p", p);                  // số thuần: 26.3
-    g.style.setProperty("--p-str", p + "%");        // dạng %: "26.3%"
-    g.style.setProperty("--pdeg", (p*3.6) + "deg"); // dạng góc: "94.68deg"
-    // Fallback nếu CSS không lấy var:
+    g.style.setProperty("--p", p);
+    g.style.setProperty("--p-str", p + "%");
+    g.style.setProperty("--pdeg", (p * 3.6) + "deg");
+    // fallback nếu CSS không dùng var()
     if (!g.style.getPropertyValue || !g.style.getPropertyValue("--p")) {
       g.style.background =
         "conic-gradient(#22c55e " + p + "%, rgba(148,163,184,.25) 0)";
     }
   }
 
-  // SVG fallback (nếu bạn dùng <circle id="circStroke" ...>)
+  // 2) SVG gauge: tự tạo nếu chưa có để bảo đảm hiển thị
   var s = document.getElementById("circStroke");
+  if (!s) {
+    var svgNS = "http://www.w3.org/2000/svg";
+    var svg = document.createElementNS(svgNS, "svg");
+    svg.setAttribute("width", "20");
+    svg.setAttribute("height", "20");
+    svg.setAttribute("viewBox", "0 0 24 24");
+    svg.style.marginLeft = "8px";
+    svg.style.verticalAlign = "middle";
+
+    var bg = document.createElementNS(svgNS, "circle");
+    bg.setAttribute("cx", "12"); bg.setAttribute("cy", "12"); bg.setAttribute("r", "9");
+    bg.setAttribute("stroke", "rgba(148,163,184,.25)");
+    bg.setAttribute("stroke-width", "3"); bg.setAttribute("fill", "none");
+
+    s = document.createElementNS(svgNS, "circle");
+    s.setAttribute("id", "circStroke");
+    s.setAttribute("cx", "12"); s.setAttribute("cy", "12"); s.setAttribute("r", "9");
+    s.setAttribute("stroke", "#22c55e");
+    s.setAttribute("stroke-width", "3"); s.setAttribute("fill", "none");
+    s.setAttribute("stroke-linecap", "round");
+    // quay -90deg để bắt đầu từ đỉnh
+    s.style.transform = "rotate(-90deg)";
+    s.style.transformOrigin = "12px 12px";
+
+    svg.appendChild(bg);
+    svg.appendChild(s);
+
+    // gắn cạnh số circulating (thẻ có id "thCirc")
+    var anchor = document.getElementById("thCirc");
+    if (anchor && anchor.parentNode) {
+      anchor.parentNode.appendChild(svg);
+    } else {
+      // dự phòng: gắn vào body để còn thấy
+      document.body.appendChild(svg);
+    }
+  }
+
+  // cập nhật tiến độ cho SVG (stroke-dashoffset)
   if (s) {
     var r = Number(s.getAttribute("r") || 0);
     var c = 2 * Math.PI * r;
@@ -433,9 +470,11 @@
     }
   }
 
+  // (tuỳ chọn) hiển thị phần trăm nếu có thẻ #circPct
   var t = document.getElementById("circPct");
   if (t) t.textContent = p.toFixed(1) + "%";
 }
+
 
 
   // ----- Lấy số ATN trong LP -----

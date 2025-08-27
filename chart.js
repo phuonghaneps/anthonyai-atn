@@ -378,22 +378,67 @@
   window.addEventListener("pagehide", stop);
 })();
 // ===== KPI card: lấy chính từ GeckoTerminal, fallback Dexscreener (ES5-safe) =====
+<script>
+// ===== KPI card: Circulating lấy từ pool (ES5-safe) =====
 (function () {
-  var POOL = "0x6a0ba3d48b25855bad2102796c837d9668ff8c18";
-  var GT_POOL_URL  = "https://api.geckoterminal.com/api/v2/networks/bsc/pools/" + POOL;
-  var DS_URL       = "https://api.dexscreener.com/latest/dex/pairs/bsc/" + POOL;
+  var POOL      = "0x6a0ba3D48b25855baD2102796c837d9668FF8C18"; // ATN/WBNB v2
+  var ATN_ADDR  = "0xb5C84953983931dd2C10C9b04a4379eE52697193".toLowerCase();
+  var GT_POOL   = "https://api.geckoterminal.com/api/v2/networks/bsc/pools/" + POOL;
+  var DS_URL    = "https://api.dexscreener.com/latest/dex/pairs/bsc/" + POOL;
 
-  // circulating cố định theo yêu cầu
-  var CIRC = 100000;
+  // (Tùy chọn) cộng thêm lượng ATN ngoài LP mà bạn muốn tính là circulating (airdrop, phần đã phân phối...)
+  var EXTRA_PUBLIC_ATN = 0; // ví dụ 100000 nếu muốn
 
-  function setText(id, v) { var el = document.getElementById(id); if (el) el.textContent = v; }
-  function usd(n) {
-    var x = Number(n); if (!isFinite(x)) return "—";
-    return "$" + x.toLocaleString();
+  function setText(id, v){ var el=document.getElementById(id); if(el) el.textContent=v; }
+  function usd(n){ var x=Number(n); if(!isFinite(x)) return "—"; return "$"+x.toLocaleString(); }
+  function kfmt(n){ var x=Number(n); if(!isFinite(x)) return "—";
+    if(x>=1e9) return (x/1e9).toFixed(2)+"B"; if(x>=1e6) return (x/1e6).toFixed(2)+"M";
+    if(x>=1e3) return (x/1e3).toFixed(2)+"K"; return x.toFixed(2);
+  }
+
+  // --- Lấy số ATN trong LP từ Dexscreener (ưu tiên) ---
+  function getPooledATNFromDS(){
+    return fetch(DS_URL).then(function(r){return r.json();}).then(function(d){
+      var p = d && d.pairs && d.pairs[0] ? d.pairs[0] : null;
+      if(!p) throw new Error("DS empty");
+      var pooled = 0;
+      // liquidity.base/quote là số token, không phải USD
+      if (p.baseToken && p.baseToken.address &&
+          String(p.baseToken.address).toLowerCase()===ATN_ADDR) {
+        pooled = Number(p.liquidity && p.liquidity.base || 0);
+      } else if (p.quoteToken && p.quoteToken.address &&
+                 String(p.quoteToken.address).toLowerCase()===ATN_ADDR) {
+        pooled = Number(p.liquidity && p.liquidity.quote || 0);
+      }
+      if (!isFinite(pooled)) pooled = 0;
+      return pooled;
+    });
+  }
+
+  // --- Fallback: ước lượng từ GeckoTerminal (reserve_in_usd/2)/price ---
+  function getPooledATNFromGT(){
+    return fetch(GT_POOL).then(function(r){return r.json();}).then(function(j){
+      var a = j && j.data && j.data.attributes ? j.data.attributes : {};
+      var reserveUsd = Number(a.reserve_in_usd || 0);
+      var atnPrice   = Number(a.base_token_price_usd || a.price_in_usd || 0);
+      // Trong pool v2, 2 bên xấp xỉ 50/50 theo USD
+      var pooled = (reserveUsd && atnPrice) ? (reserveUsd/2)/atnPrice : 0;
+      return isFinite(pooled) ? pooled : 0;
+    });
+  }
+
+  function getCirculating(){
+    // DS -> GT; cộng EXTRA_PUBLIC_ATN
+    return getPooledATNFromDS()
+      .catch(function(){ return getPooledATNFromGT(); })
+      .then(function(pooled){
+        var circ = Number(pooled || 0) + Number(EXTRA_PUBLIC_ATN || 0);
+        return circ;
+      });
   }
 
   function updateFromGT() {
-    return fetch(GT_POOL_URL)
+    return fetch(GT_POOL)
       .then(function (r) { return r.json(); })
       .then(function (j) {
         var a = j && j.data && j.data.attributes ? j.data.attributes : null;
@@ -404,24 +449,19 @@
         var fdvUsd   = Number(a.fdv_usd || 0);
         var vol24    = Number(a.volume_usd_24h || (a.volume_usd && a.volume_usd.h24) || 0);
 
-        // Giá
         if (isFinite(priceUsd) && priceUsd > 0) setText("thPrice", "$" + priceUsd.toFixed(6));
-
-        // BỎ dấu "—" của change
         setText("thChange", "");
-
-        // KPIs
         setText("thLiq",  liqUsd ? usd(liqUsd) : "—");
         setText("thFDV",  fdvUsd ? usd(fdvUsd) : "—");
-        setText("thVol",  vol24 ? usd(vol24) : "—");
+        setText("thVol",  vol24  ? usd(vol24)  : "—");
+        setText("thTotal","2,000,000 ATN");
 
-        // Market cap = price * circulating(100k)
-        var mc = isFinite(priceUsd) ? priceUsd * CIRC : 0;
-        setText("thMC", mc ? usd(mc) : "—");
-
-        // Total & Circulating
-        setText("thTotal", "2,000,000 ATN");
-        setText("thCirc",  CIRC.toLocaleString() + " ATN");
+        return getCirculating().then(function(circ){
+          if (isFinite(circ) && circ>0) {
+            setText("thCirc", kfmt(circ)+" ATN");
+            if (isFinite(priceUsd) && priceUsd>0) setText("thMC", usd(priceUsd * circ));
+          }
+        });
       });
   }
 
@@ -432,21 +472,27 @@
         var p = d && d.pairs && d.pairs[0] ? d.pairs[0] : null;
         if (!p) throw new Error("DS empty");
 
-        // Giá
-        if (isFinite(Number(p.priceUsd))) setText("thPrice", "$" + Number(p.priceUsd).toFixed(6));
-
-        // KHÔNG hiển thị % thay đổi => bỏ hẳn dấu "—"
+        var priceUsd = Number(p.priceUsd || 0);
+        if (isFinite(priceUsd)) setText("thPrice", "$" + priceUsd.toFixed(6));
         setText("thChange", "");
 
-        // Nếu muốn lấy luôn MC/FDV/Liq/Vol từ DS:
-        if (p.marketCap) setText("thMC", usd(p.marketCap));  // hoặc tính lại theo CIRC, tùy bạn
-        if (p.fdv)       setText("thFDV", usd(p.fdv));
+        if (p.fdv) setText("thFDV", usd(p.fdv));
         if (p.volume && isFinite(Number(p.volume.h24))) setText("thVol", usd(p.volume.h24));
         if (p.liquidity && isFinite(Number(p.liquidity.usd))) setText("thLiq", usd(p.liquidity.usd));
+        setText("thTotal","2,000,000 ATN");
 
-        // Total & Circulating
-        setText("thTotal", "2,000,000 ATN");
-        setText("thCirc",  CIRC.toLocaleString() + " ATN");
+        // Circulating từ DS trực tiếp
+        var pooled = 0;
+        if (p.baseToken && p.baseToken.address &&
+            String(p.baseToken.address).toLowerCase()===ATN_ADDR) {
+          pooled = Number(p.liquidity && p.liquidity.base || 0);
+        } else if (p.quoteToken && p.quoteToken.address &&
+                   String(p.quoteToken.address).toLowerCase()===ATN_ADDR) {
+          pooled = Number(p.liquidity && p.liquidity.quote || 0);
+        }
+        var circ = (isFinite(pooled)?pooled:0) + Number(EXTRA_PUBLIC_ATN||0);
+        setText("thCirc", kfmt(circ)+" ATN");
+        if (isFinite(priceUsd)) setText("thMC", usd(priceUsd * circ));
       });
   }
 
@@ -459,3 +505,4 @@
   updateKPI();
   setInterval(updateKPI, 60000);
 })();
+</script>

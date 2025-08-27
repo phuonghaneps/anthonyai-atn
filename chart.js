@@ -404,31 +404,39 @@
 
   // ----- Gauge: hỗ trợ 3 kiểu (CSS var, conic-gradient, SVG) -----
   function updateCircGauge(circ){
-    var p = 0;
-    if (isFinite(circ) && circ>0 && isFinite(TOTAL_SUPPLY) && TOTAL_SUPPLY>0) {
-      p = Math.max(0, Math.min(100, (circ / TOTAL_SUPPLY) * 100));
-    }
-    // 1) CSS var
-    var g = document.getElementById("circGauge");
-    if (g && g.style && g.style.setProperty) g.style.setProperty("--p", p);
-    // 2) Fallback conic-gradient
-    if (g && (!g.style.getPropertyValue || !g.style.getPropertyValue("--p"))) {
-      g.style.background = "conic-gradient(#22c55e " + p + "%, rgba(148,163,184,.25) 0)";
-    }
-    // 3) SVG circle
-    var s = document.getElementById("circStroke");
-    if (s) {
-      var r = Number(s.getAttribute("r") || 0);
-      var c = 2 * Math.PI * r;
-      if (isFinite(c) && c>0) {
-        s.style.strokeDasharray = String(c);
-        s.style.strokeDashoffset = String(c * (1 - p/100));
-      }
-    }
-    // (tuỳ chọn) hiển thị % bên cạnh
-    var t = document.getElementById("circPct");
-    if (t) t.textContent = p.toFixed(1) + "%";
+  var p = 0;
+  if (isFinite(circ) && circ > 0 && isFinite(TOTAL_SUPPLY) && TOTAL_SUPPLY > 0) {
+    p = Math.max(0, Math.min(100, (circ / TOTAL_SUPPLY) * 100));
   }
+
+  var g = document.getElementById("circGauge");
+  if (g && g.style) {
+    // Hỗ trợ mọi kiểu CSS bạn có thể đang dùng
+    g.style.setProperty("--p", p);                  // số thuần: 26.3
+    g.style.setProperty("--p-str", p + "%");        // dạng %: "26.3%"
+    g.style.setProperty("--pdeg", (p*3.6) + "deg"); // dạng góc: "94.68deg"
+    // Fallback nếu CSS không lấy var:
+    if (!g.style.getPropertyValue || !g.style.getPropertyValue("--p")) {
+      g.style.background =
+        "conic-gradient(#22c55e " + p + "%, rgba(148,163,184,.25) 0)";
+    }
+  }
+
+  // SVG fallback (nếu bạn dùng <circle id="circStroke" ...>)
+  var s = document.getElementById("circStroke");
+  if (s) {
+    var r = Number(s.getAttribute("r") || 0);
+    var c = 2 * Math.PI * r;
+    if (isFinite(c) && c > 0) {
+      s.style.strokeDasharray = String(c);
+      s.style.strokeDashoffset = String(c * (1 - p / 100));
+    }
+  }
+
+  var t = document.getElementById("circPct");
+  if (t) t.textContent = p.toFixed(1) + "%";
+}
+
 
   // ----- Lấy số ATN trong LP -----
   function getPooledATNFromDS(){

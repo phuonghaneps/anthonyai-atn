@@ -377,8 +377,6 @@
   document.addEventListener("visibilitychange", function(){ if (document.hidden) stop(); else if (!timer) timer = setInterval(refresh, 20000); });
   window.addEventListener("pagehide", stop);
 })();
-// ===== KPI card: lấy chính từ GeckoTerminal, fallback Dexscreener (ES5-safe) =====
-<script>
 // ===== KPI card: Circulating lấy từ pool (ES5-safe) =====
 (function () {
   var POOL      = "0x6a0ba3D48b25855baD2102796c837d9668FF8C18"; // ATN/WBNB v2
@@ -505,4 +503,4 @@
   updateKPI();
   setInterval(updateKPI, 60000);
 })();
-</script>
+

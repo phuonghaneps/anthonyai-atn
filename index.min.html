@@ -276,4 +276,21 @@
 
 
 
-})();</script><script src="./claim1.js" defer="defer"></script><script src="./claim2.js" defer="defer"></script><script src="./chart.js" defer="defer"></script></html>
+
+})();</script><script src="./claim1.js" defer="defer"></script><script src="./claim2.js" defer="defer"></script><script src="./chart.js" defer="defer"></script><script>document.addEventListener("DOMContentLoaded", function () {
+    if (window.renderATNTokenomicsV2) {
+      window.renderATNTokenomicsV2({
+        canvasId: "pie_tokenomics_v2", // id canvas mới
+        total: 2000000,
+        burn: 1000000,
+        lockedLP: 500000,
+        treasury: {
+          airdrop: 100000,
+          marketing: 100000,
+          dev: 100000,
+          lpReserve: 100000,
+          misc: 640
+        }
+      });
+    }
+  });</script></html>

@@ -86,7 +86,7 @@
         }
       });
     })();
-<script>
+
 // ===== Donut: Tokenomics V2 — giống hình 2 =====
 window.renderATNTokenomicsV2 = function (opts) {
   opts = opts || {};
@@ -156,7 +156,7 @@ window.renderATNTokenomicsV2 = function (opts) {
     }
   });
 };
-</script>
+
 
     // ----- Line: Live price + stats (GeckoTerminal) -----
     (function initLiveChart(){

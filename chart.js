@@ -93,6 +93,13 @@
       // 1) Ưu tiên vẽ vào canvas sẵn có
       var cv = document.getElementById(canvasId);
       if (cv) {
+        cv.style.display = "block";
+        cv.style.margin  = "0 auto";
+        cv.style.maxWidth = "380px";   
+        cv.style.width  = "100%";
+        cv.style.height = "260px";     
+        cv.width  = 380;               
+        cv.height = 260;
         var ctx = cv.getContext("2d");
         var data = {
           labels: [

@@ -88,99 +88,41 @@
     })();
 
 // ===== Donut: Tokenomics V2 — nhỏ gọn giống Hình 2 =====
-window.renderATNTokenomicsV2 = function (opts) {
-  opts = opts || {};
-  var canvasId = opts.canvasId || "pie_tokenomics_v2";
+onReady(function () { whenChartReady(function () {
 
-  var total     = Number(opts.total || 2000000);
-  var burn      = Number(opts.burn || 1000000);
-  var lockedLP  = Number(opts.lockedLP || 500000);
-  var t         = opts.treasury || {};
-  var airdrop   = Number(t.airdrop   || 100000);
-  var marketing = Number(t.marketing || 100000);
-  var dev       = Number(t.dev       || 100000);
-  var reserve   = Number(t.lpReserve || 100000) + Number(t.misc || 0);
+    // ----- Donut: Tokenomics -----
+    (function initDonut(){
+      var ctx = document.getElementById("pie");
+      if (!ctx) return;
 
-  var cv = document.getElementById(canvasId);
-  if (!cv) return;
-
-  // ---- KÍCH THƯỚC CỐ ĐỊNH NHỎ GỌN (KHÔNG cho auto-resize) ----
-  var CSS_W = Math.min(420, cv.parentNode ? cv.parentNode.clientWidth : 420);
-  var CSS_H = 260;
-  var DPR   = window.devicePixelRatio || 1;
-
-  cv.style.display  = "block";
-  cv.style.margin   = "0 auto";
-  cv.style.width    = CSS_W + "px";
-  cv.style.height   = CSS_H + "px";
-  cv.width  = Math.round(CSS_W * DPR);
-  cv.height = Math.round(CSS_H * DPR);
-
-  var ctx = cv.getContext("2d");
-  // vẽ theo đơn vị CSS để nét trên màn hình retina
-  if (ctx.setTransform) ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
-
-  function pct(v, tot){
-    if(!tot) return "0";
-    return (v*100/tot).toFixed(2).replace(/\.00$/,'');
-  }
-
-  var data = {
-    labels: [
-      "🔥 Burn ("       + pct(burn, total)     + "%)",
-      "🔒 Locked LP ("  + pct(lockedLP, total) + "%)",
-      "🎁 Airdrop ("    + pct(airdrop, total)  + "%)",
-      "📢 Marketing ("  + pct(marketing, total)+ "%)",
-      "👨‍💻 Dev/Team (" + pct(dev, total)      + "%)",
-      "💼 Reserve ("    + pct(reserve, total)  + "%)"
-    ],
-    datasets: [{
-      data: [burn, lockedLP, airdrop, marketing, dev, reserve],
-      backgroundColor: ["#ef4444","#06b6d4","#22c55e","#f59e0b","#a78bfa","#64748b"],
-      borderColor: "#0f172a",  // viền tách miếng
-      borderWidth: 4,
-      spacing: 2,
-      borderRadius: 8,
-      hoverOffset: 6
-    }]
-  };
-
-  new Chart(ctx, {
-    type: "doughnut",
-    data: data,
-    options: {
-      // KHÓA kích thước: không cho Chart.js tự phóng to
-      responsive: false,
-      maintainAspectRatio: false,
-      cutout: "62%",
-      rotation: -90,
-      plugins: {
-        legend: {
-          position: "bottom",
-          labels: {
-            color: "#cbd5e1",
-            boxWidth: 16,
-            boxHeight: 10,
-            usePointStyle: true,
-            pointStyle: "rectRounded",
-            padding: 12
-          }
-        },
-        tooltip: {
-          callbacks: {
-            label: function (c) {
-              var v = Number(c.parsed || 0);
-              var name = String(c.label || "").replace(/\s*\(\d+(\.\d+)?%\)\s*$/, "");
-              return " " + name + ": " + v.toLocaleString("en-US") +
-                     " ATN (" + pct(v, total) + "%)";
-            }
-          }
-        }
-      }
-    }
-  });
+     var data = {
+  labels: [
+    "Development (13.56%)",
+    "Community & Airdrop (38.49%)",
+    "Team – locked (13.56%)",
+    "Marketing (13.56%)",
+    "Partnerships & Listing (13.56%)",
+    "Reserve (7.26%)"
+  ],
+  datasets: [{
+    data: [13.56, 38.49, 13.56, 13.56, 13.56, 7.26],
+    backgroundColor: ["#22c55e","#60a5fa","#f59e0b","#ef4444","#06b6d4","#a78bfa"],
+    borderColor: "rgba(15,23,42,.8)",
+    borderWidth: 2,
+    hoverOffset: 6
+  }]
 };
 
+
+      new Chart(ctx, {
+        type: "doughnut",
+        data: data,
+        options: {
+          plugins: { legend: { position: "bottom", labels: { color: "#cbd5e1" } } },
+          cutout: "55%"
+        }
+      });
+    })();
 
     // ----- Line: Live price + stats (GeckoTerminal) -----
     (function initLiveChart(){

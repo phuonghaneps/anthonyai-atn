@@ -87,107 +87,101 @@
       });
     })();
 
-// ===== Donut: Tokenomics V2 — giống hình 2, ES5-safe =====
+// ===== Donut: Tokenomics V2 — ES5, size cố định, style như hình #2 =====
 window.renderATNTokenomicsV2 = function (opts) {
   opts = opts || {};
-  var canvasId = opts.canvasId || "pie_tokenomics_v2";
+  var id   = opts.canvasId || 'pie_tokenomics_v2';
+  var W    = Number(opts.width  || 480);   // cỡ hiển thị cố định
+  var H    = Number(opts.height || 320);
 
-  // số liệu
-  var burn      = Number((opts.burn      != null) ? opts.burn      : 0);
-  var lockedLP  = Number((opts.lockedLP  != null) ? opts.lockedLP  : 0);
+  var total     = Number(opts.total || 0);
+  var burn      = Number(opts.burn || 0);
+  var lockedLP  = Number(opts.lockedLP || 0);
   var t         = opts.treasury || {};
-  var airdrop   = Number((t.airdrop   != null) ? t.airdrop   : 0);
-  var marketing = Number((t.marketing != null) ? t.marketing : 0);
-  var dev       = Number((t.dev       != null) ? t.dev       : 0);
-  var reserve   = Number((t.lpReserve != null) ? t.lpReserve : 0) + Number(t.misc || 0);
+  var airdrop   = Number(t.airdrop   || 0);
+  var marketing = Number(t.marketing || 0);
+  var dev       = Number(t.dev       || 0);
+  var reserve   = Number(t.lpReserve || t.reserve || 0) + Number(t.misc || 0);
 
-  var total = Number(opts.total || (burn + lockedLP + airdrop + marketing + dev + reserve));
-  if (!isFinite(total) || total <= 0) total = burn + lockedLP + airdrop + marketing + dev + reserve;
-
-  var cv = document.getElementById(canvasId);
-  if (!cv) return;
-
-  // ---- KÍCH THƯỚC CHUẨN (giống hình 2), có giới hạn min/max để không quá nhỏ/khổng lồ
-  var parentW = (cv.parentNode && cv.parentNode.clientWidth) ? cv.parentNode.clientWidth : 480;
-  var maxW = Number(opts.maxWidth || 520);
-  var minW = Number(opts.minWidth || 360);
-
-  var cssW = Math.max(minW, Math.min(parentW - 32, maxW));   // trừ padding card
-  var cssH = Number(opts.height || Math.round(cssW * 0.75)); // tỷ lệ ~ 4:3 (vd 420x315)
-
-  cv.style.display = "block";
-  cv.style.margin  = "0 auto";
-  cv.style.width   = cssW + "px";
-  cv.style.height  = cssH + "px";
-
-  // HiDPI scale để không mờ
-  var dpr = window.devicePixelRatio || 1;
-  cv.width  = Math.round(cssW * dpr);
-  cv.height = Math.round(cssH * dpr);
-  var ctx = cv.getContext("2d");
-  if (ctx && dpr !== 1) { ctx.setTransform(dpr, 0, 0, dpr, 0, 0); }
-
-  function pct(v, tot) {
-    if (!tot) return "0%";
+  function pct(v, tot){
+    if(!tot) return '0';
     var p = (v * 100 / tot);
-    return (Math.round(p * 100) / 100).toString().replace(/\.00$/, "") + "%";
+    return (Math.round(p * 100) / 100)  // 2 chữ số
+      .toString().replace(/\.00$/,'');
   }
 
-  var labels = [
-    "🔥 Burn ("       + pct(burn, total)     + ")",
-    "🔒 Locked LP ("  + pct(lockedLP, total) + ")",
-    "🎁 Airdrop ("    + pct(airdrop, total)  + ")",
-    "📢 Marketing ("  + pct(marketing, total)+ ")",
-    "👨‍💻 Dev/Team (" + pct(dev, total)      + ")",
-    "💼 Reserve ("    + pct(reserve, total)  + ")"
-  ];
+  var cv = document.getElementById(id);
+  if (!cv) return;
+
+  // --- KHÓA kích thước hiển thị (không co giãn lung tung) ---
+  cv.style.display = 'block';
+  cv.style.width   = W + 'px';
+  cv.style.height  = H + 'px';
+
+  // --- Buffer theo DPR để nét ---
+  var dpr = window.devicePixelRatio || 1;
+  cv.width  = Math.round(W * dpr);
+  cv.height = Math.round(H * dpr);
+  var ctx = cv.getContext('2d');
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
   var data = {
-    labels: labels,
+    labels: [
+      '🔥 Burn ('        + pct(burn, total)     + '%)',
+      '🔒 Locked LP ('   + pct(lockedLP, total) + '%)',
+      '🎁 Airdrop ('     + pct(airdrop, total)  + '%)',
+      '📢 Marketing ('   + pct(marketing, total)+ '%)',
+      '👨‍💻 Dev/Team ('  + pct(dev, total)      + '%)',
+      '💼 Reserve ('     + pct(reserve, total)  + '%)'
+    ],
     datasets: [{
       data: [burn, lockedLP, airdrop, marketing, dev, reserve],
-      backgroundColor: ["#ef4444","#06b6d4","#22c55e","#f59e0b","#a78bfa","#64748b"],
-      borderColor: "#0f172a",   // màu khung card để có khe rõ như hình 2
-      borderWidth: 2,
-      spacing: 2,
+      backgroundColor: ['#ef4444','#06b6d4','#22c55e','#f59e0b','#a78bfa','#64748b'],
+      borderColor: '#0f172a',
+      borderWidth: 4,      // viền dày như hình #2
+      spacing: 2,          // khe tách miếng
+      borderRadius: 8,     // mép bo tròn
       hoverOffset: 6
     }]
   };
 
   new Chart(ctx, {
-    type: "doughnut",
+    type: 'doughnut',
     data: data,
     options: {
-      responsive: false,              // tự quản kích thước bằng CSS + HiDPI trên
+      responsive: false,              // KHÓA – không để Chart.js tự resize
       maintainAspectRatio: false,
-      cutout: "58%",                  // donut dày giống hình 2
-      rotation: -90,                  // bắt đầu ở trên cùng
+      cutout: '62%',                  // độ dày vòng
+      rotation: -90,                  // bắt đầu ở hướng 12h
+      layout: { padding: 6 },
+      animation: false,
       plugins: {
         legend: {
-          position: "bottom",
+          position: 'bottom',
           labels: {
-            color: "#cbd5e1",
+            color: '#cbd5e1',
             boxWidth: 16,
             boxHeight: 10,
-            usePointStyle: false,
-            padding: 12,
-            font: { size: 12 }
+            usePointStyle: true,
+            pointStyle: 'rectRounded',
+            padding: 14
           }
         },
         tooltip: {
           callbacks: {
-            label: function (ctx) {
-              var v = Number(ctx.parsed || 0);
-              var name = String(ctx.label || "");
-              return " " + name + ": " + v.toLocaleString("en-US") + " ATN";
+            label: function (c) {
+              var v = Number(c.parsed || 0);
+              var name = String(c.label || '').replace(/\s*\(\d+(?:\.\d+)?%\)\s*$/, '');
+              return ' ' + name + ': ' + v.toLocaleString('en-US') +
+                     ' ATN (' + pct(v, total) + '%)';
             }
           }
         }
-      },
-      layout: { padding: 10 }
+      }
     }
   });
 };
+
 
     // ----- Line: Live price + stats (GeckoTerminal) -----
     (function initLiveChart(){

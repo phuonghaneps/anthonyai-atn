@@ -53,195 +53,185 @@
   /* =================== Charts =================== */
   onReady(function () { whenChartReady(function () {
 
-    // ----- Donut: Tokenomics (Hình 1 cần style giống Hình 2 nhưng dữ liệu Burn/LP) -----
+    // ----- Donut: Tokenomics -----
     (function initDonut(){
       var ctx = document.getElementById("pie");
       if (!ctx) return;
 
-      // Hình 1: Burn/LP/Airdrop/Marketing/Dev/Reserve (50/25/10/10/10/10)
-      var data = {
-        labels: [
-          "🔥 Burn (50%)",
-          "🔒 Locked LP (25%)",
-          "🎁 Airdrop (10%)",
-          "📢 Marketing (10%)",
-          "👨‍💻 Dev/Team (10%)",
-          "💼 Reserve (10%)"
-        ],
-        // Dùng % để Chart.js tự tính tỉ lệ
+     var data = {
+  labels: [
+    "Development (13.56%)",
+    "Community & Airdrop (38.49%)",
+    "Team – locked (13.56%)",
+    "Marketing (13.56%)",
+    "Partnerships & Listing (13.56%)",
+    "Reserve (7.26%)"
+  ],
+  datasets: [{
+    data: [13.56, 38.49, 13.56, 13.56, 13.56, 7.26],
+    backgroundColor: ["#22c55e","#60a5fa","#f59e0b","#ef4444","#06b6d4","#a78bfa"],
+    borderColor: "rgba(15,23,42,.8)",
+    borderWidth: 2,
+    hoverOffset: 6
+  }]
+};
+
+
+      new Chart(ctx, {
+        type: "doughnut",
+        data: data,
+        options: {
+          plugins: { legend: { position: "bottom", labels: { color: "#cbd5e1" } } },
+          cutout: "55%"
+        }
+      });
+    })();
+    // ===== Donut: Tokenomics V2 (nhỏ, style giống hình #2) =====
+window.renderATNTokenomicsV2 = function (opts) {
+  opts = opts || {};
+  var canvasId = opts.canvasId || "pie_tokenomics_v2";
+
+  var burn      = Number(opts.burn || 1000000);
+  var lockedLP  = Number(opts.lockedLP || 500000);
+  var t         = opts.treasury || {};
+  var airdrop   = Number(t.airdrop   || 100000);
+  var marketing = Number(t.marketing || 100000);
+  var dev       = Number(t.dev       || 100000);
+  var reserve   = Number(t.lpReserve || 100000) + Number(t.misc || 0);
+
+  var cv = document.getElementById(canvasId);
+  if (!cv) return;
+
+  cv.style.display = "block";
+  cv.style.margin  = "0 auto";
+  cv.style.width   = "100%";
+  cv.style.maxWidth = "380px";
+  cv.style.height   = "260px";
+  cv.width  = cv.clientWidth || 380;
+  cv.height = 260;
+
+  var ctx = cv.getContext("2d");
+
+  var data = {
+    labels: [
+      "🔥 Burn (50%)",
+      "🔒 Locked LP (25%)",
+      "🎁 Airdrop (10%)",
+      "📢 Marketing (10%)",
+      "👨‍💻 Dev/Team (10%)",
+      "💼 Reserve (10%)"
+    ],
+    datasets: [{
+      data: [burn, lockedLP, airdrop, marketing, dev, reserve],
+      backgroundColor: ["#ef4444","#06b6d4","#22c55e","#f59e0b","#a78bfa","#64748b"],
+      borderColor: "rgba(15,23,42,.8)",
+      borderWidth: 2,
+      hoverOffset: 4
+    }]
+  };
+
+  new Chart(ctx, {
+    type: "doughnut",
+    data: data,
+    options: {
+      responsive: false,
+      maintainAspectRatio: false,
+      cutout: "58%",
+      layout: { padding: 10 },
+      plugins: {
+        legend: {
+          position: "bottom",
+          labels: { color: "#cbd5e1", boxWidth: 14, boxHeight: 8 }
+        }
+      }
+    }
+  });
+};
+
+        // ===== Donut: Tokenomics V2 =====
+    window.renderATNTokenomicsV2 = function (opts) {
+      var canvasId = (opts && opts.canvasId) || "pie_tokenomics_v2";
+
+      // 1) Ưu tiên vẽ vào canvas sẵn có
+      var cv = document.getElementById(canvasId);
+      if (cv) {
+        cv.style.display = "block";
+        cv.style.margin  = "0 auto";
+        cv.style.maxWidth = "380px";   
+        cv.style.width  = "100%";
+        cv.style.height = "260px";     
+        cv.width  = 380;               
+        cv.height = 260;
+        var ctx = cv.getContext("2d");
+        var data = {
+          labels: [
+            "🔥 Burn (50%)",
+            "🔒 Locked LP (25%)",
+            "🎁 Airdrop (10%)",
+            "📢 Marketing (10%)",
+            "👨‍💻 Dev/Team (10%)",
+            "💼 Reserve (10%)"
+          ],
+          datasets: [{
+            data: [1000000, 500000, 100000, 100000, 100000, 100640],
+            backgroundColor: ["#ef4444", "#06b6d4", "#22c55e", "#f59e0b", "#a78bfa", "#64748b"],
+            borderColor: "rgba(15,23,42,.8)",
+            borderWidth: 2,
+            hoverOffset: 6
+          }]
+        };
+        new Chart(ctx, {
+          type: "doughnut",
+          data: data,
+          options: {
+            plugins: { legend: { position: "bottom", labels: { color: "#cbd5e1" } } },
+            cutout: "55%"
+          }
+        });
+        return;
+      }
+
+      // 2) Fallback: nếu không có canvas sẵn thì chèn block mới
+      var afterId = (opts && opts.afterId) || "pie";
+      var wrapId  = (opts && opts.wrapId)  || "atn_tokenomics_v2";
+      var maxWidth = (opts && opts.maxWidth ? opts.maxWidth : 380);
+
+      var afterEl = document.getElementById(afterId);
+      if (!afterEl) return;
+
+      var wrap = document.createElement("div");
+      wrap.id = wrapId;
+      wrap.style.maxWidth = "380px";
+      wrap.style.margin = "30px auto";
+      wrap.className = "card card-pad";
+
+      var c = document.createElement("canvas");
+      c.id = canvasId;
+      c.height = 200;
+      wrap.appendChild(c);
+
+      afterEl.parentNode.insertBefore(wrap, afterEl.nextSibling);
+
+      var ctx2 = c.getContext("2d");
+      var data2 = {
+        labels: ["🔥 Burn (50%)","🔒 Locked LP (25%)","🎁 Airdrop (10%)","📢 Marketing (10%)","👨‍💻 Dev/Team (10%)","💼 Reserve (10%)"],
         datasets: [{
-          data: [50, 25, 10, 10, 10, 10],
+          data: [1000000, 500000, 100000, 100000, 100000, 100640],
           backgroundColor: ["#ef4444","#06b6d4","#22c55e","#f59e0b","#a78bfa","#64748b"],
           borderColor: "rgba(15,23,42,.8)",
           borderWidth: 2,
           hoverOffset: 6
         }]
       };
-
-      new Chart(ctx, {
-        type: "doughnut",
-        data: data,
-        options: {
-          responsive: false,
-          maintainAspectRatio: false,
-          plugins: { legend: { position: "bottom", labels: { color: "#cbd5e1", boxWidth: 14, boxHeight: 8 } } },
-          cutout: "55%",          // độ rỗng giống Hình 2
-          layout: { padding: 10 } // giãn giống Hình 2
-        }
-      });
-    })();
-
-    // ===== Donut: Tokenomics V2 (nhỏ, style giống hình #2) =====
-    // -> Hàm này vẽ Tokenomics kiểu Development/Community/Team/... (Hình 2)
-    window.renderATNTokenomicsV2 = function (opts) {
-      opts = opts || {};
-      var canvasId = opts.canvasId || "pie_tokenomics_v2";
-
-      var cv = document.getElementById(canvasId);
-      if (!cv) return;
-
-      cv.style.display  = "block";
-      cv.style.margin   = "0 auto";
-      cv.style.width    = "100%";
-      cv.style.maxWidth = "380px";
-      cv.style.height   = "260px";
-      cv.width  = cv.clientWidth || 380;
-      cv.height = 260;
-
-      var ctx = cv.getContext("2d");
-
-      var data = {
-        labels: [
-          "Development (13.56%)",
-          "Community & Airdrop (38.50%)",
-          "Team (locked/vesting) (13.56%)",
-          "Marketing (13.56%)",
-          "Partnerships & Listing (13.56%)",
-          "Reserve (7.26%)"
-        ],
-        datasets: [{
-          data: [13.56, 38.50, 13.56, 13.56, 13.56, 7.26],
-          backgroundColor: ["#22c55e","#60a5fa","#f59e0b","#ef4444","#06b6d4","#a78bfa"],
-          borderColor: "rgba(15,23,42,.8)",
-          borderWidth: 2,
-          hoverOffset: 6
-        }]
-      };
-
-      new Chart(ctx, {
-        type: "doughnut",
-        data: data,
-        options: {
-          responsive: false,
-          maintainAspectRatio: false,
-          cutout: "55%",
-          layout: { padding: 10 },
-          plugins: {
-            legend: {
-              position: "bottom",
-              labels: { color: "#cbd5e1", boxWidth: 14, boxHeight: 8 }
-            }
-          }
+      new Chart(ctx2, {
+        type:"doughnut",
+        data:data2,
+        options:{
+          plugins:{ legend:{ position:"bottom", labels:{ color:"#cbd5e1" } } },
+          cutout:"55%"
         }
       });
     };
-
-    // ===== Donut: Tokenomics V2 =====
-    // Khối này được giữ nguyên tiêu đề để không "xóa hàm",
-    // nhưng tránh ghi đè: chỉ định nghĩa nếu CHƯA có window.renderATNTokenomicsV2
-    if (!window.renderATNTokenomicsV2) {
-      window.renderATNTokenomicsV2 = function (opts) {
-        var canvasId = (opts && opts.canvasId) || "pie_tokenomics_v2";
-
-        // 1) Ưu tiên vẽ vào canvas sẵn có
-        var cv = document.getElementById(canvasId);
-        if (cv) {
-          cv.style.display  = "block";
-          cv.style.margin   = "0 auto";
-          cv.style.maxWidth = "380px";
-          cv.style.width    = "100%";
-          cv.style.height   = "260px";
-          cv.width  = 380;
-          cv.height = 260;
-
-          var ctx = cv.getContext("2d");
-          var data = {
-            labels: [
-              "Development (13.56%)",
-              "Community & Airdrop (38.50%)",
-              "Team (locked/vesting) (13.56%)",
-              "Marketing (13.56%)",
-              "Partnerships & Listing (13.56%)",
-              "Reserve (7.26%)"
-            ],
-            datasets: [{
-              data: [13.56, 38.50, 13.56, 13.56, 13.56, 7.26],
-              backgroundColor: ["#22c55e","#60a5fa","#f59e0b","#ef4444","#06b6d4","#a78bfa"],
-              borderColor: "rgba(15,23,42,.8)",
-              borderWidth: 2,
-              hoverOffset: 6
-            }]
-          };
-
-          new Chart(ctx, {
-            type: "doughnut",
-            data: data,
-            options: {
-              plugins: { legend: { position: "bottom", labels: { color: "#cbd5e1" } } },
-              cutout: "55%"
-            }
-          });
-          return;
-        }
-
-        // 2) Fallback: nếu không có canvas sẵn thì chèn block mới
-        var afterId = (opts && opts.afterId) || "pie";
-        var wrapId  = (opts && opts.wrapId)  || "atn_tokenomics_v2";
-
-        var afterEl = document.getElementById(afterId);
-        if (!afterEl) return;
-
-        var wrap = document.createElement("div");
-        wrap.id = wrapId;
-        wrap.style.maxWidth = "380px";
-        wrap.style.margin = "30px auto";
-        wrap.className = "card card-pad";
-
-        var c = document.createElement("canvas");
-        c.id = canvasId;
-        c.height = 200;
-        wrap.appendChild(c);
-
-        afterEl.parentNode.insertBefore(wrap, afterEl.nextSibling);
-
-        var ctx2 = c.getContext("2d");
-        var data2 = {
-          labels: [
-            "Development (13.56%)",
-            "Community & Airdrop (38.50%)",
-            "Team (locked/vesting) (13.56%)",
-            "Marketing (13.56%)",
-            "Partnerships & Listing (13.56%)",
-            "Reserve (7.26%)"
-          ],
-          datasets: [{
-            data: [13.56, 38.50, 13.56, 13.56, 13.56, 7.26],
-            backgroundColor: ["#22c55e","#60a5fa","#f59e0b","#ef4444","#06b6d4","#a78bfa"],
-            borderColor: "rgba(15,23,42,.8)",
-            borderWidth: 2,
-            hoverOffset: 6
-          }]
-        };
-        new Chart(ctx2, {
-          type:"doughnut",
-          data:data2,
-          options:{
-            plugins:{ legend:{ position:"bottom", labels:{ color:"#cbd5e1" } } },
-            cutout:"55%"
-          }
-        });
-      };
-    }
 
     // ----- Line: Live price + stats (GeckoTerminal) -----
     (function initLiveChart(){
@@ -394,7 +384,6 @@
   }); }); // <-- đóng whenChartReady và onReady
 
 })(); // <-- đóng IIFE ngoài cùng
-
 // ===== Extra: Legacy ATN pool (separate new blocks) =====
 (function(){
   function fmtCompact(n){
@@ -535,7 +524,6 @@
   document.addEventListener("visibilitychange", function(){ if (document.hidden) stop(); else if (!timer) timer = setInterval(refresh, 20000); });
   window.addEventListener("pagehide", stop);
 })();
-
 // ===== KPI card: Circulating lấy từ pool (ES5-safe) + cập nhật gauge =====
 (function () {
   // dùng lowercase để API chắc chắn nhận
@@ -562,60 +550,63 @@
   }
 
   function updateCircGauge(circ){
-    var p = 0;
-    if (isFinite(circ) && circ > 0 && isFinite(TOTAL_SUPPLY) && TOTAL_SUPPLY > 0) {
-      p = Math.max(0, Math.min(100, (circ / TOTAL_SUPPLY) * 100));
-    }
-
-    // nếu đã lỡ có vòng cũ -> ẩn nó để chỉ còn vòng nhỏ SVG
-    var oldGauge = document.getElementById("circGauge");
-    if (oldGauge) oldGauge.style.display = "none";
-
-    // tạo SVG nếu chưa có
-    var s = document.getElementById("circStroke");
-    if (!s) {
-      var svgNS = "http://www.w3.org/2000/svg";
-      var svg = document.createElementNS(svgNS, "svg");
-      // kích thước nhỏ
-      svg.setAttribute("width", "16");
-      svg.setAttribute("height", "16");
-      svg.setAttribute("viewBox", "0 0 24 24");
-      svg.style.marginLeft = "8px";
-      svg.style.verticalAlign = "middle";
-
-      var bg = document.createElementNS(svgNS, "circle");
-      bg.setAttribute("cx", "12"); bg.setAttribute("cy", "12"); bg.setAttribute("r", "9");
-      bg.setAttribute("stroke", "rgba(148,163,184,.25)");
-      bg.setAttribute("stroke-width", "3"); bg.setAttribute("fill", "none");
-
-      s = document.createElementNS(svgNS, "circle");
-      s.setAttribute("id", "circStroke");
-      s.setAttribute("cx", "12"); s.setAttribute("cy", "12"); s.setAttribute("r", "9");
-      s.setAttribute("stroke", "#22c55e");
-      s.setAttribute("stroke-width", "3"); s.setAttribute("fill", "none");
-      s.setAttribute("stroke-linecap", "round");
-      s.style.transform = "rotate(-90deg)";
-      s.style.transformOrigin = "12px 12px";
-
-      svg.appendChild(bg);
-      svg.appendChild(s);
-
-      // gắn ngay cạnh số circulating (id "thCirc")
-      var anchor = document.getElementById("thCirc");
-      (anchor && anchor.parentNode ? anchor.parentNode : document.body).appendChild(svg);
-    }
-
-    // cập nhật tiến độ cho SVG
-    var r = Number(s.getAttribute("r") || 0);
-    var c = 2 * Math.PI * r;
-    if (isFinite(c) && c > 0) {
-      s.style.strokeDasharray = String(c);
-      s.style.strokeDashoffset = String(c * (1 - p / 100));
-    }
-
-    var t = document.getElementById("circPct");
-    if (t) t.textContent = p.toFixed(1) + "%";
+  var p = 0;
+  if (isFinite(circ) && circ > 0 && isFinite(TOTAL_SUPPLY) && TOTAL_SUPPLY > 0) {
+    p = Math.max(0, Math.min(100, (circ / TOTAL_SUPPLY) * 100));
   }
+
+  // nếu đã lỡ có vòng cũ -> ẩn nó để chỉ còn vòng nhỏ SVG
+  var oldGauge = document.getElementById("circGauge");
+  if (oldGauge) oldGauge.style.display = "none";
+
+  // tạo SVG nếu chưa có
+  var s = document.getElementById("circStroke");
+  if (!s) {
+    var svgNS = "http://www.w3.org/2000/svg";
+    var svg = document.createElementNS(svgNS, "svg");
+    // kích thước nhỏ
+    svg.setAttribute("width", "16");
+    svg.setAttribute("height", "16");
+    svg.setAttribute("viewBox", "0 0 24 24");
+    svg.style.marginLeft = "8px";
+    svg.style.verticalAlign = "middle";
+
+    var bg = document.createElementNS(svgNS, "circle");
+    bg.setAttribute("cx", "12"); bg.setAttribute("cy", "12"); bg.setAttribute("r", "9");
+    bg.setAttribute("stroke", "rgba(148,163,184,.25)");
+    bg.setAttribute("stroke-width", "3"); bg.setAttribute("fill", "none");
+
+    s = document.createElementNS(svgNS, "circle");
+    s.setAttribute("id", "circStroke");
+    s.setAttribute("cx", "12"); s.setAttribute("cy", "12"); s.setAttribute("r", "9");
+    s.setAttribute("stroke", "#22c55e");
+    s.setAttribute("stroke-width", "3"); s.setAttribute("fill", "none");
+    s.setAttribute("stroke-linecap", "round");
+    s.style.transform = "rotate(-90deg)";
+    s.style.transformOrigin = "12px 12px";
+
+    svg.appendChild(bg);
+    svg.appendChild(s);
+
+    // gắn ngay cạnh số circulating (id "thCirc")
+    var anchor = document.getElementById("thCirc");
+    (anchor && anchor.parentNode ? anchor.parentNode : document.body).appendChild(svg);
+  }
+
+  // cập nhật tiến độ cho SVG
+  var r = Number(s.getAttribute("r") || 0);
+  var c = 2 * Math.PI * r;
+  if (isFinite(c) && c > 0) {
+    s.style.strokeDasharray = String(c);
+    s.style.strokeDashoffset = String(c * (1 - p / 100));
+  }
+
+  var t = document.getElementById("circPct");
+  if (t) t.textContent = p.toFixed(1) + "%";
+}
+
+
+
 
   // ----- Lấy số ATN trong LP -----
   function getPooledATNFromDS(){

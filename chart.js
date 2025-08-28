@@ -125,20 +125,20 @@
       // 2) Fallback: nếu không có canvas sẵn thì chèn block mới
       var afterId = (opts && opts.afterId) || "pie";
       var wrapId  = (opts && opts.wrapId)  || "atn_tokenomics_v2";
-      var maxWidth = (opts && opts.maxWidth ? opts.maxWidth : 680);
+      var maxWidth = (opts && opts.maxWidth ? opts.maxWidth : 380);
 
       var afterEl = document.getElementById(afterId);
       if (!afterEl) return;
 
       var wrap = document.createElement("div");
       wrap.id = wrapId;
-      wrap.style.maxWidth = maxWidth + "px";
+      wrap.style.maxWidth = "380px";
       wrap.style.margin = "30px auto";
       wrap.className = "card card-pad";
 
       var c = document.createElement("canvas");
       c.id = canvasId;
-      c.height = 240;
+      c.height = 200;
       wrap.appendChild(c);
 
       afterEl.parentNode.insertBefore(wrap, afterEl.nextSibling);

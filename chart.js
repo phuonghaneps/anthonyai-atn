@@ -86,57 +86,45 @@
         }
       });
     })();
-    // ===== Donut: Tokenomics V2 (nhỏ, style giống hình #2) =====
-// ===== Donut: Tokenomics V2 — style giống Hình 2 =====
+<script>
+// ===== Donut: Tokenomics V2 — giống hình 2 =====
 window.renderATNTokenomicsV2 = function (opts) {
   opts = opts || {};
   var canvasId = opts.canvasId || "pie_tokenomics_v2";
 
-  var total     = Number(opts.total || 0);
-  var burn      = Number(opts.burn || 0);
-  var lockedLP  = Number(opts.lockedLP || 0);
+  // dữ liệu tuyệt đối (không tự tính %)
+  var burn      = Number(opts.burn      || 1000000);
+  var lockedLP  = Number(opts.lockedLP  || 500000);
   var t         = opts.treasury || {};
-  var airdrop   = Number(t.airdrop   || 0);
-  var marketing = Number(t.marketing || 0);
-  var dev       = Number(t.dev       || 0);
-  var reserve   = Number(t.lpReserve || t.reserve || 0) + Number(t.misc || 0);
+  var airdrop   = Number(t.airdrop      || 100000);
+  var marketing = Number(t.marketing    || 100000);
+  var dev       = Number(t.dev          || 100000);
+  var reserve   = Number(t.lpReserve    || 100000) + Number(t.misc || 0);
 
   var cv = document.getElementById(canvasId);
   if (!cv) return;
 
-  // Kích thước & bố cục giống ảnh
+  // để Chart.js tự responsive — KHÔNG set width/height cứng
   cv.style.display = "block";
-  cv.style.margin  = "0 auto";
-  cv.style.width   = "100%";
-  cv.style.maxWidth = (opts.maxWidth ? String(opts.maxWidth) : "380") + "px";
-  cv.style.height   = "260px";
-  cv.width  = cv.clientWidth || 380;
-  cv.height = 260;
+  cv.style.width = "100%";        // full bề ngang card
+  cv.style.margin = "0 auto";
 
   var ctx = cv.getContext("2d");
 
-  function pct(v, tot){
-    if(!tot) return "0";
-    return (v*100/tot).toFixed(2).replace(/\.00$/,'');
-  }
-
   var data = {
     labels: [
-      "🔥 Burn ("        + pct(burn, total)     + "%)",
-      "🔒 Locked LP ("   + pct(lockedLP, total) + "%)",
-      "🎁 Airdrop ("     + pct(airdrop, total)  + "%)",
-      "📢 Marketing ("   + pct(marketing, total)+ "%)",
-      "👨‍💻 Dev/Team ("  + pct(dev, total)      + "%)",
-      "💼 Reserve ("     + pct(reserve, total)  + "%)"
+      "🔥 Burn (50%)",
+      "🔒 Locked LP (25%)",
+      "🎁 Airdrop (10%)",
+      "📢 Marketing (10%)",
+      "👨‍💻 Dev/Team (10%)",
+      "💼 Reserve (10%)"
     ],
     datasets: [{
       data: [burn, lockedLP, airdrop, marketing, dev, reserve],
       backgroundColor: ["#ef4444","#06b6d4","#22c55e","#f59e0b","#a78bfa","#64748b"],
-      // khe tách & cảm giác dày giống Hình 2:
-      borderColor: "#0f172a",
-      borderWidth: 4,
-      spacing: 2,
-      borderRadius: 8,
+      borderColor: "rgba(15,23,42,.8)",
+      borderWidth: 2,
       hoverOffset: 6
     }]
   };
@@ -145,30 +133,22 @@ window.renderATNTokenomicsV2 = function (opts) {
     type: "doughnut",
     data: data,
     options: {
-      responsive: false,
-      maintainAspectRatio: false,
-      cutout: "62%",       // donut dày hơn
-      rotation: -90,
-      layout: { padding: 10 },
+      responsive: true,
+      maintainAspectRatio: true,  // giữ tỷ lệ tròn đẹp
+      // dùng cùng cutout như hình 2
+      cutout: "55%",
       plugins: {
         legend: {
           position: "bottom",
-          labels: {
-            color: "#cbd5e1",
-            boxWidth: 16,
-            boxHeight: 10,
-            usePointStyle: true,
-            pointStyle: "rectRounded",
-            padding: 14
-          }
+          labels: { color: "#cbd5e1" }
         },
         tooltip: {
           callbacks: {
-            label: function (ctx) {
-              var v = Number(ctx.parsed || 0);
-              var name = String(ctx.label || "").replace(/\s*\(\d+(\.\d+)?%\)\s*$/, "");
-              return " " + name + ": " + v.toLocaleString("en-US") +
-                     " ATN (" + pct(v, total) + "%)";
+            label: function (c) {
+              // chỉ hiện giá trị tuyệt đối + nhãn
+              var v = Number(c.parsed || 0);
+              return " " + c.label.replace(/\s*\(\d+%?\)\s*$/, "") +
+                     ": " + v.toLocaleString("en-US") + " ATN";
             }
           }
         }
@@ -176,6 +156,7 @@ window.renderATNTokenomicsV2 = function (opts) {
     }
   });
 };
+</script>
 
     // ----- Line: Live price + stats (GeckoTerminal) -----
     (function initLiveChart(){

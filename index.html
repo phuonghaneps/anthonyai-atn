@@ -10,7 +10,24 @@
   let opened=false;
   const check=()=>{const w=window.outerWidth-window.innerWidth>160;const h=window.outerHeight-window.innerHeight>160;if(!opened&&(w||h)){opened=true;alert('Developer Tools đang mở.');}requestAnimationFrame(check);};
   requestAnimationFrame(check);
-})();</script><style>.founder-wrap{display:grid;grid-template-columns:260px 1fr;gap:18px;align-items:start}.founder-photo{width:100%;aspect-ratio:1/1;object-fit:cover;border-radius:14px;border:1px solid rgba(148,163,184,.14);box-shadow:var(--shadow)}@media (max-width:900px){.founder-wrap{grid-template-columns:1fr}}</style></head><script type="application/ld+json">{
+})();</script><style>.founder-wrap {
+  display:grid;
+  grid-template-columns:180px 1fr;
+  gap:18px;
+  align-items:center;
+}
+.founder-photo {
+  width:160px;
+  height:160px;
+  object-fit:cover;
+  border-radius:50%;              /* làm ảnh tròn */
+  border:3px solid #22c55e;       /* viền xanh */
+  box-shadow:0 0 12px rgba(0,0,0,.35); /* đổ bóng */
+}
+@media (max-width:900px){
+  .founder-wrap{grid-template-columns:1fr;justify-items:center}
+}
+</style></head><script type="application/ld+json">{
   "@context": "https://schema.org",
   "@type": "Organization",
   "url": "https://atncrypto.com",
@@ -256,6 +273,7 @@
     setInterval(loadStats,60000);
     initTip();
   });
+
 
 
 

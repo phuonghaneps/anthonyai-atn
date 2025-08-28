@@ -568,3 +568,55 @@
   updateKPI();
   setInterval(updateKPI, 60000);
 })();
+// ===== Donut chart: Custom ATN allocation =====
+window.renderATNTokenomicsV2 = function(opts){
+  var afterId = (opts && opts.afterId) || "pie";
+  var wrapId  = (opts && opts.wrapId)  || "atn_tokenomics_v2";
+  var canvasId= (opts && opts.canvasId)|| "pie_tokenomics_v2";
+
+  var afterEl = document.getElementById(afterId);
+  if(!afterEl) return;
+
+  var wrap = document.createElement("div");
+  wrap.id = wrapId;
+  wrap.style.maxWidth = (opts && opts.maxWidth ? opts.maxWidth : 680) + "px";
+  wrap.style.margin = "30px auto";
+  wrap.className = "card card-pad";
+
+  var c = document.createElement("canvas");
+  c.id = canvasId;
+  c.height = 240;
+  wrap.appendChild(c);
+
+  afterEl.parentNode.insertBefore(wrap, afterEl.nextSibling);
+
+  var ctx = c.getContext("2d");
+  var data = {
+    labels: [
+      "🔥 Burn (50%)",
+      "🔒 Locked LP (25%)",
+      "🎁 Airdrop (10%)",
+      "📢 Marketing (10%)",
+      "👨‍💻 Dev/Team (10%)",
+      "💼 Reserve (10%)"
+    ],
+    datasets: [{
+      data: [1000000, 500000, 100000, 100000, 100000, 100640],
+      backgroundColor: [
+        "#ef4444","#06b6d4","#22c55e","#f59e0b","#a78bfa","#64748b"
+      ],
+      borderColor: "rgba(15,23,42,.8)",
+      borderWidth: 2,
+      hoverOffset: 6
+    }]
+  };
+
+  new Chart(ctx, {
+    type: "doughnut",
+    data: data,
+    options: {
+      plugins: { legend: { position: "bottom", labels: { color: "#cbd5e1" } } },
+      cutout: "55%"
+    }
+  });
+};

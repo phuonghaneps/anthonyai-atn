@@ -87,35 +87,32 @@
       });
     })();
 
-// ===== Donut: Tokenomics V2 — nhỏ gọn giống Hình 2 =====
-// ===== Donut: Tokenomics V2 — kích thước nhỏ, giống Hình 2 =====
+// ===== Donut: Tokenomics V2 — giống hình 2, cân đối =====
 window.renderATNTokenomicsV2 = function (opts) {
   opts = opts || {};
   var canvasId = opts.canvasId || "pie_tokenomics_v2";
 
-  // dữ liệu tuyệt đối
-  var burn      = Number(opts.burn      || 1000000);
-  var lockedLP  = Number(opts.lockedLP  || 500000);
+  var burn      = Number(opts.burn || 0);
+  var lockedLP  = Number(opts.lockedLP || 0);
   var t         = opts.treasury || {};
-  var airdrop   = Number(t.airdrop      || 100000);
-  var marketing = Number(t.marketing    || 100000);
-  var dev       = Number(t.dev          || 100000);
-  var reserve   = Number(t.lpReserve    || 100000) + Number(t.misc || 0);
-
-  // KÍCH THƯỚC CỐ ĐỊNH (đừng để 100% nữa)
-  var cssW = Number(opts.width  || 360);
-  var cssH = Number(opts.height || 240);
+  var airdrop   = Number(t.airdrop   || 0);
+  var marketing = Number(t.marketing || 0);
+  var dev       = Number(t.dev       || 0);
+  var reserve   = Number(t.lpReserve || 0) + Number(t.misc || 0);
 
   var cv = document.getElementById(canvasId);
   if (!cv) return;
 
-  // style cố định & căn giữa
+  // kích thước hợp lý
+  var cssW = Number(opts.width  || 420);
+  var cssH = Number(opts.height || 320);
+
   cv.style.display = "block";
   cv.style.margin  = "0 auto";
   cv.style.width   = cssW + "px";
   cv.style.height  = cssH + "px";
 
-  // hiDPI: tăng độ nét mà vẫn giữ kích thước hiển thị
+  // hiDPI: scale đúng
   var dpr = window.devicePixelRatio || 1;
   cv.width  = Math.round(cssW * dpr);
   cv.height = Math.round(cssH * dpr);
@@ -134,10 +131,8 @@ window.renderATNTokenomicsV2 = function (opts) {
     datasets: [{
       data: [burn, lockedLP, airdrop, marketing, dev, reserve],
       backgroundColor: ["#ef4444","#06b6d4","#22c55e","#f59e0b","#a78bfa","#64748b"],
-      borderColor: "#0f172a",   // khe tách rõ giống hình 2
-      borderWidth: 3,
-      spacing: 2,
-      borderRadius: 8,
+      borderColor: "#0f172a",
+      borderWidth: 2,
       hoverOffset: 6
     }]
   };
@@ -146,30 +141,25 @@ window.renderATNTokenomicsV2 = function (opts) {
     type: "doughnut",
     data: data,
     options: {
-      responsive: false,          // KHÓA kích thước
+      responsive: false,           // giữ đúng kích thước mình set
       maintainAspectRatio: false,
-      cutout: "62%",              // vòng dày
-      rotation: -90,
-      layout: { padding: 8 },
+      cutout: "55%",               // donut dày như hình 2
       plugins: {
         legend: {
           position: "bottom",
           labels: {
             color: "#cbd5e1",
-            boxWidth: 14,
+            boxWidth: 16,
             boxHeight: 10,
-            usePointStyle: true,
-            pointStyle: "rectRounded",
-            padding: 12,
-            font: { size: 11 }
+            padding: 14,
+            font: { size: 12 }
           }
         },
         tooltip: {
           callbacks: {
             label: function (c) {
               var v = Number(c.parsed || 0);
-              var name = String(c.label || "").replace(/\s*\(\d+(\.\d+)?%\)\s*$/, "");
-              return " " + name + ": " + v.toLocaleString("en-US") + " ATN";
+              return " " + c.label + ": " + v.toLocaleString("en-US") + " ATN";
             }
           }
         }
@@ -177,7 +167,6 @@ window.renderATNTokenomicsV2 = function (opts) {
     }
   });
 };
-
 
     // ----- Line: Live price + stats (GeckoTerminal) -----
     (function initLiveChart(){

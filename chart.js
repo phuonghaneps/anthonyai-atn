@@ -58,23 +58,24 @@
       var ctx = document.getElementById("pie");
       if (!ctx) return;
 
-      var data = {
-        labels: [
-  "Development (17.1%)",
-  "Community & Airdrop (27.9%)",
-  "Team – locked (20.0%)",
-  "Marketing (15%)",
-  "Partnerships & Listing (15%)",
-  "Reserve (5%)"
-],
-        datasets: [{
-          data: [17.1, 27.9, 20.0, 15, 15, 5],
-          backgroundColor: ["#22c55e","#60a5fa","#f59e0b","#ef4444","#06b6d4","#a78bfa"],
-          borderColor: "rgba(15,23,42,.8)",
-          borderWidth: 2,
-          hoverOffset: 6
-        }]
-      };
+     var data = {
+  labels: [
+    "Development (13.56%)",
+    "Community & Airdrop (38.49%)",
+    "Team – locked (13.56%)",
+    "Marketing (13.56%)",
+    "Partnerships & Listing (13.56%)",
+    "Reserve (7.26%)"
+  ],
+  datasets: [{
+    data: [13.56, 38.49, 13.56, 13.56, 13.56, 7.26],
+    backgroundColor: ["#22c55e","#60a5fa","#f59e0b","#ef4444","#06b6d4","#a78bfa"],
+    borderColor: "rgba(15,23,42,.8)",
+    borderWidth: 2,
+    hoverOffset: 6
+  }]
+};
+
 
       new Chart(ctx, {
         type: "doughnut",

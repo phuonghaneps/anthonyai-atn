@@ -87,12 +87,12 @@
       });
     })();
 
-// ===== Donut: Tokenomics V2 — ES5, size cố định, style như hình #2 =====
+// ===== Donut: Tokenomics V2 — small, rõ nét + panel bên phải =====
 window.renderATNTokenomicsV2 = function (opts) {
   opts = opts || {};
-  var id   = opts.canvasId || 'pie_tokenomics_v2';
-  var W    = Number(opts.width  || 480);   // cỡ hiển thị cố định
-  var H    = Number(opts.height || 320);
+  var canvasId = opts.canvasId || "pie_tokenomics_v2";
+  var listId   = opts.listId || null;
+  var totalEl  = opts.totalElId || null;
 
   var total     = Number(opts.total || 0);
   var burn      = Number(opts.burn || 0);
@@ -103,84 +103,115 @@ window.renderATNTokenomicsV2 = function (opts) {
   var dev       = Number(t.dev       || 0);
   var reserve   = Number(t.lpReserve || t.reserve || 0) + Number(t.misc || 0);
 
-  function pct(v, tot){
-    if(!tot) return '0';
-    var p = (v * 100 / tot);
-    return (Math.round(p * 100) / 100)  // 2 chữ số
-      .toString().replace(/\.00$/,'');
-  }
-
-  var cv = document.getElementById(id);
+  var cv = document.getElementById(canvasId);
   if (!cv) return;
 
-  // --- KHÓA kích thước hiển thị (không co giãn lung tung) ---
-  cv.style.display = 'block';
-  cv.style.width   = W + 'px';
-  cv.style.height  = H + 'px';
-
-  // --- Buffer theo DPR để nét ---
-  var dpr = window.devicePixelRatio || 1;
-  cv.width  = Math.round(W * dpr);
-  cv.height = Math.round(H * dpr);
-  var ctx = cv.getContext('2d');
+  // --- hiDPI: vẽ nét căng ---
+  var cssW = Number(opts.width  || 420);
+  var cssH = Number(opts.height || 300);
+  var dpr  = window.devicePixelRatio || 1;
+  cv.style.width = cssW + "px";
+  cv.style.height = cssH + "px";
+  cv.width  = Math.round(cssW * dpr);
+  cv.height = Math.round(cssH * dpr);
+  var ctx = cv.getContext("2d");
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
+  function pct(v, tot){
+    if(!tot) return "0";
+    return (v*100/tot).toFixed(2).replace(/\.00$/,'');
+  }
+  function kfmt(n){
+    var x=Number(n)||0;
+    if (x>=1e9) return (x/1e9).toFixed(2).replace(/\.00$/,"")+"B";
+    if (x>=1e6) return (x/1e6).toFixed(2).replace(/\.00$/,"")+"M";
+    if (x>=1e3) return (x/1e3).toFixed(2).replace(/\.00$/,"")+"K";
+    return x.toLocaleString("en-US");
+  }
+
+  // dữ liệu + màu
+  var items = [
+    { name: "🔥 Burn",        val: burn,     color: "#ef4444" },
+    { name: "🔒 Locked LP",   val: lockedLP, color: "#06b6d4" },
+    { name: "🎁 Airdrop",     val: airdrop,  color: "#22c55e" },
+    { name: "📢 Marketing",   val: marketing,color: "#f59e0b" },
+    { name: "👨‍💻 Dev/Team",  val: dev,      color: "#a78bfa" },
+    { name: "💼 Reserve",     val: reserve,  color: "#64748b" }
+  ];
+
+  // --- render panel bên phải (nếu có) ---
+  if (listId) {
+    var ul = document.getElementById(listId);
+    if (ul) {
+      ul.innerHTML = "";
+      for (var i=0;i<items.length;i++){
+        var it = items[i];
+        var li = document.createElement("li");
+        li.className = "mini-tk-item";
+        li.innerHTML =
+          '<span class="mini-tk-dot" style="background:'+it.color+'"></span>'+
+          '<span>'+it.name+' <span style="opacity:.8">('+pct(it.val,total)+'%)</span></span>'+
+          '<span class="mini-tk-right">'+kfmt(it.val)+' ATN</span>';
+        ul.appendChild(li);
+      }
+    }
+  }
+  if (totalEl){
+    var tel = document.getElementById(totalEl);
+    if (tel) tel.textContent = kfmt(total) + " ATN";
+  }
+
+  // --- Chart.js donut ---
   var data = {
-    labels: [
-      '🔥 Burn ('        + pct(burn, total)     + '%)',
-      '🔒 Locked LP ('   + pct(lockedLP, total) + '%)',
-      '🎁 Airdrop ('     + pct(airdrop, total)  + '%)',
-      '📢 Marketing ('   + pct(marketing, total)+ '%)',
-      '👨‍💻 Dev/Team ('  + pct(dev, total)      + '%)',
-      '💼 Reserve ('     + pct(reserve, total)  + '%)'
-    ],
+    labels: items.map(function(it){ return it.name+" ("+pct(it.val,total)+"%)"; }),
     datasets: [{
-      data: [burn, lockedLP, airdrop, marketing, dev, reserve],
-      backgroundColor: ['#ef4444','#06b6d4','#22c55e','#f59e0b','#a78bfa','#64748b'],
-      borderColor: '#0f172a',
-      borderWidth: 4,      // viền dày như hình #2
-      spacing: 2,          // khe tách miếng
-      borderRadius: 8,     // mép bo tròn
+      data: items.map(function(it){ return it.val; }),
+      backgroundColor: items.map(function(it){ return it.color; }),
+      borderColor: "#0f172a",
+      borderWidth: 3,
+      spacing: 2,
+      borderRadius: 8,
       hoverOffset: 6
     }]
   };
 
   new Chart(ctx, {
-    type: 'doughnut',
+    type: "doughnut",
     data: data,
     options: {
-      responsive: false,              // KHÓA – không để Chart.js tự resize
+      responsive: false,
       maintainAspectRatio: false,
-      cutout: '62%',                  // độ dày vòng
-      rotation: -90,                  // bắt đầu ở hướng 12h
-      layout: { padding: 6 },
-      animation: false,
+      cutout: "58%",
+      rotation: -90,
+      layout: { padding: 8 },
       plugins: {
         legend: {
-          position: 'bottom',
+          position: "bottom",
           labels: {
-            color: '#cbd5e1',
-            boxWidth: 16,
+            color: "#e2e8f0",      // chữ sáng hơn để dễ đọc
+            boxWidth: 14,
             boxHeight: 10,
             usePointStyle: true,
-            pointStyle: 'rectRounded',
-            padding: 14
+            pointStyle: "rectRounded",
+            padding: 12,
+            font: { size: 12, weight: "600" }
           }
         },
         tooltip: {
           callbacks: {
-            label: function (c) {
-              var v = Number(c.parsed || 0);
-              var name = String(c.label || '').replace(/\s*\(\d+(?:\.\d+)?%\)\s*$/, '');
-              return ' ' + name + ': ' + v.toLocaleString('en-US') +
-                     ' ATN (' + pct(v, total) + '%)';
+            label: function (ctx) {
+              var v = Number(ctx.parsed || 0);
+              var name = String(ctx.label || "").replace(/\s*\(\d+(\.\d+)?%\)\s*$/, "");
+              return " "+name+": "+kfmt(v)+" ATN ("+pct(v,total)+"%)";
             }
           }
         }
-      }
+      },
+      elements: { arc: { borderAlign: "center" } }
     }
   });
 };
+
 
 
     // ----- Line: Live price + stats (GeckoTerminal) -----

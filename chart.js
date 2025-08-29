@@ -106,16 +106,16 @@ window.renderATNTokenomicsV2 = function (opts) {
   var cv = document.getElementById(canvasId);
   if (!cv) return;
 
-  // --- hiDPI: vẽ nét căng ---
+  // --- hiDPI: tự scale để nét căng ---
   var cssW = Number(opts.width  || 420);
   var cssH = Number(opts.height || 300);
   var dpr  = window.devicePixelRatio || 1;
-  cv.style.width = cssW + "px";
+  cv.style.width  = cssW + "px";
   cv.style.height = cssH + "px";
   cv.width  = Math.round(cssW * dpr);
   cv.height = Math.round(cssH * dpr);
   var ctx = cv.getContext("2d");
-  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0); // vẽ theo dpr (razor-sharp)
 
   function pct(v, tot){
     if(!tot) return "0";
@@ -139,7 +139,7 @@ window.renderATNTokenomicsV2 = function (opts) {
     { name: "💼 Reserve",     val: reserve,  color: "#64748b" }
   ];
 
-  // --- render panel bên phải (nếu có) ---
+  // --- panel bên phải (nếu có) ---
   if (listId) {
     var ul = document.getElementById(listId);
     if (ul) {
@@ -168,7 +168,7 @@ window.renderATNTokenomicsV2 = function (opts) {
       data: items.map(function(it){ return it.val; }),
       backgroundColor: items.map(function(it){ return it.color; }),
       borderColor: "#0f172a",
-      borderWidth: 3,
+      borderWidth: 2,      // viền gọn hơn
       spacing: 2,
       borderRadius: 8,
       hoverOffset: 6
@@ -179,6 +179,7 @@ window.renderATNTokenomicsV2 = function (opts) {
     type: "doughnut",
     data: data,
     options: {
+      devicePixelRatio: 1,          // QUAN TRỌNG: tắt retina-scale của Chart.js (đã tự scale ở trên)
       responsive: false,
       maintainAspectRatio: false,
       cutout: "58%",
@@ -188,13 +189,13 @@ window.renderATNTokenomicsV2 = function (opts) {
         legend: {
           position: "bottom",
           labels: {
-            color: "#e2e8f0",      // chữ sáng hơn để dễ đọc
+            color: "#e2e8f0",
             boxWidth: 14,
             boxHeight: 10,
             usePointStyle: true,
             pointStyle: "rectRounded",
             padding: 12,
-            font: { size: 12, weight: "600" }
+            font: { size: 12, weight: "700" } // đậm hơn để không mờ
           }
         },
         tooltip: {
@@ -202,15 +203,18 @@ window.renderATNTokenomicsV2 = function (opts) {
             label: function (ctx) {
               var v = Number(ctx.parsed || 0);
               var name = String(ctx.label || "").replace(/\s*\(\d+(\.\d+)?%\)\s*$/, "");
-              return " "+name+": "+kfmt(v)+" ATN ("+pct(v,total)+"%)";
+              return " " + name + ": " + kfmt(v) + " ATN (" + pct(v,total) + "%)";
             }
           }
         }
       },
-      elements: { arc: { borderAlign: "center" } }
+      elements: {
+        arc: { borderAlign: "center" } // giữ ổn định (hầu hết phiên bản Chart.js đều hỗ trợ)
+      }
     }
   });
 };
+
 
 
 

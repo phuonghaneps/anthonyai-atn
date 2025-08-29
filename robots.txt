@@ -1,5 +1,8 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://atncrypto.com/sitemap.xml
+# Allow Google AdSense crawler
+User-agent: Mediapartners-Google
+Allow: /
 
+Sitemap: https://atncrypto.com/sitemap.xml

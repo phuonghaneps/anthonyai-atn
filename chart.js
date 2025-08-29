@@ -81,7 +81,7 @@
         type: "doughnut",
         data: data,
         options: {
-          plugins: { legend: { position: "bottom", labels: { color: "#cbd5e1" } } },
+          plugins: { legend: { position: "bottom", labels: { color: "#e2e8f0" } } },
           cutout: "55%"
         }
       });
@@ -221,23 +221,29 @@ window.renderATNTokenomicsV2 = function (opts) {
       if (!ctxLine) return;
 
       // KHÓA kích thước để ngăn "bung"
-      var w = (canvas.parentNode && canvas.parentNode.clientWidth) ? canvas.parentNode.clientWidth : 900;
-      canvas.style.width  = "100%";
-      canvas.style.height = "320px";
-      canvas.width        = w;
-      canvas.height       = 320;
+      // KHÓA kích thước + hiDPI (nét căng)
+    var cssH = 320;
+    var w   = (canvas.parentNode && canvas.parentNode.clientWidth) ? canvas.parentNode.clientWidth : 900;
+    var dpr = window.devicePixelRatio || 1;
+
+    canvas.style.width  = "100%";
+    canvas.style.height = cssH + "px";
+    canvas.width  = Math.round(w * dpr);
+    canvas.height = Math.round(cssH * dpr);
+    ctxLine.setTransform(dpr, 0, 0, dpr, 0, 0);
 
       var priceData = {
         labels: [],
         datasets: [{
           label: "ATN/USD",
           data: [],
-          borderColor: "rgba(34,197,94,1)",
-          borderWidth: 2,
-          backgroundColor: "rgba(34,197,94,.12)",
+          borderColor: "#00e396",
+          borderWidth: 3,
+          backgroundColor: "transparent",
           tension: 0.25,
-          fill: true,
-          pointRadius: 0
+          fill: false,
+          pointRadius: 1.5,
+          pointHitRadius: 6
         }]
       };
 
@@ -249,8 +255,8 @@ window.renderATNTokenomicsV2 = function (opts) {
           responsive: false,
           plugins: { legend: { display: false } },
           scales: {
-            x: { ticks: { color: "#cbd5e1" }, grid: { color: "rgba(148,163,184,.12)" } },
-            y: { ticks: { color: "#cbd5e1" }, grid: { color: "rgba(148,163,184,.12)" } }
+            x: { ticks: { color: "#e2e8f0" }, grid: { color: "rgba(148,163,184,.25)" } },
+            y: { ticks: { color: "#e2e8f0" }, grid: { color: "rgba(148,163,184,.25)" } }
           }
         }
       });

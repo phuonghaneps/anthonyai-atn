@@ -68,9 +68,10 @@ jobs:
 
       - name: Commit build artifacts
         run: |
-          git config --global user.name  "github-actions[bot]"
-          git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          git config --global --add safe.directory "$GITHUB_WORKSPACE"
-          git add chart.obf.js claim1.obf.js claim2.obf.js index.min.html index.html index.dev.html
-          git commit -m "build: obfuscate JS + minify index for release" || echo "No changes to commit"
-          git push
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "build: obfuscate JS + minify index for release" || echo "nothing to commit"
+          git pull --rebase origin main || true
+          git push origin HEAD:main --force
+

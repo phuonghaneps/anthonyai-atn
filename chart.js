@@ -219,19 +219,16 @@ window.renderATNTokenomicsV2 = function (opts) {
       var canvas = document.getElementById("priceLine");
       var ctxLine = canvas ? canvas.getContext("2d") : null;
       if (!ctxLine) return;
+    
+var cssH = 320;
+var w   = (canvas.parentNode && canvas.parentNode.clientWidth) ? canvas.parentNode.clientWidth : 900;
+var dpr = window.devicePixelRatio || 1;
 
-      // KHÓA kích thước để ngăn "bung"
-      // KHÓA kích thước + hiDPI (nét căng)
-    var cssH = 320;
-    var w   = (canvas.parentNode && canvas.parentNode.clientWidth) ? canvas.parentNode.clientWidth : 900;
-    var dpr = window.devicePixelRatio || 1;
-
-    canvas.style.width  = "100%";
-    canvas.style.height = cssH + "px";
-    canvas.width  = Math.round(w * dpr);
-    canvas.height = Math.round(cssH * dpr);
-    ctxLine.setTransform(dpr, 0, 0, dpr, 0, 0);
-
+canvas.style.width  = "100%";
+canvas.style.height = cssH + "px";
+canvas.width  = Math.round(w * dpr);
+canvas.height = Math.round(cssH * dpr);
+ctxLine.setTransform(dpr, 0, 0, dpr, 0, 0);
       var priceData = {
         labels: [],
         datasets: [{

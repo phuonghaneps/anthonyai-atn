@@ -68,10 +68,14 @@ jobs:
 
       - name: Commit build artifacts
         run: |
-          git config user.name  "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          set -e
+          git config --global user.name  "github-actions[bot]"
+          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add -A
           git commit -m "build: obfuscate JS + minify index for release" || echo "nothing to commit"
+          # đồng bộ nhánh main rồi mới đẩy
+          git fetch origin main
           git pull --rebase origin main || true
-          git push origin HEAD:main --force
+          # đẩy lên an toàn (tránh ghi đè ngoài ý muốn)
+          git push --force-with-lease origin HEAD:main
 

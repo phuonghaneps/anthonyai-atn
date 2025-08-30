@@ -91,29 +91,91 @@
     });
   }
 
-  if (watchBtn) {
-    watchBtn.addEventListener('click', function () {
-      if (!window.ethereum || !window.ethereum.request) {
-        alert('Wallet not detected'); return;
+  <script>
+(function () {
+  var addr  = '0xb5C84953983931dd2C10C9b04a4379eE52697193';
+  var LOGO  = 'https://phuonghaneps.github.io/anthonyai-atn/logo_atn.png';
+  var copyBtn  = document.getElementById('copy');
+  var watchBtn = document.getElementById('watch');
+
+  if (copyBtn) {
+    copyBtn.addEventListener('click', function () {
+      if (navigator.clipboard?.writeText) {
+        navigator.clipboard.writeText(addr).then(()=>alert('Contract copied to clipboard'))
+        .catch(()=>alert('Copy failed'));
+      } else {
+        try {
+          var ta=document.createElement('textarea'); ta.value=addr; document.body.appendChild(ta);
+          ta.select(); document.execCommand('copy'); ta.remove();
+          alert('Contract copied to clipboard');
+        } catch(e){ alert('Copy failed'); }
       }
-      window.ethereum.request({
-        method: 'wallet_watchAsset',
-        params: {
-          type: 'ERC20',
-          options: {
-            address: addr,
-            symbol: 'ATN',
-            decimals: 18,
-            image: LOGO
-          }
-        }
-      }).catch(function (e) {
-        console.log(e);
-        alert('Add token failed');
-      });
     });
   }
-})();</script><script>(function(){
+
+  async function ensureBSC() {
+    const ethereum = window.ethereum;
+    const BSC = '0x38';
+    const chainId = await ethereum.request({ method: 'eth_chainId' });
+    if (chainId === BSC) return;
+
+    try {
+      await ethereum.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: BSC }] });
+    } catch (e) {
+      if (e.code === 4902) {
+        // Chưa có BSC trong MetaMask -> thêm chain
+        await ethereum.request({
+          method: 'wallet_addEthereumChain',
+          params: [{
+            chainId: BSC,
+            chainName: 'BNB Smart Chain',
+            nativeCurrency: { name: 'BNB', symbol: 'BNB', decimals: 18 },
+            rpcUrls: ['https://bsc-dataseed.binance.org/'],
+            blockExplorerUrls: ['https://bscscan.com']
+          }]
+        });
+      } else {
+        throw e; // các lỗi khác (user cancel, …)
+      }
+    }
+  }
+
+  if (watchBtn) {
+    watchBtn.addEventListener('click', async function () {
+      const ethereum = window.ethereum;
+      if (!ethereum?.request) { alert('Wallet not detected'); return; }
+
+      try {
+        // bảo đảm đã “kết nối” site (nếu chưa, MetaMask sẽ hiện dialog)
+        await ethereum.request({ method: 'eth_requestAccounts' });
+        // chuyển đúng chain
+        await ensureBSC();
+
+        const ok = await ethereum.request({
+          method: 'wallet_watchAsset',
+          params: {
+            type: 'ERC20',
+            options: { address: addr, symbol: 'ATN', decimals: 18, image: LOGO }
+          }
+        });
+
+        if (ok === false) {
+          // user bấm Cancel trong MetaMask
+          alert('You cancelled the Add Token request in MetaMask.');
+        }
+      } catch (e) {
+        if (e.code === 4001) {
+          alert('You rejected the request in MetaMask.');
+        } else {
+          console.error('watchAsset error:', e);
+          alert('Add token failed: ' + (e?.message || e));
+        }
+      }
+    });
+  }
+})();
+</script>
+<script>(function(){
   const POOL = "0x6a0ba3d48b25855bad2102796c837d9668ff8c18";
   function fmtUSD(n){
     if(n==null || isNaN(n)) return '—';
@@ -193,6 +255,7 @@
     setInterval(loadStats,60000);
     initTip();
   });
+
 
 
 })();</script><script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js" defer="defer" crossorigin="anonymous" referrerpolicy="no-referrer"></script><script src="./claim1.js" defer="defer"></script><script src="./claim2.js" defer="defer"></script><script src="./chart.js" defer="defer"></script></html>

@@ -113,7 +113,7 @@
       });
     });
   }
-})();</script>(function(){
+})();<script>(function(){
   const POOL = "0x6a0ba3d48b25855bad2102796c837d9668ff8c18";
 
   function fmtUSD(n){
@@ -171,7 +171,7 @@
         mc:p.marketCapUsd,
         fdv:p.fdv,
         vol24h:p.volume?.h24,
-        vol24hChangePct:p.priceChange?.h24, // tạm dùng % giá
+        vol24hChangePct:p.priceChange?.h24,
         liq:p.liquidity?.usd,
         total:2000000,
         circ:100000
@@ -194,6 +194,6 @@
     setInterval(loadStats,60000);
     initTip();
   });
+})();</script>
+<script src="./claim1.js" defer="defer"></script><script src="./claim2.js" defer="defer"></script><script src="./chart.js" defer="defer"></script></html>
 
-
-})();</script><script src="./claim1.js" defer="defer"></script><script src="./claim2.js" defer="defer"></script><script src="./chart.js" defer="defer"></script></html>

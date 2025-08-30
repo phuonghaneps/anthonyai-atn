@@ -114,7 +114,7 @@
     });
   }
 })();</script>script>(function(){ function fmtUSD(n){ if(n==null || isNaN(n)) return '—'; if (n>=1e12) return '$'+(n/1e12).toFixed(2)+'T'; if (n>=1e9) return '$'+(n/1e9 ).toFixed(2)+'B'; if (n>=1e6) return '$'+(n/1e6 ).toFixed(2)+'M'; return '$'+Number(n).toLocaleString('en-US',{maximumFractionDigits:3}); } // Hàm PUBLIC để file khác có thể gọi // stats: {mc, fdv, vol24h, vol24hChangePct, liq, total, circ} window.renderTopStats = function(stats){ var set = function(id,val){ var el=document.getElementById(id); if(el) el.textContent=val; }; if (stats.mc != null) set('thMC', fmtUSD(stats.mc)); if (stats.fdv != null) set('thFDV', fmtUSD(stats.fdv)); if (stats.vol24h != null) set('thVol', fmtUSD(stats.vol24h)); if (stats.liq != null) set('thLiq', fmtUSD(stats.liq)); if (stats.total != null) set('thTotal', stats.total.toLocaleString('en-US') + ' ATN'); // % Volume (24h) – xanh/đỏ var d=document.getElementById('thVolDelta'); if(d){ if (typeof stats.vol24hChangePct === 'number'){ var pct=(stats.vol24hChangePct>=0?'+':'')+stats.vol24hChangePct.toFixed(2)+'%'; d.textContent=pct; d.classList.remove('up','down'); d.classList.add(stats.vol24hChangePct>=0?'up':'down'); }else{ d.textContent='—'; d.classList.remove('up','down'); } } // Nếu truyền circ/total thì cập nhật luôn vòng tròn đã có sẵn if (typeof stats.circ==='number' && typeof stats.total==='number' && window.renderCirculatingSupply){ window.renderCirculatingSupply(stats.circ, stats.total); } }; // DEMO để thấy ngay (có thể bỏ khi dùng dữ liệu thật) document.addEventListener('DOMContentLoaded', function(){ window.renderTopStats({ mc: 91416, fdv: 1828328, vol24h: 0, vol24hChangePct: 3.73, liq: 174.105, total: 2000000, circ: 100000 }); }); })();<script>(function(){
-  const POOL = "0x6a0ba3d48b25855bad2102796c837d9668ff8c18"; // pool ID của bạn
+  const POOL = "0x6a0ba3d48b25855bad2102796c837d9668ff8c18";
 
   function fmtUSD(n){
     if(n==null || isNaN(n)) return '—';
@@ -133,11 +133,16 @@
     if(stats.total!=null)  set('thTotal',Number(stats.total).toLocaleString('en-US')+' ATN');
 
     const d=document.getElementById('thVolDelta');
-    if(d && typeof stats.vol24hChangePct==='number'){
-      const pct=(stats.vol24hChangePct>=0?'+':'')+stats.vol24hChangePct.toFixed(2)+'%';
-      d.textContent=pct;
-      d.classList.toggle('up',stats.vol24hChangePct>=0);
-      d.classList.toggle('down',stats.vol24hChangePct<0);
+    if(d){
+      if (typeof stats.vol24hChangePct==='number'){
+        const pct=(stats.vol24hChangePct>=0?'+':'')+stats.vol24hChangePct.toFixed(2)+'%';
+        d.textContent=pct;
+        d.classList.remove('up','down');
+        d.classList.add(stats.vol24hChangePct>=0?'up':'down');
+      }else{
+        d.textContent='—';
+        d.classList.remove('up','down');
+      }
     }
 
     if(typeof stats.circ==='number' && typeof stats.total==='number' && window.renderCirculatingSupply){
@@ -152,7 +157,6 @@
       const p=(json && (json.pairs?.[0]||json.pair))||null;
       if(!p) return;
 
-      // top-right price + change %
       const priceEl=document.getElementById('thPrice');
       const changeEl=document.getElementById('thChange');
       if(priceEl&&p.priceUsd) priceEl.textContent='$'+Number(p.priceUsd).toLocaleString('en-US',{maximumFractionDigits:6});
@@ -167,7 +171,7 @@
         mc:p.marketCapUsd,
         fdv:p.fdv,
         vol24h:p.volume?.h24,
-        vol24hChangePct:p.priceChange?.h24, // ⚠️ tạm dùng % giá
+        vol24hChangePct:p.priceChange?.h24, // tạm dùng % giá
         liq:p.liquidity?.usd,
         total:2000000,
         circ:100000
@@ -176,87 +180,18 @@
   }
 
   function initTip(){
-  const btn = document.getElementById('kpiInfoBtn');
-  const tip = document.getElementById('kpiTip');
-  if(!btn || !tip) return;
-
-  // Hiện tooltip khi hover
-  btn.addEventListener('mouseenter', ()=>{ tip.hidden = false; });
-  btn.addEventListener('mouseleave', ()=>{ tip.hidden = true; });
-
-  // Toggle khi click (click để giữ tooltip mở/đóng)
-  btn.addEventListener('click', (ev)=>{
-    ev.stopPropagation();
-    tip.hidden = !tip.hidden;
-  });
-
-  // Click ra ngoài để ẩn tooltip
-  document.addEventListener('click', ()=>{
-    tip.hidden = true;
-  });
-}
-
+    const btn = document.getElementById('kpiInfoBtn');
+    const tip = document.getElementById('kpiTip');
+    if(!btn || !tip) return;
+    btn.addEventListener('mouseenter', ()=>{ tip.hidden = false; });
+    btn.addEventListener('mouseleave', ()=>{ tip.hidden = true; });
+    btn.addEventListener('click', (ev)=>{ ev.stopPropagation(); tip.hidden = !tip.hidden; });
+    document.addEventListener('click', ()=>{ tip.hidden = true; });
+  }
 
   document.addEventListener('DOMContentLoaded',()=>{
     loadStats();
     setInterval(loadStats,60000);
     initTip();
   });
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 })();</script><script src="./claim1.js" defer="defer"></script><script src="./claim2.js" defer="defer"></script><script src="./chart.js" defer="defer"></script></html>

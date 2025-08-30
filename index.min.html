@@ -35,16 +35,15 @@
   s.onerror=function(){var el=document.getElementById('msg'); if(el) el.textContent="Failed to load ethers.js";};
   document.head.appendChild(s);
 }</script><script>(function(){
-  function formatNum(n){ // 19.91M / 100,000
+  function formatNum(n){
     if (n>=1e12) return (n/1e12).toFixed(2).replace(/\.00$/,'')+'T';
     if (n>=1e9)  return (n/1e9 ).toFixed(2).replace(/\.00$/,'')+'B';
     if (n>=1e6)  return (n/1e6 ).toFixed(2).replace(/\.00$/,'')+'M';
     return n.toLocaleString('en-US');
   }
 
-  // Animate dashoffset like một vòng tròn đang “đầy dần”
   function animateRing(el, targetPct){
-    var CIRC=113.097, start=null, dur=650; // ms
+    var CIRC=113.097, start=null, dur=650;
     var targetOffset=CIRC*(1-targetPct);
     function step(ts){
       if(!start) start=ts;
@@ -56,7 +55,6 @@
     requestAnimationFrame(step);
   }
 
-  // Public-ish so chart.js có thể gọi cập nhật realtime nếu muốn
   window.renderCirculatingSupply = function(circ, total){
     var nEl=document.getElementById('thCirc');
     var ring=document.getElementById('circDash');
@@ -66,121 +64,56 @@
     animateRing(ring, pct);
   };
 
-  // Khởi tạo mặc định (có thể thay bằng số live)
   document.addEventListener('DOMContentLoaded', function(){
-    // ví dụ giống hình 2: 100,000 ATN đang lưu hành trên tổng 2,000,000
     renderCirculatingSupply(100000, 2000000);
-
-    // Footer year
     var y=document.getElementById('year'); if(y) y.textContent=(new Date()).getFullYear();
-<!-- Copy & Watch (chuẩn MetaMask/Rabby + logo tuyệt đối) -->
-<script>
-  (function () {
-    var addr  = '0xb5C84953983931dd2C10C9b04a4379eE52697193';
-    var LOGO  = 'https://phuonghaneps.github.io/anthonyai-atn/logo_atn.png';
-    var copyBtn  = document.getElementById('copy');
-    var watchBtn = document.getElementById('watch');
-    // Copy contract
-    if (copyBtn) {
-      copyBtn.addEventListener('click', function () {
-        if (navigator.clipboard && navigator.clipboard.writeText) {
-          navigator.clipboard.writeText(addr)
-            .then(function(){ alert('Contract copied to clipboard'); })
-            .catch(function(){ alert('Copy failed'); });
-        } else {
-          // Fallback cho trình duyệt cũ
-          try {
-            var ta = document.createElement('textarea');
-            ta.value = addr; document.body.appendChild(ta); ta.select();
-            document.execCommand('copy'); document.body.removeChild(ta);
-            alert('Contract copied to clipboard');
-          } catch(e) { alert('Copy failed'); }
-        }
-      });
-    }
+  });
+})();</script><script>(function () {
+  var addr  = '0xb5C84953983931dd2C10C9b04a4379eE52697193';
+  var LOGO  = 'https://phuonghaneps.github.io/anthonyai-atn/logo_atn.png';
+  var copyBtn  = document.getElementById('copy');
+  var watchBtn = document.getElementById('watch');
 
-    // Add token vào ví
-    if (watchBtn) {
-      watchBtn.addEventListener('click', function () {
-        if (!window.ethereum || !window.ethereum.request) {
-          alert('Wallet not detected'); return;
-        }
-        window.ethereum.request({
-          method: 'wallet_watchAsset',
-          params: {
-            type: 'ERC20',
-            options: {
-              address: addr,
-              symbol: 'ATN',
-              decimals: 18,
-              image: LOGO   // luôn dùng URL tuyệt đối
-            }
-          }
-        }).catch(function (e) {
-          console.log(e);
-          alert('Add token failed');
-        });
-      });
-    }
-  })();</script><script>(function(){
-  function fmtUSD(n){
-    if(n==null || isNaN(n)) return '—';
-    if (n>=1e12) return '$'+(n/1e12).toFixed(2)+'T';
-    if (n>=1e9)  return '$'+(n/1e9 ).toFixed(2)+'B';
-    if (n>=1e6)  return '$'+(n/1e6 ).toFixed(2)+'M';
-    return '$'+Number(n).toLocaleString('en-US',{maximumFractionDigits:3});
+  if (copyBtn) {
+    copyBtn.addEventListener('click', function () {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(addr)
+          .then(function(){ alert('Contract copied to clipboard'); })
+          .catch(function(){ alert('Copy failed'); });
+      } else {
+        try {
+          var ta = document.createElement('textarea');
+          ta.value = addr; document.body.appendChild(ta); ta.select();
+          document.execCommand('copy'); document.body.removeChild(ta);
+          alert('Contract copied to clipboard');
+        } catch(e) { alert('Copy failed'); }
+      }
+    });
   }
 
-  // Hàm PUBLIC để file khác có thể gọi
-  // stats: {mc, fdv, vol24h, vol24hChangePct, liq, total, circ}
-  window.renderTopStats = function(stats){
-    var set = function(id,val){
-      var el=document.getElementById(id);
-      if(el) el.textContent=val;
-    };
-
-    if (stats.mc != null)     set('thMC',    fmtUSD(stats.mc));
-    if (stats.fdv != null)    set('thFDV',   fmtUSD(stats.fdv));
-    if (stats.vol24h != null) set('thVol',   fmtUSD(stats.vol24h));
-    if (stats.liq != null)    set('thLiq',   fmtUSD(stats.liq));
-    if (stats.total != null)  set('thTotal', stats.total.toLocaleString('en-US') + ' ATN');
-
-    // % Volume (24h) – xanh/đỏ
-    var d=document.getElementById('thVolDelta');
-    if(d){
-      if (typeof stats.vol24hChangePct === 'number'){
-        var pct=(stats.vol24hChangePct>=0?'+':'')+stats.vol24hChangePct.toFixed(2)+'%';
-        d.textContent=pct;
-        d.classList.remove('up','down');
-        d.classList.add(stats.vol24hChangePct>=0?'up':'down');
-      }else{
-        d.textContent='—';
-        d.classList.remove('up','down');
+  if (watchBtn) {
+    watchBtn.addEventListener('click', function () {
+      if (!window.ethereum || !window.ethereum.request) {
+        alert('Wallet not detected'); return;
       }
-    }
-
-    // Nếu truyền circ/total thì cập nhật luôn vòng tròn đã có sẵn
-    if (typeof stats.circ==='number' && typeof stats.total==='number' && window.renderCirculatingSupply){
-      window.renderCirculatingSupply(stats.circ, stats.total);
-    }
-  };
-
-  // DEMO để thấy ngay (có thể bỏ khi dùng dữ liệu thật)
-  document.addEventListener('DOMContentLoaded', function(){
-    window.renderTopStats({
-      mc: 91416,
-      fdv: 1828328,
-      vol24h: 0,
-      vol24hChangePct: 3.73,
-      liq: 174.105,
-      total: 2000000,
-      circ: 100000
+      window.ethereum.request({
+        method: 'wallet_watchAsset',
+        params: {
+          type: 'ERC20',
+          options: {
+            address: addr,
+            symbol: 'ATN',
+            decimals: 18,
+            image: LOGO
+          }
+        }
+      }).catch(function (e) {
+        console.log(e);
+        alert('Add token failed');
+      });
     });
-  });
-
-
-
-})();</script><script>(function(){
+  }
+})();</script>script>(function(){ function fmtUSD(n){ if(n==null || isNaN(n)) return '—'; if (n>=1e12) return '$'+(n/1e12).toFixed(2)+'T'; if (n>=1e9) return '$'+(n/1e9 ).toFixed(2)+'B'; if (n>=1e6) return '$'+(n/1e6 ).toFixed(2)+'M'; return '$'+Number(n).toLocaleString('en-US',{maximumFractionDigits:3}); } // Hàm PUBLIC để file khác có thể gọi // stats: {mc, fdv, vol24h, vol24hChangePct, liq, total, circ} window.renderTopStats = function(stats){ var set = function(id,val){ var el=document.getElementById(id); if(el) el.textContent=val; }; if (stats.mc != null) set('thMC', fmtUSD(stats.mc)); if (stats.fdv != null) set('thFDV', fmtUSD(stats.fdv)); if (stats.vol24h != null) set('thVol', fmtUSD(stats.vol24h)); if (stats.liq != null) set('thLiq', fmtUSD(stats.liq)); if (stats.total != null) set('thTotal', stats.total.toLocaleString('en-US') + ' ATN'); // % Volume (24h) – xanh/đỏ var d=document.getElementById('thVolDelta'); if(d){ if (typeof stats.vol24hChangePct === 'number'){ var pct=(stats.vol24hChangePct>=0?'+':'')+stats.vol24hChangePct.toFixed(2)+'%'; d.textContent=pct; d.classList.remove('up','down'); d.classList.add(stats.vol24hChangePct>=0?'up':'down'); }else{ d.textContent='—'; d.classList.remove('up','down'); } } // Nếu truyền circ/total thì cập nhật luôn vòng tròn đã có sẵn if (typeof stats.circ==='number' && typeof stats.total==='number' && window.renderCirculatingSupply){ window.renderCirculatingSupply(stats.circ, stats.total); } }; // DEMO để thấy ngay (có thể bỏ khi dùng dữ liệu thật) document.addEventListener('DOMContentLoaded', function(){ window.renderTopStats({ mc: 91416, fdv: 1828328, vol24h: 0, vol24hChangePct: 3.73, liq: 174.105, total: 2000000, circ: 100000 }); }); })();<script>(function(){
   const POOL = "0x6a0ba3d48b25855bad2102796c837d9668ff8c18"; // pool ID của bạn
 
   function fmtUSD(n){
@@ -269,6 +202,7 @@
     setInterval(loadStats,60000);
     initTip();
   });
+
 
 
 

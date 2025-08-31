@@ -7,21 +7,12 @@
   <style>
   :root{--fg:#111827;--muted:#6b7280;--border:#e5e7eb;--card:#fff;--bg:#f8fafc;--brand:#2563eb}
   *{box-sizing:border-box}
-  body{
-    margin:0;
-    font-family:system-ui,Segoe UI,Roboto,Arial;
-    background:var(--bg);
-    color:var(--fg);
-    font-size:16px;
-    line-height:1.45;
-  }
+  body{margin:0;font-family:system-ui,Segoe UI,Roboto,Arial;background:var(--bg);color:var(--fg);font-size:16px;line-height:1.45;}
   .wrap{max-width:1200px;margin:32px auto;padding:0 24px}
   .card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:18px}
   h1{margin:0 0 14px 0;font-size:24px;display:flex;align-items:center;gap:10px}
   .row{display:flex;gap:10px;flex-wrap:wrap;margin:12px 0}
-  input,select,button{
-    padding:12px 14px;border-radius:12px;border:1px solid var(--border);font-size:16px
-  }
+  input,select,button{padding:12px 14px;border-radius:12px;border:1px solid var(--border);font-size:16px}
   button{background:var(--brand);color:#fff;border:none;cursor:pointer}
   button:disabled{opacity:.5;cursor:not-allowed}
   .muted{color:var(--muted);font-size:13px}
@@ -31,17 +22,11 @@
   .kpi{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin-top:14px}
   .kpi .card{padding:16px}
   .kpi .v{font-size:22px;font-weight:700}
-  canvas{
-    width:100%;height:360px;border:1px solid var(--border);border-radius:10px;background:#fff
-  }
+  canvas{width:100%;height:360px;border:1px solid var(--border);border-radius:10px;background:#fff}
   .mono{font-family:ui-monospace,Consolas,monospace}
   .readonly{background:#f3f4f6}
   pre{background:#0f172a;color:#e5e7eb;border-radius:12px;padding:12px;overflow:auto}
-  @media(max-width:640px){
-    .wrap{padding:0 16px}
-    .kpi{grid-template-columns:1fr}
-    h1{font-size:20px}
-  }
+  @media(max-width:640px){.wrap{padding:0 16px}.kpi{grid-template-columns:1fr}h1{font-size:20px}}
   </style>
 </head>
 <body>
@@ -62,7 +47,6 @@
       <div class="row">
         <button id="btnCheck">Kiểm tra số dư có thể claim</button>
         <button id="btnReq">Gửi yêu cầu payout (off-chain)</button>
-        <!-- Nút claim on-chain sẽ kích hoạt khi có Merkle proof/contract -->
         <button id="btnClaim" disabled title="Sẽ bật khi có Merkle proof/contract">Claim on-chain</button>
       </div>
 
@@ -96,18 +80,14 @@
 
 <script>
 (function(){
-  // ====== Cấu hình ======
   const API = 'https://api.atncrypto.com';
   document.getElementById('api').textContent = API;
 
-  // ====== Helpers ======
   const $ = sel => document.querySelector(sel);
   const log = (msg) => { const el = $('#log'); el.textContent = (el.textContent ? el.textContent + "\n" : "") + msg; };
   const clearLog = () => $('#log').textContent = '';
 
-  function isWallet(addr){
-    return /^0x[a-fA-F0-9]{40}$/.test((addr||'').trim());
-  }
+  function isWallet(addr){ return /^0x[a-fA-F0-9]{40}$/.test((addr||'').trim()); }
   async function fetchJSON(url, opts){
     const res = await fetch(url, opts);
     const ct = res.headers.get('content-type') || '';
@@ -116,207 +96,145 @@
     if (!ct.includes('application/json')) throw new Error(`Không phải JSON: ${txt.slice(0,160)}`);
     return JSON.parse(txt);
   }
-  function fmt(n, digits=6){
-    const x = Number(n || 0);
-    return x.toLocaleString('en-US', { maximumFractionDigits: digits });
-  }
+  function fmt(n, digits=6){ const x = Number(n || 0); return x.toLocaleString('en-US', { maximumFractionDigits: digits }); }
 
-  // ====== Lấy params từ URL (từ Extension mở sang) ======
+  // Params từ URL
   const qs = new URLSearchParams(location.search);
   const walletEl = $('#wallet');
   const urlWallet = qs.get('wallet') || '';
   const urlDevice = qs.get('device') || '';
   const devBox = $('#devBox');
-  // Fallback: nếu URL không có ?device=... thì tự hỏi backend để lấy device_id đã liên kết
-let deviceParam = urlDevice;
 
-async function ensureDeviceId(wallet){
-  if (deviceParam) return deviceParam;              // đã có từ URL
-  if (!isWallet(wallet)) return '';                 // ví chưa hợp lệ
-  try{
-    const j = await fetchJSON(`${API}/device/binding?wallet=${encodeURIComponent(wallet)}`);
-    if (j && j.device_id){
-      deviceParam = j.device_id;
-      // cập nhật góc thông tin thiết bị trên UI
-      devBox.textContent = `Thiết bị: ${deviceParam}`;
-    }
-  }catch(e){
-    log('Không lấy được device_id từ server: ' + e.message);
+  // Fallback device: tự hỏi backend nếu URL thiếu
+  let deviceParam = urlDevice;
+  async function ensureDeviceId(wallet){
+    if (deviceParam) return deviceParam;
+    if (!isWallet(wallet)) return '';
+    try{
+      const j = await fetchJSON(`${API}/device/binding?wallet=${encodeURIComponent(wallet)}`);
+      if (j && j.device_id){
+        deviceParam = j.device_id;
+        devBox.textContent = `Thiết bị: ${deviceParam}`;
+      }
+    }catch(e){ log('Không lấy được device_id từ server: ' + e.message); }
+    return deviceParam;
   }
-  return deviceParam;
-}
 
   if (urlWallet) {
     walletEl.value = urlWallet;
     walletEl.readOnly = true;
     walletEl.classList.add('readonly');
   }
-  if (urlDevice) {
-    devBox.textContent = `Thiết bị: ${urlDevice}`;
-  }
+  if (urlDevice) devBox.textContent = `Thiết bị: ${urlDevice}`;
 
-  // ====== API: History để hiển thị chart/bảng ======
+  // History
   async function fetchHistory(wallet, days){
     const url = `${API}/stats/history?wallet=${encodeURIComponent(wallet)}&days=${days}`;
     const data = await fetchJSON(url);
-    // Kỳ vọng: { wallet, days, rate_atn_per_gb, daily: [{day, gb, est_atn}] }
     if (!Array.isArray(data.daily)) data.daily = [];
     return data;
   }
 
-  // Vẽ chart GB theo ngày
   function drawChart(canvas, points){
     const ctx = canvas.getContext('2d');
     const W = canvas.width, H = canvas.height;
     ctx.clearRect(0,0,W,H);
-
-    const L=40,R=10,T=12,B=30;
-    const w=W-L-R, h=H-T-B;
-
-    // Khung
-    ctx.strokeStyle='#e5e7eb'; ctx.lineWidth=1;
-    ctx.strokeRect(L,T,w,h);
-
+    const L=40,R=10,T=12,B=30, w=W-L-R, h=H-T-B;
+    ctx.strokeStyle='#e5e7eb'; ctx.lineWidth=1; ctx.strokeRect(L,T,w,h);
     if(points.length===0) return;
     const ys = points.map(p=>Number(p.gb)||0);
     const yMax = Math.max(...ys)*1.1 || 1;
     const xStep = w / Math.max(1, points.length-1);
-
-    // lưới + nhãn Y
     ctx.fillStyle='#6b7280'; ctx.font='12px system-ui';
     const ticks=4;
     for(let i=0;i<=ticks;i++){
       const y=T + h - (i/ticks)*h;
       ctx.beginPath(); ctx.moveTo(L,y); ctx.lineTo(W-R,y); ctx.stroke();
-      const v = (yMax*i/ticks);
-      ctx.fillText(v.toFixed(2), 4, y+4);
+      ctx.fillText((yMax*i/ticks).toFixed(2), 4, y+4);
     }
-
-    // đường line
-    ctx.strokeStyle='#2563eb'; ctx.lineWidth=2;
-    ctx.beginPath();
-    points.forEach((p,i)=>{
-      const x = L + i*xStep;
-      const y = T + h - (Number(p.gb)/yMax)*h;
-      if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
-    });
+    ctx.strokeStyle='#2563eb'; ctx.lineWidth=2; ctx.beginPath();
+    points.forEach((p,i)=>{ const x=L+i*xStep; const y=T+h-(Number(p.gb)/yMax)*h; if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y); });
     ctx.stroke();
-
-    // chấm
     ctx.fillStyle='#2563eb';
-    points.forEach((p,i)=>{
-      const x = L + i*xStep;
-      const y = T + h - (Number(p.gb)/yMax)*h;
-      ctx.beginPath(); ctx.arc(x,y,3,0,Math.PI*2); ctx.fill();
-    });
-
-    // nhãn X thưa
+    points.forEach((p,i)=>{ const x=L+i*xStep; const y=T+h-(Number(p.gb)/yMax)*h; ctx.beginPath(); ctx.arc(x,y,3,0,Math.PI*2); ctx.fill(); });
     ctx.fillStyle='#6b7280'; ctx.textAlign='center';
     const step = Math.ceil(points.length/6);
-    points.forEach((p,i)=>{
-      if(i%step!==0 && i!==points.length-1) return;
-      const x = L + i*xStep;
-      ctx.fillText(p.day, x, H-8);
-    });
+    points.forEach((p,i)=>{ if(i%step!==0 && i!==points.length-1) return; const x=L+i*xStep; ctx.fillText(p.day, x, H-8); });
   }
 
-  // ====== Nút Xem (lịch sử & KPI) ======
   async function viewHistory(){
     clearLog();
     const wallet = walletEl.value.trim();
     const days = Number($('#days').value);
-    if (!isWallet(wallet)) { alert('Nhập ví BSC hợp lệ (0x + 40 hex)'); return; }
+    if (!isWallet(wallet)) { alert('Nhập ví BSC hợp lệ'); return; }
 
     $('#btnView').disabled = true;
     try{
       const data = await fetchHistory(wallet, days);
       const list = data.daily;
-
       const totalGB = list.reduce((s,x)=>s+Number(x.gb||0),0);
       const totalATN = list.reduce((s,x)=>s+Number(x.est_atn||0),0);
-
-      // KPI
       $('#kpiGB').textContent = fmt(totalGB,6);
       $('#kpiATN').textContent = fmt(totalATN,6);
       $('#kpiDays').textContent = list.length;
 
-      // Table
       const tbody = $('#tbody'); tbody.innerHTML='';
       list.forEach(row=>{
         const tr = document.createElement('tr');
-        tr.innerHTML = `<td>${row.day}</td>
-                        <td>${fmt(row.gb,6)}</td>
-                        <td>${fmt(row.est_atn,6)}</td>`;
+        tr.innerHTML = `<td>${row.day}</td><td>${fmt(row.gb,6)}</td><td>${fmt(row.est_atn,6)}</td>`;
         tbody.appendChild(tr);
       });
-
-      // Chart
-      const points = list.map(r=>({day:r.day, gb:r.gb, ts: Date.parse(r.day+'T00:00:00Z')||0}));
+      const points = list.map(r=>({day:r.day, gb:r.gb}));
       drawChart($('#chart'), points);
-
       log('Tải lịch sử thành công.');
     }catch(e){
       alert('Lỗi tải dữ liệu: ' + e.message);
       log('Lỗi history: ' + e.message);
       console.error(e);
-    }finally{
-      $('#btnView').disabled = false;
-    }
+    }finally{ $('#btnView').disabled = false; }
   }
 
-  // ====== Nút Kiểm tra số dư (GET /payout/balance) ======
   async function checkBalance(){
     clearLog();
     const wallet = walletEl.value.trim();
     if (!isWallet(wallet)) { alert('Ví không hợp lệ.'); return; }
     try{
       const r = await fetchJSON(`${API}/payout/balance?wallet=${encodeURIComponent(wallet)}`);
+      const avail = Number(r.available_atn);  // ép kiểu số
+      const min   = Number(r.min);
       log(JSON.stringify(r, null, 2));
-      if (typeof r.available_atn === 'number' && typeof r.min === 'number') {
-        if (r.available_atn >= r.min) {
-          log('✅ Đủ ngưỡng để tạo yêu cầu payout.');
-        } else {
-          log('ℹ️ Chưa đủ ngưỡng.');
-        }
+      if (!Number.isNaN(avail) && !Number.isNaN(min)){
+        if (avail >= min) log('✅ Đủ ngưỡng để tạo yêu cầu payout.');
+        else log('ℹ️ Chưa đủ ngưỡng.');
       }
-    }catch(e){
-      log('Lỗi balance: ' + e.message);
-    }
+    }catch(e){ log('Lỗi balance: ' + e.message); }
   }
 
-  // ====== Nút Gửi yêu cầu payout (POST /payout/request) ======
   async function requestPayout(){
-  clearLog();
-  const wallet = walletEl.value.trim();
-  if (!isWallet(wallet)) { alert('Ví không hợp lệ.'); return; }
-
-  // Lấy device_id đúng: ưu tiên URL, nếu thiếu thì hỏi /device/binding
-  const device = await ensureDeviceId(wallet);
-  if (!device){
-    alert('Thiếu device_id. Hãy mở trang này từ Extension sau khi đã đăng ký thiết bị.');
-    log('Thiếu device_id — không thể tạo yêu cầu payout.');
-    return;
+    clearLog();
+    const wallet = walletEl.value.trim();
+    if (!isWallet(wallet)) { alert('Ví không hợp lệ.'); return; }
+    const device = await ensureDeviceId(wallet);
+    if (!device){
+      alert('Thiếu device_id. Hãy mở trang này từ Extension sau khi đã đăng ký thiết bị.');
+      log('Thiếu device_id — không thể tạo yêu cầu payout.');
+      return;
+    }
+    try{
+      const r = await fetchJSON(`${API}/payout/request`, {
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ wallet, device_id: device })
+      });
+      log(JSON.stringify(r, null, 2));
+      if (r.ok) log('✅ Đã ghi nhận yêu cầu payout.');
+    }catch(e){ log('Lỗi payout: ' + e.message); }
   }
 
-  try{
-    const r = await fetchJSON(`${API}/payout/request`, {
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ wallet, device_id: device })
-    });
-    log(JSON.stringify(r, null, 2));
-    if (r.ok) log('✅ Đã ghi nhận yêu cầu payout.');
-  }catch(e){
-    log('Lỗi payout: ' + e.message);
-  }
-}
-
-  // ====== Gắn sự kiện ======
   $('#btnView').addEventListener('click', viewHistory);
   $('#btnCheck').addEventListener('click', checkBalance);
   $('#btnReq').addEventListener('click', requestPayout);
 
-  // Auto-run nếu có wallet trên URL
   if (walletEl.value) viewHistory();
 })();
 </script>

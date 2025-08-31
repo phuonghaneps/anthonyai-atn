@@ -52,6 +52,7 @@
 
       <div class="muted">API: <span id="api">https://api.atncrypto.com</span>
         <span id="devBox" class="muted" style="margin-left:8px"></span>
+        <span id="devStatus" class="muted" style="margin-left:8px"></span>
       </div>
 
       <div class="kpi">
@@ -234,6 +235,20 @@
   $('#btnView').addEventListener('click', viewHistory);
   $('#btnCheck').addEventListener('click', checkBalance);
   $('#btnReq').addEventListener('click', requestPayout);
+    // --- ONLINE INDICATOR ---
+  async function refreshOnline(){
+    const wallet = walletEl.value.trim();
+    const device = await ensureDeviceId(wallet);  // đã có sẵn ở trên
+    if (!isWallet(wallet) || !device) { document.querySelector('#devStatus').textContent=''; return; }
+    try{
+      const j = await fetchJSON(`${API}/device/online?wallet=${encodeURIComponent(wallet)}&device_id=${encodeURIComponent(device)}`);
+      document.querySelector('#devStatus').textContent = j.online ? '• Online' : '• Offline';
+    }catch(e){
+      document.querySelector('#devStatus').textContent = '';
+    }
+  }
+  refreshOnline();
+  setInterval(refreshOnline, 30000); // 30s cập nhật một lần
 
   if (walletEl.value) viewHistory();
 })();

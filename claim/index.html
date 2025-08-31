@@ -127,6 +127,24 @@
   const urlWallet = qs.get('wallet') || '';
   const urlDevice = qs.get('device') || '';
   const devBox = $('#devBox');
+  // Fallback: nếu URL không có ?device=... thì tự hỏi backend để lấy device_id đã liên kết
+let deviceParam = urlDevice;
+
+async function ensureDeviceId(wallet){
+  if (deviceParam) return deviceParam;              // đã có từ URL
+  if (!isWallet(wallet)) return '';                 // ví chưa hợp lệ
+  try{
+    const j = await fetchJSON(`${API}/device/binding?wallet=${encodeURIComponent(wallet)}`);
+    if (j && j.device_id){
+      deviceParam = j.device_id;
+      // cập nhật góc thông tin thiết bị trên UI
+      devBox.textContent = `Thiết bị: ${deviceParam}`;
+    }
+  }catch(e){
+    log('Không lấy được device_id từ server: ' + e.message);
+  }
+  return deviceParam;
+}
 
   if (urlWallet) {
     walletEl.value = urlWallet;
@@ -268,26 +286,30 @@
 
   // ====== Nút Gửi yêu cầu payout (POST /payout/request) ======
   async function requestPayout(){
-    clearLog();
-    const wallet = walletEl.value.trim();
-    const device = urlDevice;
-    if (!isWallet(wallet)) { alert('Ví không hợp lệ.'); return; }
-    if (!device) { alert('Thiếu device_id. Hãy mở trang này từ Extension để có ?device=...'); return; }
+  clearLog();
+  const wallet = walletEl.value.trim();
+  if (!isWallet(wallet)) { alert('Ví không hợp lệ.'); return; }
 
-    try{
-      const r = await fetchJSON(`${API}/payout/request`, {
-        method:'POST',
-        headers:{'Content-Type':'application/json'},
-        body: JSON.stringify({ wallet, device_id: device })
-      });
-      log(JSON.stringify(r, null, 2));
-      if (r.ok) {
-        log('✅ Đã ghi nhận yêu cầu payout.');
-      }
-    }catch(e){
-      log('Lỗi payout: ' + e.message);
-    }
+  // Lấy device_id đúng: ưu tiên URL, nếu thiếu thì hỏi /device/binding
+  const device = await ensureDeviceId(wallet);
+  if (!device){
+    alert('Thiếu device_id. Hãy mở trang này từ Extension sau khi đã đăng ký thiết bị.');
+    log('Thiếu device_id — không thể tạo yêu cầu payout.');
+    return;
   }
+
+  try{
+    const r = await fetchJSON(`${API}/payout/request`, {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ wallet, device_id: device })
+    });
+    log(JSON.stringify(r, null, 2));
+    if (r.ok) log('✅ Đã ghi nhận yêu cầu payout.');
+  }catch(e){
+    log('Lỗi payout: ' + e.message);
+  }
+}
 
   // ====== Gắn sự kiện ======
   $('#btnView').addEventListener('click', viewHistory);

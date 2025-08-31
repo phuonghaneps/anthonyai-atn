@@ -1,1 +1,189 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>ATN Claim</title>
+  <style>
+    :root{--fg:#111827;--muted:#6b7280;--border:#e5e7eb;--card:#fff;--bg:#f8fafc;--brand:#2563eb}
+    *{box-sizing:border-box} body{margin:0;font-family:system-ui,Segoe UI,Roboto,Arial;background:var(--bg);color:var(--fg)}
+    .wrap{max-width:920px;margin:24px auto;padding:0 16px}
+    .card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px}
+    h1{margin:0 0 12px 0;font-size:20px;display:flex;align-items:center;gap:8px}
+    .row{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}
+    input,select,button{padding:10px;border-radius:10px;border:1px solid var(--border);font-size:14px}
+    button{background:var(--brand);color:#fff;border:none;cursor:pointer}
+    button:disabled{opacity:.5;cursor:not-allowed}
+    .muted{color:var(--muted);font-size:13px}
+    table{width:100%;border-collapse:collapse;margin-top:12px}
+    th,td{border-top:1px solid var(--border);padding:10px 8px;text-align:left;font-variant-numeric:tabular-nums}
+    th{background:#f3f4f6}
+    .kpi{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-top:12px}
+    .kpi .card{padding:14px} .kpi .v{font-size:18px;font-weight:700}
+    canvas{width:100%;height:220px;border:1px solid var(--border);border-radius:10px;background:#fff}
+    @media(max-width:640px){.kpi{grid-template-columns:1fr}}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <h1>ATN Claim</h1>
+      <div class="row">
+        <input id="wallet" placeholder="0x... ví BSC" style="flex:1" />
+        <select id="days">
+          <option value="7">7 ngày</option>
+          <option value="14">14 ngày</option>
+          <option value="30" selected>30 ngày</option>
+        </select>
+        <button id="btn">Xem</button>
+      </div>
+      <div class="muted">API: <span id="api">https://api.atncrypto.com</span></div>
+
+      <div class="kpi">
+        <div class="card"><div class="muted">Tổng GB</div><div id="kpiGB" class="v">0</div></div>
+        <div class="card"><div class="muted">Ước tính ATN</div><div id="kpiATN" class="v">0</div></div>
+        <div class="card"><div class="muted">Ngày có dữ liệu</div><div id="kpiDays" class="v">0</div></div>
+      </div>
+
+      <div style="margin-top:14px" class="card">
+        <canvas id="chart" width="800" height="260"></canvas>
+      </div>
+
+      <div class="card" style="margin-top:14px">
+        <table>
+          <thead><tr><th>Ngày (UTC)</th><th>GB</th><th>ATN (ước tính)</th></tr></thead>
+          <tbody id="tbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+<script>
+(function(){
+  const API = 'https://api.atncrypto.com';
+  const qs = new URLSearchParams(location.search);
+  const $ = sel => document.querySelector(sel);
+  $('#api').textContent = API;
+
+  const walletEl = $('#wallet');
+  walletEl.value = qs.get('wallet') || '';
+
+  async function fetchHistory(wallet, days){
+    const url = `${API}/stats/history?wallet=${encodeURIComponent(wallet)}&days=${days}`;
+    const r = await fetch(url);
+    if(!r.ok) throw new Error(await r.text());
+    return await r.json();
+  }
+
+  function fmt(n, digits=6){
+    const x = Number(n || 0);
+    return x.toLocaleString('en-US', {maximumFractionDigits:digits});
+  }
+
+  function drawChart(canvas, points){
+    const ctx = canvas.getContext('2d');
+    const W = canvas.width, H = canvas.height;
+    ctx.clearRect(0,0,W,H);
+    // padding
+    const L=40,R=10,T=12,B=30;
+    const w=W-L-R, h=H-T-B;
+
+    // axes
+    ctx.strokeStyle='#e5e7eb'; ctx.lineWidth=1;
+    ctx.strokeRect(L,T,w,h);
+
+    if(points.length===0) return;
+    const xs = points.map(p=>p.ts);
+    const ys = points.map(p=>Number(p.gb));
+
+    const yMax = Math.max(...ys)*1.1 || 1;
+    const xStep = w / Math.max(1, points.length-1);
+
+    // y grid
+    ctx.fillStyle='#6b7280';
+    ctx.font='12px system-ui';
+    const ticks=4;
+    for(let i=0;i<=ticks;i++){
+      const y=T + h - (i/ticks)*h;
+      ctx.beginPath(); ctx.moveTo(L,y); ctx.lineTo(W-R,y); ctx.stroke();
+      const v = (yMax*i/ticks);
+      ctx.fillText(v.toFixed(2), 4, y+4);
+    }
+
+    // line
+    ctx.strokeStyle='#2563eb'; ctx.lineWidth=2;
+    ctx.beginPath();
+    points.forEach((p,i)=>{
+      const x = L + i*xStep;
+      const y = T + h - (Number(p.gb)/yMax)*h;
+      if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+    });
+    ctx.stroke();
+
+    // dots
+    ctx.fillStyle='#2563eb';
+    points.forEach((p,i)=>{
+      const x = L + i*xStep;
+      const y = T + h - (Number(p.gb)/yMax)*h;
+      ctx.beginPath(); ctx.arc(x,y,3,0,Math.PI*2); ctx.fill();
+    });
+
+    // x labels (sparse)
+    ctx.fillStyle='#6b7280';
+    ctx.textAlign='center';
+    const step = Math.ceil(points.length/6);
+    points.forEach((p,i)=>{
+      if(i%step!==0 && i!==points.length-1) return;
+      const x = L + i*xStep;
+      ctx.fillText(p.day, x, H-8);
+    });
+  }
+
+  async function run(){
+    const wallet = walletEl.value.trim();
+    const days = Number($('#days').value);
+    if(!wallet){ alert('Nhập ví BSC'); return; }
+
+    $('#btn').disabled = true;
+    try{
+      const data = await fetchHistory(wallet, days);
+      // data = { wallet, days, rate_atn_per_gb, daily: [{day, gb, est_atn}] }
+      const list = Array.isArray(data.daily) ? data.daily : [];
+      const totalGB = list.reduce((s,x)=>s+Number(x.gb||0),0);
+      const totalATN = list.reduce((s,x)=>s+Number(x.est_atn||0),0);
+
+      // KPI
+      $('#kpiGB').textContent = fmt(totalGB,6);
+      $('#kpiATN').textContent = fmt(totalATN,6);
+      $('#kpiDays').textContent = list.length;
+
+      // table
+      const tbody = $('#tbody'); tbody.innerHTML='';
+      list.forEach(row=>{
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td>${row.day}</td>
+                        <td>${fmt(row.gb,6)}</td>
+                        <td>${fmt(row.est_atn,6)}</td>`;
+        tbody.appendChild(tr);
+      });
+
+      // chart
+      const points = list.map(r=>({day:r.day, gb:r.gb, ts: Date.parse(r.day+'T00:00:00Z')||0}));
+      drawChart($('#chart'), points);
+    }catch(e){
+      alert('Lỗi tải dữ liệu: ' + e.message);
+      console.error(e);
+    }finally{
+      $('#btn').disabled = false;
+    }
+  }
+
+  $('#btn').addEventListener('click', run);
+
+  // auto-run nếu có wallet trong URL
+  if(walletEl.value) run();
+})();
+</script>
+</body>
+</html>
 

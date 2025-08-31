@@ -12,22 +12,15 @@
     font-family:system-ui,Segoe UI,Roboto,Arial;
     background:var(--bg);
     color:var(--fg);
-    font-size:16px;                /* ↑ từ 14 lên 16 */
+    font-size:16px;
     line-height:1.45;
   }
-  .wrap{
-    max-width:1200px;              /* ↑ từ 920 lên 1200 */
-    margin:32px auto;              /* ↑ spacing */
-    padding:0 24px;                /* ↑ padding */
-  }
+  .wrap{max-width:1200px;margin:32px auto;padding:0 24px}
   .card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:18px}
-  h1{margin:0 0 14px 0;font-size:24px;display:flex;align-items:center;gap:10px}  /* ↑ size */
+  h1{margin:0 0 14px 0;font-size:24px;display:flex;align-items:center;gap:10px}
   .row{display:flex;gap:10px;flex-wrap:wrap;margin:12px 0}
   input,select,button{
-    padding:12px 14px;              /* ↑ kích thước control */
-    border-radius:12px;
-    border:1px solid var(--border);
-    font-size:16px;                 /* ↑ font */
+    padding:12px 14px;border-radius:12px;border:1px solid var(--border);font-size:16px
   }
   button{background:var(--brand);color:#fff;border:none;cursor:pointer}
   button:disabled{opacity:.5;cursor:not-allowed}
@@ -37,26 +30,25 @@
   th{background:#f3f4f6}
   .kpi{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin-top:14px}
   .kpi .card{padding:16px}
-  .kpi .v{font-size:22px;font-weight:700}   /* ↑ số KPI */
+  .kpi .v{font-size:22px;font-weight:700}
   canvas{
-    width:100%;
-    height:360px;                  /* ↑ từ 220/260 lên 360 */
-    border:1px solid var(--border);
-    border-radius:10px;
-    background:#fff
+    width:100%;height:360px;border:1px solid var(--border);border-radius:10px;background:#fff
   }
+  .mono{font-family:ui-monospace,Consolas,monospace}
+  .readonly{background:#f3f4f6}
+  pre{background:#0f172a;color:#e5e7eb;border-radius:12px;padding:12px;overflow:auto}
   @media(max-width:640px){
     .wrap{padding:0 16px}
     .kpi{grid-template-columns:1fr}
     h1{font-size:20px}
   }
-</style>
-
+  </style>
 </head>
 <body>
   <div class="wrap">
     <div class="card">
       <h1>ATN Claim</h1>
+
       <div class="row">
         <input id="wallet" placeholder="0x... ví BSC" style="flex:1" />
         <select id="days">
@@ -64,9 +56,19 @@
           <option value="14">14 ngày</option>
           <option value="30" selected>30 ngày</option>
         </select>
-        <button id="btn">Xem</button>
+        <button id="btnView">Xem</button>
       </div>
-      <div class="muted">API: <span id="api">https://api.atncrypto.com</span></div>
+
+      <div class="row">
+        <button id="btnCheck">Kiểm tra số dư có thể claim</button>
+        <button id="btnReq">Gửi yêu cầu payout (off-chain)</button>
+        <!-- Nút claim on-chain sẽ kích hoạt khi có Merkle proof/contract -->
+        <button id="btnClaim" disabled title="Sẽ bật khi có Merkle proof/contract">Claim on-chain</button>
+      </div>
+
+      <div class="muted">API: <span id="api">https://api.atncrypto.com</span>
+        <span id="devBox" class="muted" style="margin-left:8px"></span>
+      </div>
 
       <div class="kpi">
         <div class="card"><div class="muted">Tổng GB</div><div id="kpiGB" class="v">0</div></div>
@@ -84,53 +86,86 @@
           <tbody id="tbody"></tbody>
         </table>
       </div>
+
+      <div class="card" style="margin-top:14px">
+        <div class="muted">Log</div>
+        <pre id="log" class="mono"></pre>
+      </div>
     </div>
   </div>
 
 <script>
 (function(){
+  // ====== Cấu hình ======
   const API = 'https://api.atncrypto.com';
-  const qs = new URLSearchParams(location.search);
+  document.getElementById('api').textContent = API;
+
+  // ====== Helpers ======
   const $ = sel => document.querySelector(sel);
-  $('#api').textContent = API;
+  const log = (msg) => { const el = $('#log'); el.textContent = (el.textContent ? el.textContent + "\n" : "") + msg; };
+  const clearLog = () => $('#log').textContent = '';
 
-  const walletEl = $('#wallet');
-  walletEl.value = qs.get('wallet') || '';
-
-  async function fetchHistory(wallet, days){
-    const url = `${API}/stats/history?wallet=${encodeURIComponent(wallet)}&days=${days}`;
-    const r = await fetch(url);
-    if(!r.ok) throw new Error(await r.text());
-    return await r.json();
+  function isWallet(addr){
+    return /^0x[a-fA-F0-9]{40}$/.test((addr||'').trim());
   }
-
+  async function fetchJSON(url, opts){
+    const res = await fetch(url, opts);
+    const ct = res.headers.get('content-type') || '';
+    const txt = await res.text();
+    if (!res.ok) throw new Error(`HTTP ${res.status}: ${txt.slice(0,160)}`);
+    if (!ct.includes('application/json')) throw new Error(`Không phải JSON: ${txt.slice(0,160)}`);
+    return JSON.parse(txt);
+  }
   function fmt(n, digits=6){
     const x = Number(n || 0);
-    return x.toLocaleString('en-US', {maximumFractionDigits:digits});
+    return x.toLocaleString('en-US', { maximumFractionDigits: digits });
   }
 
+  // ====== Lấy params từ URL (từ Extension mở sang) ======
+  const qs = new URLSearchParams(location.search);
+  const walletEl = $('#wallet');
+  const urlWallet = qs.get('wallet') || '';
+  const urlDevice = qs.get('device') || '';
+  const devBox = $('#devBox');
+
+  if (urlWallet) {
+    walletEl.value = urlWallet;
+    walletEl.readOnly = true;
+    walletEl.classList.add('readonly');
+  }
+  if (urlDevice) {
+    devBox.textContent = `Thiết bị: ${urlDevice}`;
+  }
+
+  // ====== API: History để hiển thị chart/bảng ======
+  async function fetchHistory(wallet, days){
+    const url = `${API}/stats/history?wallet=${encodeURIComponent(wallet)}&days=${days}`;
+    const data = await fetchJSON(url);
+    // Kỳ vọng: { wallet, days, rate_atn_per_gb, daily: [{day, gb, est_atn}] }
+    if (!Array.isArray(data.daily)) data.daily = [];
+    return data;
+  }
+
+  // Vẽ chart GB theo ngày
   function drawChart(canvas, points){
     const ctx = canvas.getContext('2d');
     const W = canvas.width, H = canvas.height;
     ctx.clearRect(0,0,W,H);
-    // padding
+
     const L=40,R=10,T=12,B=30;
     const w=W-L-R, h=H-T-B;
 
-    // axes
+    // Khung
     ctx.strokeStyle='#e5e7eb'; ctx.lineWidth=1;
     ctx.strokeRect(L,T,w,h);
 
     if(points.length===0) return;
-    const xs = points.map(p=>p.ts);
-    const ys = points.map(p=>Number(p.gb));
-
+    const ys = points.map(p=>Number(p.gb)||0);
     const yMax = Math.max(...ys)*1.1 || 1;
     const xStep = w / Math.max(1, points.length-1);
 
-    // y grid
-    ctx.fillStyle='#6b7280';
-    ctx.font='12px system-ui';
+    // lưới + nhãn Y
+    ctx.fillStyle='#6b7280'; ctx.font='12px system-ui';
     const ticks=4;
     for(let i=0;i<=ticks;i++){
       const y=T + h - (i/ticks)*h;
@@ -139,7 +174,7 @@
       ctx.fillText(v.toFixed(2), 4, y+4);
     }
 
-    // line
+    // đường line
     ctx.strokeStyle='#2563eb'; ctx.lineWidth=2;
     ctx.beginPath();
     points.forEach((p,i)=>{
@@ -149,7 +184,7 @@
     });
     ctx.stroke();
 
-    // dots
+    // chấm
     ctx.fillStyle='#2563eb';
     points.forEach((p,i)=>{
       const x = L + i*xStep;
@@ -157,9 +192,8 @@
       ctx.beginPath(); ctx.arc(x,y,3,0,Math.PI*2); ctx.fill();
     });
 
-    // x labels (sparse)
-    ctx.fillStyle='#6b7280';
-    ctx.textAlign='center';
+    // nhãn X thưa
+    ctx.fillStyle='#6b7280'; ctx.textAlign='center';
     const step = Math.ceil(points.length/6);
     points.forEach((p,i)=>{
       if(i%step!==0 && i!==points.length-1) return;
@@ -168,16 +202,18 @@
     });
   }
 
-  async function run(){
+  // ====== Nút Xem (lịch sử & KPI) ======
+  async function viewHistory(){
+    clearLog();
     const wallet = walletEl.value.trim();
     const days = Number($('#days').value);
-    if(!wallet){ alert('Nhập ví BSC'); return; }
+    if (!isWallet(wallet)) { alert('Nhập ví BSC hợp lệ (0x + 40 hex)'); return; }
 
-    $('#btn').disabled = true;
+    $('#btnView').disabled = true;
     try{
       const data = await fetchHistory(wallet, days);
-      // data = { wallet, days, rate_atn_per_gb, daily: [{day, gb, est_atn}] }
-      const list = Array.isArray(data.daily) ? data.daily : [];
+      const list = data.daily;
+
       const totalGB = list.reduce((s,x)=>s+Number(x.gb||0),0);
       const totalATN = list.reduce((s,x)=>s+Number(x.est_atn||0),0);
 
@@ -186,7 +222,7 @@
       $('#kpiATN').textContent = fmt(totalATN,6);
       $('#kpiDays').textContent = list.length;
 
-      // table
+      // Table
       const tbody = $('#tbody'); tbody.innerHTML='';
       list.forEach(row=>{
         const tr = document.createElement('tr');
@@ -196,23 +232,71 @@
         tbody.appendChild(tr);
       });
 
-      // chart
+      // Chart
       const points = list.map(r=>({day:r.day, gb:r.gb, ts: Date.parse(r.day+'T00:00:00Z')||0}));
       drawChart($('#chart'), points);
+
+      log('Tải lịch sử thành công.');
     }catch(e){
       alert('Lỗi tải dữ liệu: ' + e.message);
+      log('Lỗi history: ' + e.message);
       console.error(e);
     }finally{
-      $('#btn').disabled = false;
+      $('#btnView').disabled = false;
     }
   }
 
-  $('#btn').addEventListener('click', run);
+  // ====== Nút Kiểm tra số dư (GET /payout/balance) ======
+  async function checkBalance(){
+    clearLog();
+    const wallet = walletEl.value.trim();
+    if (!isWallet(wallet)) { alert('Ví không hợp lệ.'); return; }
+    try{
+      const r = await fetchJSON(`${API}/payout/balance?wallet=${encodeURIComponent(wallet)}`);
+      log(JSON.stringify(r, null, 2));
+      if (typeof r.available_atn === 'number' && typeof r.min === 'number') {
+        if (r.available_atn >= r.min) {
+          log('✅ Đủ ngưỡng để tạo yêu cầu payout.');
+        } else {
+          log('ℹ️ Chưa đủ ngưỡng.');
+        }
+      }
+    }catch(e){
+      log('Lỗi balance: ' + e.message);
+    }
+  }
 
-  // auto-run nếu có wallet trong URL
-  if(walletEl.value) run();
+  // ====== Nút Gửi yêu cầu payout (POST /payout/request) ======
+  async function requestPayout(){
+    clearLog();
+    const wallet = walletEl.value.trim();
+    const device = urlDevice;
+    if (!isWallet(wallet)) { alert('Ví không hợp lệ.'); return; }
+    if (!device) { alert('Thiếu device_id. Hãy mở trang này từ Extension để có ?device=...'); return; }
+
+    try{
+      const r = await fetchJSON(`${API}/payout/request`, {
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ wallet, device_id: device })
+      });
+      log(JSON.stringify(r, null, 2));
+      if (r.ok) {
+        log('✅ Đã ghi nhận yêu cầu payout.');
+      }
+    }catch(e){
+      log('Lỗi payout: ' + e.message);
+    }
+  }
+
+  // ====== Gắn sự kiện ======
+  $('#btnView').addEventListener('click', viewHistory);
+  $('#btnCheck').addEventListener('click', checkBalance);
+  $('#btnReq').addEventListener('click', requestPayout);
+
+  // Auto-run nếu có wallet trên URL
+  if (walletEl.value) viewHistory();
 })();
 </script>
 </body>
 </html>
-

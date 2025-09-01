@@ -32,7 +32,7 @@
   @media(max-width:640px){.wrap{padding:0 16px}.kpi{grid-template-columns:1fr}h1{font-size:20px}}
   </style>
   <!-- Ethers v6 để gọi claim on-chain -->
-  <script src="https://cdn.jsdelivr.net/npm/ethers@6.13.2/dist/ethers.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/ethers@6.13.2/dist/ethers.umd.min.js"></script>
 </head>
 <body>
   <div class="wrap">
@@ -317,7 +317,7 @@
 
       // 3) (tuỳ chọn) check root ngày đó đã set chưa
       const root = await c.roots(BigInt(proof.day));
-      if (/^0x0+$/i.test(root)) throw new Error(`Ngày ${dayStr} chưa có root on-chain.`);
+      if (root === ethers.ZeroHash) throw new Error(`Ngày ${dayStr} chưa có root on-chain.`);
 
       // 4) (tuỳ chọn) check đã claim chưa
       const already = await c.isClaimed(BigInt(proof.day), BigInt(proof.index));
@@ -325,7 +325,7 @@
 
       // 5) estimate + gửi tx
       log('Đang gửi giao dịch claim...');
-      const gas = await c.claim.estimateGas(
+      const gas = await c.estimateGas.claim(
         BigInt(proof.day),
         BigInt(proof.index),
         proof.account,
@@ -338,8 +338,9 @@
         proof.account,
         BigInt(proof.amountWei),
         proof.proof,
-        { gasLimit: gas * 12n / 10n } // +20% headroom
+        { gasLimit: (gas * 12n) / 10n }  // +20% headroom
       );
+
       log('Tx gửi: ' + tx.hash + ' — chờ xác nhận...');
       const rc = await tx.wait();
       log('✅ Claim thành công. Tx: ' + rc.transactionHash);

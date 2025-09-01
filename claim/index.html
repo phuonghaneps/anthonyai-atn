@@ -326,25 +326,25 @@
 
       // 5) estimate + gửi tx
       log('Đang gửi giao dịch claim...');
-      const gas = await c.estimateGas.claim(
-        BigInt(proof.day),
-        BigInt(proof.index),
-        proof.account,
-        BigInt(proof.amountWei),
-        proof.proof
-      );
-      const tx = await c.claim(
-        BigInt(proof.day),
-        BigInt(proof.index),
-        proof.account,
-        BigInt(proof.amountWei),
-        proof.proof,
-        { gasLimit: (gas * 12n) / 10n }  // +20% headroom
-      );
+      // ===== gửi claim với ethers v6 (dùng chữ ký hàm) =====
+const FN = "claim(uint256,uint256,address,uint256,bytes32[])";
+const args = [
+  BigInt(proof.day),
+  BigInt(proof.index),
+  proof.account,
+  BigInt(proof.amountWei),
+  proof.proof
+];
 
-      log('Tx gửi: ' + tx.hash + ' — chờ xác nhận...');
-      const rc = await tx.wait();
-      log('✅ Claim thành công. Tx: ' + rc.transactionHash);
+// estimate gas
+const gas = await c.estimateGas[FN](...args);
+
+// gửi tx
+const tx  = await c[FN](...args, { gasLimit: (gas * 12n) / 10n });
+log("Tx gửi: " + tx.hash + " — chờ xác nhận...");
+const rc = await tx.wait();
+log("✅ Claim thành công. Tx: " + rc.transactionHash);
+
 
       // 6) cập nhật nút
       await refreshClaimEligibility();

@@ -120,6 +120,7 @@
 
   // ====== Params từ URL ======
   const qs = new URLSearchParams(location.search);
+  const urlClaimDay = qs.get('claim_day') || '';
   const walletEl = $('#wallet');
   const urlWallet = qs.get('wallet') || '';
   const urlDevice = qs.get('device') || '';
@@ -258,7 +259,7 @@
     btn.title = 'Sẽ bật khi có Merkle proof/contract';
     const wallet = walletEl.value.trim();
     if (!isWallet(wallet)) return;
-    const dayStr = yesterdayStrUTC();
+    const dayStr = urlClaimDay || yesterdayStrUTC();
     try{
       const st = await getAirdropStatus(wallet, dayStr); // {hasEntry, claimed, amountWei, index,...}
       if (!st.hasEntry){ btn.title = `Ví không có trong airdrop ngày ${dayStr}`; return; }
@@ -305,7 +306,7 @@
     try{
       const wallet = walletEl.value.trim();
       if (!isWallet(wallet)) throw new Error('Ví không hợp lệ.');
-      const dayStr = dayStrOverride || yesterdayStrUTC(); // mặc định: hôm qua UTC
+      const dayStr = dayStrOverride || urlClaimDay || yesterdayStrUTC();
 
       // 1) lấy proof từ backend
       const proof = await getAirdropProof(wallet, dayStr);

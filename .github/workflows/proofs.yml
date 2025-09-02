@@ -1,7 +1,7 @@
 name: make-proofs
 
 on:
-  workflow_dispatch:
+  workflow_dispatch: {}
   push:
     paths:
       - 'lists/airdrop2.csv'
@@ -14,30 +14,33 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version: 20
 
-      - name: Install deps (pin ethers v5)
+      # >>> BƯỚC CÀI DEPENDENCIES (điểm bạn hỏi) <<<
+      - name: Install deps (no package.json)
         run: |
-          npm i --no-save csv-parse@5 merkletreejs@0.2.44 keccak256@1 ethers@5
+          npm i csv-parse merkletreejs keccak256 ethers@6
 
       - name: Generate proofs.json
         env:
-          CSV: lists/airdrop2.csv
-          TARGET_DIR: "<repo>"   # ĐÚNG thư mục bạn đang dùng
-        run: node scripts/make-proofs.js
+          CSV: lists/airdrop2.csv          # file CSV của bạn
+          TARGET_DIR: '<repo>'             # thư mục đích chứa proofs.json
+        run: node scripts/make-proofs.js   # chạy script tạo proofs.json
 
       - name: Commit & push if changed
         run: |
           if [[ -n "$(git status --porcelain)" ]]; then
             git config user.name "github-actions[bot]"
             git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-            git add -A
-            git commit -m "chore: update proofs.json"
+            git add '<repo>/proofs.json'
+            git commit -m "chore: update proofs.json (auto)"
             git push
           else
-            echo "No changes to commit"
+            echo "No changes to commit."
           fi

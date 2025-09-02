@@ -211,7 +211,7 @@ function drawChart(canvas, points){
 
   // Grid ngang + nhãn Y
   ctx.fillStyle = 'rgba(148,163,184,.7)';
-  ctx.font = '12px system-ui, sans-serif';
+  ctx.font = '13px system-ui, sans-serif';
   ctx.textAlign = 'left';
   ctx.textBaseline = 'middle';
   const ticks = 4;
@@ -228,7 +228,7 @@ function drawChart(canvas, points){
   grad.addColorStop(1, '#2563eb');
 
   const areaGrad = ctx.createLinearGradient(0, T, 0, T+h);
-  areaGrad.addColorStop(0, 'rgba(59,130,246,.22)');
+  areaGrad.addColorStop(0, 'rgba(59,130,246,.32)');
   areaGrad.addColorStop(1, 'rgba(59,130,246,0)');
 
   // Path cho area

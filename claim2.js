@@ -2,7 +2,7 @@
 /*** CONFIG — Airdrop #2 (Merkle) ***/
 const X_HANDLE2      = "Token_ATN";
 const AIRDROP2_ADDR = ethers.utils.getAddress("0x4B4e1138291255EC2e556BcE18a2929d7Bfa5959");
-const TOKEN_ADDR    = ethers.utils.getAddress("0xb5C84953983931dd2C10C9b04a4379eE52697193");
+const TOKEN_ADDR = ethers.utils.getAddress("0xb5C84953983931dd2C10C9b04a4379eE52697193");
 const PROOFS_URL = "./<repo>/proofs.json";
 
 // ABI tối giản cho MerkleAirdropV2 (claim(amount, proof))
@@ -175,7 +175,7 @@ async function fetchInfo2(){
     CLAIMED2 = await airdrop2.claimed(account2);
     // nếu ví có trong whitelist → hiển thị đúng amount per-wallet của người đó
     try {
-      const proofs = await loadProofs2();
+      const proofs = await loadProofs();
       const row = proofs[account2.toLowerCase()];
       PER_WALLET2 = (row && row.amount) ? row.amount : PER_WALLET2_DEFAULT;
     } catch { PER_WALLET2 = PER_WALLET2_DEFAULT; }
@@ -228,7 +228,7 @@ async function doClaim2(){
     if(!$("followChk2")?.checked){ setMsg2(`Please follow @${X_HANDLE2} and tick the checkbox.`, "warn"); return; }
     if(nowSec2()<START_TS2){ setMsg2("Claiming has not started yet.", "warn"); return; }
 
-    const proofs = await loadProofs2();
+    const proofs = await loadProofs();
     const row = proofs[account2.toLowerCase()];
     if (!row){ setMsg2("Ví này không có trong whitelist.", "error"); return; }
 

@@ -1,42 +1,54 @@
-// scripts/make-proofs.js
+// scripts/make-proofs.js (ethers v6)
 const fs = require('fs');
 const { parse } = require('csv-parse/sync');
 const { MerkleTree } = require('merkletreejs');
-const keccak256 = require('keccak256');
-const { ethers } = require('ethers');
+const keccak256buf = require('keccak256');
+
+// lấy hàm v6 trực tiếp
+const { getAddress, parseUnits, keccak256, solidityPacked } = require('ethers');
 
 const CSV = process.env.CSV || 'lists/airdrop2.csv';
-const TARGET_DIR = process.env.TARGET_DIR || '<repo>'; // <— ĐÚNG tên thư mục của bạn
+const TARGET_DIR = process.env.TARGET_DIR || '<repo>';   // thư mục đích của bạn
 const OUT = `${TARGET_DIR}/proofs.json`;
 
+// đọc CSV
 const csv = fs.readFileSync(CSV, 'utf8');
 const rows = parse(csv, { columns: true, skip_empty_lines: true });
 
+// chuẩn hóa dữ liệu
 const entries = rows.map(r => {
-  const addr = ethers.utils.getAddress(r.address).toLowerCase();
+  // validate + chuẩn checksum rồi hạ lowercase để làm key
+  const addr = getAddress(r.address).toLowerCase();
+
+  // ưu tiên trường amountWei; nếu không có thì lấy amountATN/amount và parse 18 decimals
   const amountWei = r.amountWei
-    ? ethers.BigNumber.from(r.amountWei)
-    : ethers.utils.parseUnits(String(r.amountATN ?? r.amount ?? '100'), 18);
+    ? BigInt(r.amountWei)
+    : parseUnits(String(r.amountATN ?? r.amount ?? 100), 18);
+
   return { addr, amountWei };
 });
 
 // leaf = keccak256(abi.encodePacked(address, uint256))
-const leaves = entries.map(e =>
-  Buffer.from(
-    ethers.utils.solidityKeccak256(['address','uint256'], [e.addr, e.amountWei]).slice(2),
-    'hex'
-  )
-);
-
-const tree = new MerkleTree(leaves, keccak256, { sortPairs: true });
-
-const out = {};
-entries.forEach((e, i) => {
-  const proof = tree.getHexProof(leaves[i]);
-  out[e.addr] = { amount: e.amountWei.toString(), proof };
+const leaves = entries.map(e => {
+  const leafHex = keccak256(
+    solidityPacked(['address', 'uint256'], [e.addr, e.amountWei])
+  ); // "0x..."
+  return Buffer.from(leafHex.slice(2), 'hex');
 });
 
-fs.mkdirSync(TARGET_DIR, { recursive: true });
-fs.writeFileSync(OUT, JSON.stringify(out, null, 2));
-console.log('merkleRoot =', '0x' + tree.getRoot().toString('hex'));
+// build tree, sortPairs để hash theo cặp đã sort
+const tree = new MerkleTree(leaves, keccak256buf, { sortPairs: true });
 
+// tạo object { address(lowercase): { amount, proof } }
+const claims = {};
+entries.forEach((e, i) => {
+  claims[e.addr] = {
+    amount: e.amountWei.toString(),
+    proof: tree.getHexProof(leaves[i])
+  };
+});
+
+// ghi file
+fs.mkdirSync(TARGET_DIR, { recursive: true });
+fs.writeFileSync(OUT, JSON.stringify(claims, null, 2));
+console.log('Wrote', OUT, 'with', Object.keys(claims).length, 'entries');

@@ -3,7 +3,8 @@
 const X_HANDLE2      = "Token_ATN";
 const AIRDROP2_ADDR = ethers.utils.getAddress("0x4B4e1138291255EC2e556BcE18a2929d7Bfa5959");
 const TOKEN_ADDR = ethers.utils.getAddress("0xb5C84953983931dd2C10C9b04a4379eE52697193");
-const PROOFS_URL = "./<repo>/proofs.json";
+const PROOFS_URL = "./airdrop2-proofs.json"; // ✅
+
 
 // ABI MerkleAirdropV2 (khớp ABI bạn đưa)
 const AIRDROP2_ABI = [

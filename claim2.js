@@ -54,26 +54,26 @@ async function syncChainTime2(){
 }
 const nowSec2 = () => CHAIN_NOW2 ? Math.floor(CHAIN_NOW2 + (Date.now()-SYNCED_AT_MS2)/1000) : Math.floor(Date.now()/1000);
 
-/*** fetch proofs.json ***/
+
 /*** fetch proofs.json ***/
 async function loadProofs2() {
   const urls = [
     PROOFS_URL,
-    'claim/proofs.json', './claim/proofs.json',
-    'proofs.json', './proofs.json',
-    'assets/proofs.json', './assets/proofs.json'
-  ].filter(Boolean);
+    './<repo>/proofs.json',
+    'proofs.json','./proofs.json'
+  ];
   for (const p of urls) {
     try {
       const r = await fetch(p, { cache: 'no-cache' });
       if (r.ok) {
         const data = await r.json();
-        return data.claims || data; // chấp nhận cả 2 dạng
+        return data.claims || data; // hỗ trợ cả 2 kiểu
       }
     } catch {}
   }
   throw new Error('Không tìm thấy proofs.json ở các đường dẫn đã thử');
 }
+
 
 
 

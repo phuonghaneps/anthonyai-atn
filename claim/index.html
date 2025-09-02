@@ -173,30 +173,118 @@
   async function fetchHistory(wallet, days){
     return fetchJSON(`${API}/stats/history?wallet=${encodeURIComponent(wallet)}&days=${days}`);
   }
-  function drawChart(canvas, points){
-    const ctx = canvas.getContext('2d'); const W = canvas.width, H = canvas.height;
-    ctx.clearRect(0,0,W,H);
-    const L=40,R=10,T=12,B=30, w=W-L-R, h=H-T-B;
-    ctx.strokeStyle='#e5e7eb'; ctx.lineWidth=1; ctx.strokeRect(L,T,w,h);
-    if(points.length===0) return;
-    const ys = points.map(p=>Number(p.gb)||0); const yMax = Math.max(...ys)*1.1 || 1;
-    const xStep = w / Math.max(1, points.length-1);
-    ctx.fillStyle='#6b7280'; ctx.font='12px system-ui';
-    const ticks=4;
-    for(let i=0;i<=ticks;i++){
-      const y=T + h - (i/ticks)*h;
-      ctx.beginPath(); ctx.moveTo(L,y); ctx.lineTo(W-R,y); ctx.stroke();
-      ctx.fillText(((yMax*i/ticks)).toFixed(2), 4, y+4);
-    }
-    ctx.strokeStyle='#2563eb'; ctx.lineWidth=2; ctx.beginPath();
-    points.forEach((p,i)=>{ const x=L+i*xStep; const y=T+h-(Number(p.gb)/yMax)*h; if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);});
-    ctx.stroke();
-    ctx.fillStyle='#2563eb';
-    points.forEach((p,i)=>{ const x=L+i*xStep; const y=T+h-(Number(p.gb)/yMax)*h; ctx.beginPath(); ctx.arc(x,y,3,0,Math.PI*2); ctx.fill();});
-    ctx.fillStyle='#6b7280'; ctx.textAlign='center';
-    const step = Math.ceil(points.length/6);
-    points.forEach((p,i)=>{ if(i%step!==0 && i!==points.length-1) return; const x=L+i*xStep; ctx.fillText(p.day, x, H-8);});
+function drawChart(canvas, points){
+  // Hiển thị sắc nét trên màn hình retina
+  const dpr = window.devicePixelRatio || 1;
+  const cssW = canvas.clientWidth || canvas.width;
+  const cssH = canvas.clientHeight || canvas.height;
+  canvas.width  = Math.round(cssW * dpr);
+  canvas.height = Math.round(cssH * dpr);
+  const ctx = canvas.getContext('2d');
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0); // dùng đơn vị CSS pixel
+
+  const W = cssW, H = cssH;
+
+  // Padding & style
+  const L=44, R=14, T=16, B=34;
+  const w=W-L-R, h=H-T-B;
+
+  // Nền plot
+  ctx.clearRect(0,0,W,H);
+  ctx.lineWidth = 1;
+  ctx.strokeStyle = 'rgba(148,163,184,.15)'; // grid nhạt
+  ctx.fillStyle   = 'rgba(15,23,42,.02)';
+  ctx.fillRect(L,T,w,h);
+  ctx.strokeRect(L,T,w,h);
+
+  if (!points || points.length === 0) return;
+
+  // Scale
+  const ys = points.map(p => +p.gb || 0);
+  const yMaxRaw = Math.max(...ys, 1);
+  const mag = Math.pow(10, Math.floor(Math.log10(yMaxRaw)));
+  const yMax = Math.ceil(yMaxRaw / (0.5*mag)) * (0.5*mag);
+
+  const xStep = w / Math.max(1, points.length - 1);
+  const xAt = i => L + i * xStep;
+  const yAt = v => T + h - (v / yMax) * h;
+
+  // Grid ngang + nhãn Y
+  ctx.fillStyle = 'rgba(148,163,184,.7)';
+  ctx.font = '12px system-ui, sans-serif';
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'middle';
+  const ticks = 4;
+  for (let i=0;i<=ticks;i++){
+    const yy = T + h - (i/ticks)*h;
+    ctx.beginPath(); ctx.moveTo(L,yy); ctx.lineTo(W-R,yy); ctx.stroke();
+    const label = (yMax*i/ticks).toLocaleString('en-US', {maximumFractionDigits:2});
+    ctx.fillText(label, 6, yy);
   }
+
+  // Line gradient & area fill
+  const grad = ctx.createLinearGradient(L, T, L, T+h);
+  grad.addColorStop(0, '#3b82f6');
+  grad.addColorStop(1, '#2563eb');
+
+  const areaGrad = ctx.createLinearGradient(0, T, 0, T+h);
+  areaGrad.addColorStop(0, 'rgba(59,130,246,.22)');
+  areaGrad.addColorStop(1, 'rgba(59,130,246,0)');
+
+  // Path cho area
+  ctx.beginPath();
+  points.forEach((p,i) => {
+    const x = xAt(i);
+    const y = yAt(+p.gb||0);
+    if (i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+  });
+  ctx.lineTo(L + (points.length-1)*xStep, T+h);
+  ctx.lineTo(L, T+h);
+  ctx.closePath();
+  ctx.fillStyle = areaGrad;
+  ctx.fill();
+
+  // Vẽ line
+  ctx.beginPath();
+  points.forEach((p,i) => {
+    const x = xAt(i);
+    const y = yAt(+p.gb||0);
+    if (i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+  });
+  ctx.lineWidth = 2.5;
+  ctx.lineJoin = 'round';
+  ctx.lineCap  = 'round';
+  ctx.strokeStyle = grad;
+  ctx.stroke();
+
+  // Markers có glow
+  points.forEach((p,i)=>{
+    const x=xAt(i), y=yAt(+p.gb||0);
+    ctx.save();
+    ctx.shadowColor = 'rgba(59,130,246,.45)';
+    ctx.shadowBlur = 6;
+    ctx.fillStyle = '#3b82f6';
+    ctx.beginPath(); ctx.arc(x,y,3.2,0,Math.PI*2); ctx.fill();
+    ctx.restore();
+  });
+
+  // Nhãn X (thưa)
+  ctx.fillStyle = 'rgba(148,163,184,.9)';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'alphabetic';
+  const step = Math.ceil(points.length/5);
+  points.forEach((p,i)=>{
+    if (i%step!==0 && i!==points.length-1) return;
+    const x=xAt(i);
+    ctx.fillText(p.day, x, H-8);
+  });
+
+  // trả ra geom cho tooltip
+  return {
+    xAt, yAt, yMax, rect:{L,R,T,B,w,h,W,H}
+  };
+}
+
 
   // ====== Nút Xem ======
   async function viewHistory(){
@@ -220,8 +308,70 @@
         tbody.appendChild(tr);
       });
       const points = list.map(r=>({day:r.day, gb:r.gb, ts: Date.parse(r.day+'T00:00:00Z')||0}));
-      drawChart($('#chart'), points);
-      log('Tải lịch sử thành công.');
+
+const canvas = $('#chart');
+let geom = drawChart(canvas, points);
+
+// Tooltip hover trong canvas
+(function attachTooltip(){
+  const state = { idx: -1 };
+  canvas.onmousemove = (e)=>{
+    if (!points.length || !geom) return;
+    const rect = canvas.getBoundingClientRect();
+    const x = (e.clientX - rect.left);
+    const i = Math.round((x - geom.rect.L) / (geom.rect.w / Math.max(1, points.length-1)));
+    const idx = Math.min(points.length-1, Math.max(0, i));
+    if (idx === state.idx) return;
+    state.idx = idx;
+
+    // vẽ lại + overlay tooltip
+    geom = drawChart(canvas, points);
+    const ctx = canvas.getContext('2d');
+    const dpr = window.devicePixelRatio || 1;
+    ctx.setTransform(dpr,0,0,dpr,0,0);
+
+    const px = geom.xAt(idx);
+    const py = geom.yAt(+points[idx].gb||0);
+
+    // crosshair
+    ctx.strokeStyle = 'rgba(148,163,184,.35)';
+    ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(px, geom.rect.T); ctx.lineTo(px, geom.rect.T+geom.rect.h); ctx.stroke();
+
+    // popup
+    const pad=8;
+    const text1 = points[idx].day;
+    const text2 = `${Number(points[idx].gb||0).toLocaleString('en-US',{maximumFractionDigits:6})} GB`;
+    ctx.font = '12px system-ui, sans-serif';
+    const w = Math.max(ctx.measureText(text1).width, ctx.measureText(text2).width) + pad*2;
+    const h = 34;
+    let bx = px + 10, by = py - h - 10;
+    if (bx + w > geom.rect.W - geom.rect.R) bx = px - w - 10;
+    if (by < geom.rect.T) by = py + 10;
+
+    ctx.fillStyle = 'rgba(2,6,23,.9)';
+    ctx.strokeStyle = 'rgba(59,130,246,.6)';
+    ctx.lineWidth = 1;
+    if (ctx.roundRect) { ctx.beginPath(); ctx.roundRect(bx, by, w, h, 8); ctx.fill(); ctx.stroke(); }
+    else { ctx.fillRect(bx, by, w, h); ctx.strokeRect(bx, by, w, h); }
+
+    ctx.fillStyle = '#e2e8f0';
+    ctx.textAlign='left'; ctx.textBaseline='top';
+    ctx.fillText(text1, bx+pad, by+6);
+    ctx.fillStyle = '#93c5fd';
+    ctx.fillText(text2, bx+pad, by+18);
+  };
+
+  canvas.onmouseleave = ()=>{
+    state.idx = -1;
+    geom = drawChart(canvas, points);
+  };
+
+  window.addEventListener('resize', ()=>{ geom = drawChart(canvas, points); });
+})();
+
+log('Tải lịch sử thành công.');
+
       await refreshClaimEligibility();
     }catch(e){ alert('Lỗi tải dữ liệu: ' + e.message); log('Lỗi history: ' + e.message); console.error(e);
     }finally{ $('#btnView').disabled = false; }

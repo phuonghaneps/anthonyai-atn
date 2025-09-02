@@ -56,23 +56,14 @@ const nowSec2 = () => CHAIN_NOW2 ? Math.floor(CHAIN_NOW2 + (Date.now()-SYNCED_AT
 
 
 /*** fetch proofs.json ***/
-async function loadProofs2() {
-  const urls = [
-    PROOFS_URL,
-    './<repo>/proofs.json',
-    'proofs.json','./proofs.json'
-  ];
-  for (const p of urls) {
-    try {
-      const r = await fetch(p, { cache: 'no-cache' });
-      if (r.ok) {
-        const data = await r.json();
-        return data.claims || data; // hỗ trợ cả 2 kiểu
-      }
-    } catch {}
-  }
-  throw new Error('Không tìm thấy proofs.json ở các đường dẫn đã thử');
+async function loadProofs() {
+  const url = PROOFS_URL + (PROOFS_URL.includes("?") ? "" : `?v=${Date.now()}`);
+  const r = await fetch(url, { cache: "no-cache" });
+  if (!r.ok) throw new Error("Không tải được proofs.json");
+  const data = await r.json();
+  return data.claims || data; // hỗ trợ cả 2 kiểu
 }
+
 
 
 

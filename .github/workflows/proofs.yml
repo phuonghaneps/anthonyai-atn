@@ -1,1 +1,55 @@
+name: Build proofs.json
+
+on:
+  push:
+    paths:
+      - "lists/airdrop2.csv"
+      - "scripts/make-proofs.js"
+      - ".github/workflows/proofs.yml"
+  workflow_dispatch: {}
+
+permissions:
+  contents: write   # để commit/push file mới
+
+jobs:
+  make-proofs:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install deps (no package.json)
+        run: |
+          npm init -y >/dev/null 2>&1 || true
+          npm install csv-parse merkletreejs keccak256 ethers
+
+      - name: Generate proofs.json
+        env:
+          CSV: "lists/airdrop2.csv"
+          TARGET_DIR: "<repo>"     # THƯ MỤC của bạn, đúng như đang dùng
+        run: node scripts/make-proofs.js
+
+      - name: Pretty print (optional)
+        shell: bash
+        run: |
+          node -e "const fs=require('fs');const p='/<repo>/proofs.json';fs.writeFileSync(p, JSON.stringify(JSON.parse(fs.readFileSync(p,'utf8')), null, 2));"
+
+      - name: Commit & push if changed
+        run: |
+          if ! git diff --quiet -- "<repo>/proofs.json"; then
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add "<repo>/proofs.json"
+            git commit -m "chore: rebuild proofs.json from lists/airdrop2.csv"
+            git push
+          else
+            echo "No changes."
+          fi
 

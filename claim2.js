@@ -5,17 +5,26 @@ const AIRDROP2_ADDR = ethers.utils.getAddress("0x4B4e1138291255EC2e556BcE18a2929
 const TOKEN_ADDR = ethers.utils.getAddress("0xb5C84953983931dd2C10C9b04a4379eE52697193");
 const PROOFS_URL = "./<repo>/proofs.json";
 
-// ABI tối giản cho MerkleAirdropV2 (claim(amount, proof))
-const AIRDROP2_ABI   = [
+// ABI MerkleAirdropV2 (khớp ABI bạn đưa)
+const AIRDROP2_ABI = [
+  "function token() view returns (address)",
   "function claim(uint256 amount, bytes32[] proof) external",
   "function claimed(address) view returns (bool)",
   "function startTime() view returns (uint256)",
   "function endTime() view returns (uint256)",
   "function totalDistributed() view returns (uint256)",
-  "function maxDistributable() view returns (uint256)"
+  "function maxDistributable() view returns (uint256)",
+  "function setRoot(bytes32 newRoot) external",
+  "function recoverLeftover(address to) external",
+  "function owner() view returns (address)"
 ];
-// ERC20 balanceOf để đọc số ATN còn trong contract
-const ERC20_ABI      = [ "function balanceOf(address) view returns (uint256)" ];
+
+// ERC20
+const ERC20_ABI = [
+  "function balanceOf(address) view returns (uint256)",
+  "function symbol() view returns (string)",
+  "function decimals() view returns (uint8)"
+];
 
 // Nếu per-wallet cố định 100 ATN → để mặc định này (18 decimals).
 const PER_WALLET2_DEFAULT = ethers.utils.parseUnits("100", 18).toString();

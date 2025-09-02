@@ -1,32 +1,24 @@
 (() => {
-/*** CONFIG #2 (EARLY = Airdrop #1) ***/
+/*** CONFIG — Airdrop #2 (Merkle) ***/
 const X_HANDLE2      = "Token_ATN";
-const AIRDROP2_ADDR  = ethers.utils.getAddress("0x1f597227BA91E60548c1F6573C86586EEC878f88");
+const AIRDROP2_ADDR  = ethers.utils.getAddress("PASTE_AIRDROP2B_ADDRESS_HERE"); // <— ĐIỀN CONTRACT MỚI
+const TOKEN_ADDR     = ethers.utils.getAddress("0xb5C84953983931dd2C10C9b04a379eE52697193"); // ATN
+const PROOFS_URL     = "./claim/proofs.json"; // đường dẫn proofs.json bạn up lên GitHub Pages
+
+// ABI tối giản cho MerkleAirdropV2 (claim(amount, proof))
 const AIRDROP2_ABI   = [
-  {"inputs":[{"internalType":"address","name":"tokenAddress","type":"address"},{"internalType":"uint256","name":"_startTime","type":"uint256"},{"internalType":"uint256","name":"_amountPerWallet","type":"uint256"},{"internalType":"uint256","name":"_maxClaims","type":"uint256"}],"stateMutability":"nonpayable","type":"constructor"},
-  {"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"account","type":"address"},{"indexed":false,"internalType":"uint256","name":"amount","type":"uint256"},{"indexed":true,"internalType":"uint256","name":"claimNo","type":"uint256"}],"name":"Claimed","type":"event"},
-  {"anonymous":false,"inputs":[{"indexed":false,"internalType":"uint256","name":"amount","type":"uint256"}],"name":"Deposited","type":"event"},
-  {"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"oldOwner","type":"address"},{"indexed":true,"internalType":"address","name":"newOwner","type":"address"}],"name":"OwnershipTransferred","type":"event"},
-  {"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"to","type":"address"},{"indexed":false,"internalType":"uint256","name":"amount","type":"uint256"}],"name":"Withdrawn","type":"event"},
-  {"inputs":[],"name":"amountPerWallet","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
-  {"inputs":[],"name":"claim","outputs":[],"stateMutability":"nonpayable","type":"function"},
-  {"inputs":[{"internalType":"address","name":"","type":"address"}],"name":"claimed","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"view","type":"function"},
-  {"inputs":[],"name":"claimsCount","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
-  {"inputs":[{"internalType":"address","name":"user","type":"address"}],"name":"info","outputs":[
-    {"internalType":"uint256","name":"_startTime","type":"uint256"},
-    {"internalType":"uint256","name":"_amountPerWallet","type":"uint256"},
-    {"internalType":"uint256","name":"_maxClaims","type":"uint256"},
-    {"internalType":"uint256","name":"_claimsCount","type":"uint256"},
-    {"internalType":"bool","name":"_claimed","type":"bool"},
-    {"internalType":"uint256","name":"_contractBalance","type":"uint256"}
-  ],"stateMutability":"view","type":"function"},
-  {"inputs":[],"name":"maxClaims","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
-  {"inputs":[],"name":"owner","outputs":[{"internalType":"address","name":"","type":"address"}],"stateMutability":"view","type":"function"},
-  {"inputs":[],"name":"startTime","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
-  {"inputs":[],"name":"token","outputs":[{"internalType":"contract IERC20","name":"","type":"address"}],"stateMutability":"view","type":"function"},
-  {"inputs":[{"internalType":"address","name":"newOwner","type":"address"}],"name":"transferOwnership","outputs":[],"stateMutability":"nonpayable","type":"function"},
-  {"inputs":[{"internalType":"address","name":"to","type":"address"},{"internalType":"uint256","name":"amount","type":"uint256"}],"name":"withdrawLeftover","outputs":[],"stateMutability":"nonpayable","type":"function"}
+  "function claim(uint256 amount, bytes32[] proof) external",
+  "function claimed(address) view returns (bool)",
+  "function startTime() view returns (uint256)",
+  "function endTime() view returns (uint256)",
+  "function totalDistributed() view returns (uint256)",
+  "function maxDistributable() view returns (uint256)"
 ];
+// ERC20 balanceOf để đọc số ATN còn trong contract
+const ERC20_ABI      = [ "function balanceOf(address) view returns (uint256)" ];
+
+// Nếu per-wallet cố định 100 ATN → để mặc định này (18 decimals).
+const PER_WALLET2_DEFAULT = ethers.utils.parseUnits("100", 18).toString();
 
 /*** RPCs (khỏe) ***/
 const RPCS2 = [
@@ -48,8 +40,10 @@ function setMsg2(t, kind="info"){
 }
 
 /*** state ***/
-let provider2, signer2, airdrop2, account2=null, pollTimer2=null, countdownTimer2=null;
-let START_TS2=0, PER_WALLET2="0", MAX2=0, COUNT2=0, CLAIMED2=false, BALANCE2="0";
+let provider2, signer2, airdrop2, token2, account2=null, pollTimer2=null, countdownTimer2=null;
+let START_TS2=0, END_TS2=0, MD2="0", TD2="0", CLAIMED2=false, BALANCE2="0";
+let PER_WALLET2 = PER_WALLET2_DEFAULT; // sẽ cập nhật theo proofs nếu ví có trong whitelist
+let PROOFS2=null;
 
 /*** chain time sync ***/
 let CHAIN_NOW2=0, SYNCED_AT_MS2=0, chainSyncTimer2=null;
@@ -60,20 +54,37 @@ async function syncChainTime2(){
 }
 const nowSec2 = () => CHAIN_NOW2 ? Math.floor(CHAIN_NOW2 + (Date.now()-SYNCED_AT_MS2)/1000) : Math.floor(Date.now()/1000);
 
+/*** fetch proofs.json ***/
+async function loadProofs2(){
+  if (PROOFS2) return PROOFS2;
+  const r = await fetch(PROOFS_URL, { cache: "no-store" });
+  if (!r.ok) throw new Error("Không tải được proofs.json");
+  PROOFS2 = await r.json();
+  return PROOFS2;
+}
+
 /*** render ***/
 function renderStats2(){
   $("tokenSymbol2") && ($("tokenSymbol2").textContent = "ATN");
   $("perWallet2")   && ($("perWallet2").textContent   = `${fmt(PER_WALLET2)} ATN`);
-  $("maxClaims2")   && ($("maxClaims2").textContent   = String(MAX2));
-  $("claimedCount2")&& ($("claimedCount2").textContent= String(COUNT2));
-  $("contractBal2") && ($("contractBal2").textContent = `${fmt(BALANCE2)} ATN`);
-  $("remaining2")   && ($("remaining2").textContent   = `Remaining: ${Math.max(Number(MAX2)-Number(COUNT2),0)} slots`);
+
+  // Quy đổi slot theo per-wallet mặc định 100 ATN (nếu bạn thay đổi, sửa PER_WALLET2_DEFAULT)
+  const per = ethers.BigNumber.from(PER_WALLET2_DEFAULT);
+  const maxSlots = ethers.BigNumber.from(MD2).div(per).toNumber();
+  const usedSlots= ethers.BigNumber.from(TD2).div(per).toNumber();
+
+  $("maxClaims2")    && ($("maxClaims2").textContent   = String(maxSlots));
+  $("claimedCount2") && ($("claimedCount2").textContent= String(usedSlots));
+  $("contractBal2")  && ($("contractBal2").textContent = `${fmt(BALANCE2)} ATN`);
+  $("remaining2")    && ($("remaining2").textContent   = `Remaining: ${Math.max(maxSlots - usedSlots,0)} slots`);
+
   const pb=$("claimProgress2"), lbl=$("claimProgressLabel2");
-  if (pb && MAX2>0){
-    const pct=Math.min(100, Math.round((COUNT2/MAX2)*100));
+  if (pb && maxSlots>0){
+    const pct=Math.min(100, Math.round((usedSlots/maxSlots)*100));
     pb.style.setProperty("--pct", pct+"%");
-    lbl && (lbl.textContent=`${COUNT2}/${MAX2} claimed (${pct}%)`);
+    lbl && (lbl.textContent=`${usedSlots}/${maxSlots} claimed (${pct}%)`);
   }
+
   const openVN=$("openAtVN2");
   if (openVN && START_TS2>0){
     openVN.textContent=new Date(START_TS2*1000).toLocaleString(
@@ -87,12 +98,16 @@ function updateClaimButton2(){
   const btn = $("claimBtn2");
   if (!btn) return;
 
+  const per = ethers.BigNumber.from(PER_WALLET2_DEFAULT);
+  const maxSlots = ethers.BigNumber.from(MD2).div(per).toNumber();
+  const usedSlots= ethers.BigNumber.from(TD2).div(per).toNumber();
+  const leftSlots= Math.max(maxSlots - usedSlots, 0);
+
   const nowOK    = (START_TS2 > 0) && (nowSec2() >= START_TS2);
   const hasWallet= !!account2;
   const hasFollow= $("followChk2")?.checked ?? false;
-  const left     = MAX2 - COUNT2;
   const enough   = ethers.BigNumber.from(BALANCE2).gte(ethers.BigNumber.from(PER_WALLET2));
-  const canClaim = nowOK && hasWallet && hasFollow && left > 0 && enough && !CLAIMED2;
+  const canClaim = nowOK && hasWallet && hasFollow && leftSlots > 0 && enough && !CLAIMED2;
 
   btn.style.display = nowOK ? "inline-flex" : "none";
   btn.disabled = !canClaim;
@@ -100,7 +115,7 @@ function updateClaimButton2(){
   if (!nowOK) setMsg2("Claiming has not started yet.", "warn");
   else if (!hasWallet) setMsg2("Connect your wallet to claim.", "info");
   else if (!hasFollow) setMsg2(`Please follow @${X_HANDLE2} and tick the checkbox.`, "warn");
-  else if (!enough) setMsg2(left<=0 ? "All claim slots have been used." : "The contract has insufficient tokens for claiming.", "warn");
+  else if (!enough) setMsg2(leftSlots<=0 ? "All claim slots have been used." : "The contract has insufficient tokens for claiming.", "warn");
   else setMsg2("");
 }
 
@@ -132,29 +147,50 @@ function startCountdown2(){
   }
   tick(); countdownTimer2 = setInterval(tick, 1000);
 }
-/*** read info ***/
+
+/*** read info (Merkle) ***/
 async function fetchInfo2(){
-  const u=account2||"0x0000000000000000000000000000000000000000";
-  const r=await airdrop2.info(u);
-  START_TS2   = Number(r._startTime);
-  PER_WALLET2 = r._amountPerWallet.toString();
-  MAX2        = Number(r._maxClaims);
-  COUNT2      = Number(r._claimsCount);
-  CLAIMED2    = Boolean(r._claimed);
-  BALANCE2    = r._contractBalance.toString();
+  // đọc thông tin tổng
+  const [st, ed, md, td] = await Promise.all([
+    airdrop2.startTime(),
+    airdrop2.endTime(),
+    airdrop2.maxDistributable(),
+    airdrop2.totalDistributed()
+  ]);
+  START_TS2 = Number(st);
+  END_TS2   = Number(ed);
+  MD2       = md.toString();
+  TD2       = td.toString();
+
+  // số ATN đang nằm trong contract (để kiểm tra đủ token)
+  BALANCE2  = (await token2.balanceOf(AIRDROP2_ADDR)).toString();
+
+  // trạng thái ví hiện tại
+  if (account2){
+    CLAIMED2 = await airdrop2.claimed(account2);
+    // nếu ví có trong whitelist → hiển thị đúng amount per-wallet của người đó
+    try {
+      const proofs = await loadProofs2();
+      const row = proofs[account2.toLowerCase()];
+      PER_WALLET2 = (row && row.amount) ? row.amount : PER_WALLET2_DEFAULT;
+    } catch { PER_WALLET2 = PER_WALLET2_DEFAULT; }
+  } else {
+    PER_WALLET2 = PER_WALLET2_DEFAULT; // chưa connect: hiển thị mặc định 100 ATN
+  }
+
   renderStats2(); updateClaimButton2();
 }
 
 /*** ensure BSC ***/
 async function ensureBSC2(){
-  const net=await provider2.getNetwork();
-  if(net.chainId!==56){
+  const net = await provider2.getNetwork();
+  if (net.chainId !== 56){
     try{
       await window.ethereum.request({method:"wallet_switchEthereumChain",params:[{chainId:"0x38"}]});
     }catch{
       await window.ethereum.request({
         method:"wallet_addEthereumChain",
-        params:[{chainId:"0x38",chainName:"BNB Smart Chain",nativeCurrency:{name:"BNB",symbol:"BNB",decimals:18},rpcUrls:["https://bsc-dataseed.binance.org/"],blockExplorerUrls:["https://bscscan.com/"]}]});
+        params:[{chainId:"0x38",chainName:"BNB Smart Chain",nativeCurrency:{name:"BNB",symbol:"BNB",decimals:18},rpcUrls:["https://bsc-dataseed.binance.org/"],blockExplorerUrls:["https://bscscan.com/"]}]} );
     }
   }
 }
@@ -166,10 +202,12 @@ async function connect2(){
     provider2=new ethers.providers.Web3Provider(window.ethereum,"any");
     await provider2.send("eth_requestAccounts",[]);
     await ensureBSC2();
-    signer2 = provider2.getSigner();
-    account2= await signer2.getAddress();
-    $("accountLabel2").textContent="Wallet: "+short(account2);
-    airdrop2=new ethers.Contract(AIRDROP2_ADDR,AIRDROP2_ABI,provider2);
+    signer2  = provider2.getSigner();
+    account2 = await signer2.getAddress();
+    $("accountLabel2") && ($("accountLabel2").textContent="Wallet: "+short(account2));
+
+    airdrop2 = new ethers.Contract(AIRDROP2_ADDR, AIRDROP2_ABI, provider2);
+    token2   = new ethers.Contract(TOKEN_ADDR,    ERC20_ABI,   provider2);
 
     await syncChainTime2(); if(chainSyncTimer2) clearInterval(chainSyncTimer2);
     chainSyncTimer2=setInterval(syncChainTime2,30000);
@@ -178,14 +216,19 @@ async function connect2(){
   }catch(e){ setMsg2(e?.message||String(e),"error"); }
 }
 
-/*** claim ***/
+/*** claim (Merkle) ***/
 async function doClaim2(){
   try{
     if(!signer2){ setMsg2("Please connect your wallet first.", "error"); return; }
-    if(!$("followChk2").checked){ setMsg2(`Please follow @${X_HANDLE2} and tick the checkbox.`, "warn"); return; }
+    if(!$("followChk2")?.checked){ setMsg2(`Please follow @${X_HANDLE2} and tick the checkbox.`, "warn"); return; }
     if(nowSec2()<START_TS2){ setMsg2("Claiming has not started yet.", "warn"); return; }
+
+    const proofs = await loadProofs2();
+    const row = proofs[account2.toLowerCase()];
+    if (!row){ setMsg2("Ví này không có trong whitelist.", "error"); return; }
+
     setMsg2("Submitting transaction...");
-    const tx=await airdrop2.connect(signer2).claim();
+    const tx=await airdrop2.connect(signer2).claim(ethers.BigNumber.from(row.amount), row.proof);
     setMsg2("Waiting for confirmation: "+tx.hash);
     await tx.wait();
     setMsg2("Claim successful!","success");
@@ -195,20 +238,18 @@ async function doClaim2(){
   }
 }
 
-/*** readonly init ***/
+/*** readonly init (không cần connect) ***/
 async function initReadonly2(){
   let lastErr;
   for(const url of RPCS2){
     try{
-      // provider kèm network cho chắc chắn
       provider2=new ethers.providers.JsonRpcProvider(url, { name: "bnb", chainId: 56 });
       await provider2.getBlockNumber();
-
-      // cảnh báo sớm nếu trỏ nhầm địa chỉ
       const code = await provider2.getCode(AIRDROP2_ADDR);
       if (code === "0x"){ setMsg2("No contract code at " + AIRDROP2_ADDR, "error"); return; }
 
-      airdrop2=new ethers.Contract(AIRDROP2_ADDR,AIRDROP2_ABI,provider2);
+      airdrop2=new ethers.Contract(AIRDROP2_ADDR, AIRDROP2_ABI, provider2);
+      token2  =new ethers.Contract(TOKEN_ADDR,    ERC20_ABI,   provider2);
 
       await syncChainTime2(); if(chainSyncTimer2) clearInterval(chainSyncTimer2);
       chainSyncTimer2=setInterval(syncChainTime2,30000);
@@ -219,7 +260,7 @@ async function initReadonly2(){
     }catch(e){ lastErr=e; }
   }
 
-  /* Fallback đọc chain qua MetaMask nếu RPC public đều fail (không yêu cầu connect) */
+  /* Fallback đọc chain qua MetaMask nếu RPC public đều fail */
   if (window.ethereum) {
     try {
       provider2 = new ethers.providers.Web3Provider(window.ethereum, "any");
@@ -227,7 +268,8 @@ async function initReadonly2(){
       const code = await provider2.getCode(AIRDROP2_ADDR);
       if (code === "0x"){ setMsg2("No contract code at " + AIRDROP2_ADDR, "error"); return; }
 
-      airdrop2  = new ethers.Contract(AIRDROP2_ADDR, AIRDROP2_ABI, provider2);
+      airdrop2 = new ethers.Contract(AIRDROP2_ADDR, AIRDROP2_ABI, provider2);
+      token2   = new ethers.Contract(TOKEN_ADDR,    ERC20_ABI,   provider2);
 
       await syncChainTime2(); if (chainSyncTimer2) clearInterval(chainSyncTimer2);
       chainSyncTimer2 = setInterval(syncChainTime2, 30000);
@@ -238,8 +280,8 @@ async function initReadonly2(){
     } catch(e){ lastErr = e; }
   }
 
-  setMsg2("Unable to reach BSC RPC for Airdrop #1.", "error");
-  console.error("RPC errors #1:", lastErr);
+  setMsg2("Unable to reach BSC RPC for Airdrop #2.", "error");
+  console.error("RPC errors #2:", lastErr);
 }
 function startPolling2(){ if(pollTimer2) clearInterval(pollTimer2); pollTimer2=setInterval(async()=>{ try{ await fetchInfo2(); }catch{} },15000); }
 

@@ -1,18 +1,18 @@
 <!doctype html>
-<html lang="vi">
+<html lang="en">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>ATN Claim</title>
   <style>
-  /* GIỮ NGUYÊN PALETTE DARK BẠN ĐANG DÙNG */
+  /* Keep your existing dark palette */
   :root{
-    --fg:#f1f5f9;       /* chữ chính (sáng) */
-    --muted:#94a3b8;    /* chữ phụ */
-    --border:#334155;   /* viền tối */
-    --card:#0f172a;     /* nền thẻ/card */
-    --bg:#1e293b;       /* nền toàn web */
-    --brand:#3b82f6;    /* xanh thương hiệu */
+    --fg:#f1f5f9;       /* primary text (light) */
+    --muted:#94a3b8;    /* secondary text */
+    --border:#334155;   /* dark border */
+    --card:#0f172a;     /* card background */
+    --bg:#1e293b;       /* page background */
+    --brand:#3b82f6;    /* brand blue */
   }
 
   *{box-sizing:border-box}
@@ -30,7 +30,7 @@
 
   .row{display:flex;gap:10px;flex-wrap:wrap;margin:12px 0}
 
-  /* INPUTS/SELECTS có nền tối & chữ sáng */
+  /* Inputs/selects with dark background & light text */
   input,select{
     padding:12px 14px;border-radius:12px;
     border:1px solid var(--border);
@@ -39,7 +39,7 @@
   }
   input::placeholder{color:#8aa0b5}
 
-  /* BUTTONS */
+  /* Buttons */
   button{
     padding:12px 14px;border-radius:12px;
     background:var(--brand);color:#fff;border:none;cursor:pointer;font-size:16px
@@ -50,22 +50,22 @@
 
   .muted{color:#cbd5e1;font-size:13px}
 
-  /* BẢNG DARK */
+  /* Table (dark) */
   table{width:100%;border-collapse:collapse;margin-top:14px;color:var(--fg)}
   th,td{border-top:1px solid var(--border);padding:12px 10px;text-align:left;font-variant-numeric:tabular-nums}
-  th{background:#0b1220;color:#e2e8f0}   /* trước kia là màu sáng -> gây chói trên dark */
+  th{background:#0b1220;color:#e2e8f0}
 
-  /* KPI */
+  /* KPIs */
   .kpi{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin-top:14px}
   .kpi .card{padding:16px}
   .kpi .v{font-size:22px;font-weight:700;color:#e6edf3}
 
-  /* CHART CANVAS nền tối + viền nhẹ để đồng bộ */
+  /* Chart canvas */
   canvas{
     width:100%;height:360px;
     border:1px solid rgba(148,163,184,.15);
     border-radius:10px;
-    background:#0b1220;  /* nền vùng plot */
+    background:#0b1220;
   }
 
   .mono{font-family:ui-monospace,Consolas,monospace}
@@ -97,20 +97,20 @@
 </h1>
 
       <div class="row">
-        <input id="wallet" placeholder="0x... ví BSC" style="flex:1" />
+        <input id="wallet" placeholder="0x... BSC wallet" style="flex:1" />
         <select id="days">
-         <option value="1" selected>1 ngày</option>
-         <option value="7">7 ngày</option>
-         <option value="14">14 ngày</option>
-         <option value="30">30 ngày</option>
+         <option value="1" selected>1 day</option>
+         <option value="7">7 days</option>
+         <option value="14">14 days</option>
+         <option value="30">30 days</option>
         </select>
-        <button id="btnView">Xem</button>
+        <button id="btnView">View</button>
       </div>
 
       <div class="row">
-        <button id="btnCheck">Kiểm tra số dư có thể claim</button>
-        <button id="btnReq">Gửi yêu cầu payout (off-chain)</button>
-        <button id="btnClaim" disabled title="Sẽ bật khi có Merkle proof/contract">Claim on-chain</button>
+        <button id="btnCheck">Check claimable balance</button>
+        <button id="btnReq">Submit payout request (off-chain)</button>
+        <button id="btnClaim" disabled title="Will enable when Merkle proof/contract are available">Claim on-chain</button>
       </div>
 
       <div class="muted">API: <span id="api">https://api.atncrypto.com</span>
@@ -118,9 +118,9 @@
       </div>
 
       <div class="kpi">
-        <div class="card"><div class="muted">Tổng GB</div><div id="kpiGB" class="v">0</div></div>
-        <div class="card"><div class="muted">Ước tính ATN</div><div id="kpiATN" class="v">0</div></div>
-        <div class="card"><div class="muted">Ngày có dữ liệu</div><div id="kpiDays" class="v">0</div></div>
+        <div class="card"><div class="muted">Total GB</div><div id="kpiGB" class="v">0</div></div>
+        <div class="card"><div class="muted">Estimated ATN</div><div id="kpiATN" class="v">0</div></div>
+        <div class="card"><div class="muted">Days with data</div><div id="kpiDays" class="v">0</div></div>
       </div>
 
       <div style="margin-top:14px" class="card">
@@ -129,7 +129,7 @@
 
       <div class="card" style="margin-top:14px">
         <table>
-          <thead><tr><th>Ngày (UTC)</th><th>GB</th><th>ATN (ước tính)</th></tr></thead>
+          <thead><tr><th>Date (UTC)</th><th>GB</th><th>ATN (estimated)</th></tr></thead>
           <tbody id="tbody"></tbody>
         </table>
       </div>
@@ -144,11 +144,11 @@
 <script>
 (function(){
   // ====== CONFIG ======
-  const API = 'https://api.atncrypto.com'; // đổi nếu backend khác
-  const AIRDROP_CONTRACT = '0xc956969fc7dad2B1654Ad98f183A3fDFCE325341'; // contract airdrop của bạn
+  const API = 'https://api.atncrypto.com'; // change if your backend differs
+  const AIRDROP_CONTRACT = '0xc956969fc7dad2B1654Ad98f183A3fDFCE325341'; // your airdrop contract
   document.getElementById('api').textContent = API;
 
-  // ABI tối thiểu
+  // Minimal ABI
   const AIRDROP_ABI = [
     {"inputs":[{"internalType":"uint256","name":"day","type":"uint256"},{"internalType":"uint256","name":"index","type":"uint256"},{"internalType":"address","name":"account","type":"address"},{"internalType":"uint256","name":"amountWei","type":"uint256"},{"internalType":"bytes32[]","name":"proof","type":"bytes32[]"}],"name":"claim","outputs":[],"stateMutability":"nonpayable","type":"function"},
     {"inputs":[{"internalType":"uint256","name":"day","type":"uint256"},{"internalType":"uint256","name":"index","type":"uint256"}],"name":"isClaimed","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"view","type":"function"},
@@ -165,7 +165,7 @@
     const ct = res.headers.get('content-type') || '';
     const txt = await res.text();
     if (!res.ok) throw new Error(`HTTP ${res.status}: ${txt.slice(0,180)}`);
-    if (!ct.includes('application/json')) throw new Error(`Không phải JSON: ${txt.slice(0,180)}`);
+    if (!ct.includes('application/json')) throw new Error(`Not JSON: ${txt.slice(0,180)}`);
     return JSON.parse(txt);
   }
   const fmt = (n, digits=6) => Number(n||0).toLocaleString('en-US',{maximumFractionDigits:digits});
@@ -175,9 +175,9 @@
     return `${t.getUTCFullYear()}-${z2(t.getUTCMonth()+1)}-${z2(t.getUTCDate())}`;
   }
 
-  // ====== Params URL ======
+  // ====== URL params ======
   const qs = new URLSearchParams(location.search);
-  const urlClaimDay = qs.get('claim_day') || ''; // cho phép ép ngày qua URL
+  const urlClaimDay = qs.get('claim_day') || '';
   const walletEl = $('#wallet');
   const urlWallet = qs.get('wallet') || '';
   const urlDevice = qs.get('device') || '';
@@ -195,12 +195,12 @@
         deviceParam = j.device_id;
         updateDeviceBadge(wallet, deviceParam, false);
       }
-    }catch(e){ log('Không lấy được device_id từ server: ' + e.message); }
+    }catch(e){ log('Unable to obtain device_id from server: ' + e.message); }
     return deviceParam;
   }
   function updateDeviceBadge(wallet, device, online){
     const dot = `<span class="dot ${online===true?'online':(online===false?'offline':'')}"></span>`;
-    devBox.innerHTML = `Thiết bị: ${device||'-'} ${dot}${online===true?'Online':(online===false?'Offline':'')}`;
+    devBox.innerHTML = `Device: ${device||'-'} ${dot}${online===true?'Online':(online===false?'Offline':'')}`;
   }
   let onlineTimer=null;
   async function pingOnline(){
@@ -219,14 +219,14 @@
     return fetchJSON(`${API}/stats/history?wallet=${encodeURIComponent(wallet)}&days=${days}`);
   }
 function drawChart(canvas, points){
-  // Hiển thị sắc nét trên màn hình retina
+  // Crisp rendering on high-DPI (retina)
   const dpr = window.devicePixelRatio || 1;
   const cssW = canvas.clientWidth || canvas.width;
   const cssH = canvas.clientHeight || canvas.height;
   canvas.width  = Math.round(cssW * dpr);
   canvas.height = Math.round(cssH * dpr);
   const ctx = canvas.getContext('2d');
-  ctx.setTransform(dpr, 0, 0, dpr, 0, 0); // dùng đơn vị CSS pixel
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0); // draw in CSS pixels
 
   const W = cssW, H = cssH;
 
@@ -234,10 +234,10 @@ function drawChart(canvas, points){
   const L=44, R=14, T=16, B=34;
   const w=W-L-R, h=H-T-B;
 
-  // Nền plot
+  // Plot background
   ctx.clearRect(0,0,W,H);
   ctx.lineWidth = 1;
-  ctx.strokeStyle = 'rgba(148,163,184,.15)'; // grid nhạt
+  ctx.strokeStyle = 'rgba(148,163,184,.15)'; // subtle grid
   ctx.fillStyle   = 'rgba(15,23,42,.02)';
   ctx.fillRect(L,T,w,h);
   ctx.strokeRect(L,T,w,h);
@@ -254,7 +254,7 @@ function drawChart(canvas, points){
   const xAt = i => L + i * xStep;
   const yAt = v => T + h - (v / yMax) * h;
 
-  // Grid ngang + nhãn Y
+  // Horizontal grid + Y labels
   ctx.fillStyle = 'rgba(148,163,184,.7)';
   ctx.font = '13px system-ui, sans-serif';
   ctx.textAlign = 'left';
@@ -276,7 +276,7 @@ function drawChart(canvas, points){
   areaGrad.addColorStop(0, 'rgba(59,130,246,.32)');
   areaGrad.addColorStop(1, 'rgba(59,130,246,0)');
 
-  // Path cho area
+  // Area path
   ctx.beginPath();
   points.forEach((p,i) => {
     const x = xAt(i);
@@ -289,7 +289,7 @@ function drawChart(canvas, points){
   ctx.fillStyle = areaGrad;
   ctx.fill();
 
-  // Vẽ line
+  // Line
   ctx.beginPath();
   points.forEach((p,i) => {
     const x = xAt(i);
@@ -302,7 +302,7 @@ function drawChart(canvas, points){
   ctx.strokeStyle = grad;
   ctx.stroke();
 
-  // Markers có glow
+  // Markers with glow
   points.forEach((p,i)=>{
     const x=xAt(i), y=yAt(+p.gb||0);
     ctx.save();
@@ -313,7 +313,7 @@ function drawChart(canvas, points){
     ctx.restore();
   });
 
-  // Nhãn X (thưa)
+  // X labels (sparse)
   ctx.fillStyle = 'rgba(148,163,184,.9)';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'alphabetic';
@@ -324,19 +324,19 @@ function drawChart(canvas, points){
     ctx.fillText(p.day, x, H-8);
   });
 
-  // trả ra geom cho tooltip
+  // return geometry for tooltip
   return {
     xAt, yAt, yMax, rect:{L,R,T,B,w,h,W,H}
   };
 }
 
 
-  // ====== Nút Xem ======
+  // ====== View button ======
   async function viewHistory(){
     clearLog();
     const wallet = walletEl.value.trim();
     const days = Number($('#days').value);
-    if (!isWallet(wallet)) { alert('Nhập ví BSC hợp lệ (0x + 40 hex)'); return; }
+    if (!isWallet(wallet)) { alert('Enter a valid BSC wallet (0x + 40 hex).'); return; }
     $('#btnView').disabled = true;
     try{
       const data = await fetchHistory(wallet, days);
@@ -357,7 +357,7 @@ function drawChart(canvas, points){
 const canvas = $('#chart');
 let geom = drawChart(canvas, points);
 
-// Tooltip hover trong canvas
+// Canvas hover tooltip
 (function attachTooltip(){
   const state = { idx: -1 };
   canvas.onmousemove = (e)=>{
@@ -369,7 +369,7 @@ let geom = drawChart(canvas, points);
     if (idx === state.idx) return;
     state.idx = idx;
 
-    // vẽ lại + overlay tooltip
+    // redraw + overlay tooltip
     geom = drawChart(canvas, points);
     const ctx = canvas.getContext('2d');
     const dpr = window.devicePixelRatio || 1;
@@ -415,40 +415,40 @@ let geom = drawChart(canvas, points);
   window.addEventListener('resize', ()=>{ geom = drawChart(canvas, points); });
 })();
 
-log('Tải lịch sử thành công.');
+log('History loaded.');
 
       await refreshClaimEligibility();
-    }catch(e){ alert('Lỗi tải dữ liệu: ' + e.message); log('Lỗi history: ' + e.message); console.error(e);
+    }catch(e){ alert('Failed to load data: ' + e.message); log('History error: ' + e.message); console.error(e);
     }finally{ $('#btnView').disabled = false; }
   }
 
-  // ====== Số dư off-chain ======
+  // ====== Off-chain balance ======
   async function checkBalance(){
     clearLog();
     const wallet = walletEl.value.trim();
-    if (!isWallet(wallet)) { alert('Ví không hợp lệ.'); return; }
+    if (!isWallet(wallet)) { alert('Invalid wallet.'); return; }
     try{
       const r = await fetchJSON(`${API}/payout/balance?wallet=${encodeURIComponent(wallet)}`);
       log(JSON.stringify(r, null, 2));
-      if (+r.available_atn >= +r.min) log('✅ Đủ ngưỡng để tạo yêu cầu payout.'); else log('ℹ️ Chưa đủ ngưỡng.');
-    }catch(e){ log('Lỗi balance: ' + e.message); }
+      if (+r.available_atn >= +r.min) log('✅ Threshold met — you can create a payout request.'); else log('ℹ️ Not enough yet for payout.');
+    }catch(e){ log('Balance error: ' + e.message); }
   }
 
-  // ====== Tạo yêu cầu off-chain ======
+  // ====== Create off-chain request ======
   async function requestPayout(){
     clearLog();
     const wallet = walletEl.value.trim();
-    if (!isWallet(wallet)) { alert('Ví không hợp lệ.'); return; }
+    if (!isWallet(wallet)) { alert('Invalid wallet.'); return; }
     const device = await ensureDeviceId(wallet);
-    if (!device){ alert('Thiếu device_id. Hãy mở trang này từ Extension sau khi đã đăng ký thiết bị.'); log('Thiếu device_id — không thể tạo yêu cầu payout.'); return; }
+    if (!device){ alert('Missing device_id. Open this page from the Extension after registering your device.'); log('Missing device_id — cannot create payout request.'); return; }
     try{
       const r = await fetchJSON(`${API}/payout/request`, {
         method:'POST', headers:{'Content-Type':'application/json'},
         body: JSON.stringify({ wallet, device_id: device })
       });
       log(JSON.stringify(r, null, 2));
-      if (r.ok) log('✅ Đã ghi nhận yêu cầu payout.');
-    }catch(e){ log('Lỗi payout: ' + e.message); }
+      if (r.ok) log('✅ Payout request recorded.');
+    }catch(e){ log('Payout error: ' + e.message); }
   }
 
   // ====== Airdrop APIs ======
@@ -462,24 +462,24 @@ log('Tải lịch sử thành công.');
   async function refreshClaimEligibility(){
     const btn = $('#btnClaim');
     btn.disabled = true;
-    btn.title = 'Sẽ bật khi có Merkle proof/contract';
+    btn.title = 'Will enable when Merkle proof/contract are available';
     const wallet = walletEl.value.trim();
     if (!isWallet(wallet)) return;
     const dayStr = urlClaimDay || yesterdayStrUTC();
     try{
       const st = await getAirdropStatus(wallet, dayStr);
-      if (!st.hasEntry){ btn.title = `Ví không có trong airdrop ngày ${dayStr}`; return; }
-      if (st.claimed){ btn.title = `Đã claim ngày ${dayStr}`; return; }
+      if (!st.hasEntry){ btn.title = `Wallet not in airdrop for ${dayStr}`; return; }
+      if (st.claimed){ btn.title = `Already claimed for ${dayStr}`; return; }
       btn.disabled = false;
-      btn.title = `Claim ${st.amountWei} wei cho ngày ${dayStr}`;
+      btn.title = `Claim ${st.amountWei} wei for ${dayStr}`;
     }catch(e){
-      log('Status lỗi: ' + e.message);
+      log('Status error: ' + e.message);
     }
   }
 
   // ====== MetaMask / BSC signer ======
   async function getSignerBSC(){
-    if (!window.ethereum) throw new Error('Chưa phát hiện ví (MetaMask).');
+    if (!window.ethereum) throw new Error('No wallet detected (MetaMask).');
     const provider = new ethers.BrowserProvider(window.ethereum);
     let net = await provider.getNetwork();
     if (net.chainId !== 56n){
@@ -510,27 +510,27 @@ log('Tải lịch sử thành công.');
     clearLog();
     try{
       const wallet = walletEl.value.trim();
-      if (!isWallet(wallet)) throw new Error('Ví không hợp lệ.');
+      if (!isWallet(wallet)) throw new Error('Invalid wallet.');
       const dayStr = dayStrOverride || urlClaimDay || yesterdayStrUTC();
 
-      // 1) lấy proof từ backend
+      // 1) fetch proof from backend
       const proof = await getAirdropProof(wallet, dayStr);
       // proof: { day:"20250831", index, account, amountWei, proof:[...] }
 
-      // 2) signer + contract (để lấy interface & gọi view)
+      // 2) signer + contract
       const signer = await getSignerBSC();
       const c = new ethers.Contract(AIRDROP_CONTRACT, AIRDROP_ABI, signer);
 
-      // 3) check root đã set chưa
+      // 3) root must exist on-chain
       const root = await c.roots(BigInt(proof.day));
-      if (!root || /^0x0+$/i.test(root)) throw new Error(`Ngày ${dayStr} chưa có root on-chain.`);
+      if (!root || /^0x0+$/i.test(root)) throw new Error(`Root for ${dayStr} not set on-chain yet.`);
 
-      // 4) check đã claim chưa
+      // 4) already claimed?
       const already = await c.isClaimed(BigInt(proof.day), BigInt(proof.index));
-      if (already) { log('Đã claim trước đó.'); return; }
+      if (already) { log('Already claimed.'); return; }
 
-      // 5) encode calldata + ước lượng gas + gửi tx
-      log('Đang gửi giao dịch claim...');
+      // 5) encode + estimate gas + send
+      log('Submitting claim transaction...');
       const FN = "claim(uint256,uint256,address,uint256,bytes32[])";
       const args = [
         BigInt(proof.day),
@@ -548,31 +548,31 @@ log('Tải lịch sử thành công.');
         gasLimit: (gas * 12n) / 10n   // +20% headroom
       });
 
-      log('Tx gửi: ' + tx.hash + ' — chờ xác nhận...');
+      log('Tx sent: ' + tx.hash + ' — waiting for confirmation...');
       const rc = await tx.wait();
-      log('✅ Claim thành công. Tx: ' + rc.transactionHash);
+      log('✅ Claim successful. Tx: ' + rc.transactionHash);
 
-      // 6) cập nhật nút
+      // 6) refresh button state
       await refreshClaimEligibility();
     }catch(e){
       console.error(e);
-      log('❌ Claim lỗi: ' + (e?.message || e));
-      alert('Claim lỗi: ' + (e?.message || e));
+      log('❌ Claim failed: ' + (e?.message || e));
+      alert('Claim failed: ' + (e?.message || e));
     }
   }
 
-  // ====== Gắn sự kiện ======
+  // ====== Events ======
   $('#btnView').addEventListener('click', viewHistory);
   $('#btnCheck').addEventListener('click', checkBalance);
   $('#btnReq').addEventListener('click', requestPayout);
   $('#btnClaim').addEventListener('click', () => claimOnChain());
   $('#wallet').addEventListener('input', () => { refreshClaimEligibility(); });
 
-  // ====== Khởi chạy ======
+  // ====== Boot ======
   if (urlDevice) updateDeviceBadge(walletEl.value.trim(), urlDevice, null);
   if (walletEl.value) viewHistory(); else refreshClaimEligibility();
 
-  // Ping online mỗi 15s
+  // Ping online every 15s
   (async function bootPing(){
     const w = walletEl.value.trim();
     const d = await ensureDeviceId(w);

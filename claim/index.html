@@ -31,7 +31,7 @@
   .dot.offline{background:#9ca3af}
   @media(max-width:640px){.wrap{padding:0 16px}.kpi{grid-template-columns:1fr}h1{font-size:20px}}
   </style>
-  <!-- Ethers v6 để gọi claim on-chain -->
+  <!-- Ethers v6 (UMD) -->
   <script src="https://cdn.jsdelivr.net/npm/ethers@6.13.2/dist/ethers.umd.min.js"></script>
 </head>
 <body>
@@ -85,12 +85,12 @@
 
 <script>
 (function(){
-  // ====== CONFIG (đổi nếu cần) ======
-  const API = 'https://api.atncrypto.com';              // backend FastAPI
-  const AIRDROP_CONTRACT = '0xc956969fc7dad2B1654Ad98f183A3fDFCE325341'; // DailyMerkleAirdrop
+  // ====== CONFIG ======
+  const API = 'https://api.atncrypto.com'; // đổi nếu backend khác
+  const AIRDROP_CONTRACT = '0xc956969fc7dad2B1654Ad98f183A3fDFCE325341'; // contract airdrop của bạn
   document.getElementById('api').textContent = API;
 
-  // ABI tối thiểu cho claim/isClaimed/roots
+  // ABI tối thiểu
   const AIRDROP_ABI = [
     {"inputs":[{"internalType":"uint256","name":"day","type":"uint256"},{"internalType":"uint256","name":"index","type":"uint256"},{"internalType":"address","name":"account","type":"address"},{"internalType":"uint256","name":"amountWei","type":"uint256"},{"internalType":"bytes32[]","name":"proof","type":"bytes32[]"}],"name":"claim","outputs":[],"stateMutability":"nonpayable","type":"function"},
     {"inputs":[{"internalType":"uint256","name":"day","type":"uint256"},{"internalType":"uint256","name":"index","type":"uint256"}],"name":"isClaimed","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"view","type":"function"},
@@ -111,23 +111,22 @@
     return JSON.parse(txt);
   }
   const fmt = (n, digits=6) => Number(n||0).toLocaleString('en-US',{maximumFractionDigits:digits});
-
   function z2(n){return String(n).padStart(2,'0');}
   function yesterdayStrUTC(){
     const t=new Date(); t.setUTCDate(t.getUTCDate()-1);
     return `${t.getUTCFullYear()}-${z2(t.getUTCMonth()+1)}-${z2(t.getUTCDate())}`;
   }
 
-  // ====== Params từ URL ======
+  // ====== Params URL ======
   const qs = new URLSearchParams(location.search);
-  const urlClaimDay = qs.get('claim_day') || '';
+  const urlClaimDay = qs.get('claim_day') || ''; // cho phép ép ngày qua URL
   const walletEl = $('#wallet');
   const urlWallet = qs.get('wallet') || '';
   const urlDevice = qs.get('device') || '';
   const devBox = $('#devBox');
   if (urlWallet) { walletEl.value = urlWallet; walletEl.readOnly = true; walletEl.classList.add('readonly'); }
 
-  // ====== Device helpers (cho off-chain payout/online) ======
+  // ====== Device helpers ======
   let deviceParam = urlDevice;
   async function ensureDeviceId(wallet){
     if (deviceParam) return deviceParam;
@@ -210,7 +209,6 @@
       const points = list.map(r=>({day:r.day, gb:r.gb, ts: Date.parse(r.day+'T00:00:00Z')||0}));
       drawChart($('#chart'), points);
       log('Tải lịch sử thành công.');
-      // sau khi load, cập nhật khả năng claim
       await refreshClaimEligibility();
     }catch(e){ alert('Lỗi tải dữ liệu: ' + e.message); log('Lỗi history: ' + e.message); console.error(e);
     }finally{ $('#btnView').disabled = false; }
@@ -245,7 +243,7 @@
     }catch(e){ log('Lỗi payout: ' + e.message); }
   }
 
-  // ====== Airdrop: trạng thái & proof ======
+  // ====== Airdrop APIs ======
   async function getAirdropStatus(wallet, dayStr){
     return fetchJSON(`${API}/airdrop/status?wallet=${encodeURIComponent(wallet)}&day=${encodeURIComponent(dayStr)}`);
   }
@@ -261,7 +259,7 @@
     if (!isWallet(wallet)) return;
     const dayStr = urlClaimDay || yesterdayStrUTC();
     try{
-      const st = await getAirdropStatus(wallet, dayStr); // {hasEntry, claimed, amountWei, index,...}
+      const st = await getAirdropStatus(wallet, dayStr);
       if (!st.hasEntry){ btn.title = `Ví không có trong airdrop ngày ${dayStr}`; return; }
       if (st.claimed){ btn.title = `Đã claim ngày ${dayStr}`; return; }
       btn.disabled = false;
@@ -280,7 +278,6 @@
       try{
         await window.ethereum.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: '0x38' }] });
       }catch (err){
-        // nếu chưa add chain
         if (err && (err.code === 4902 || err.code === -32603)){
           await window.ethereum.request({
             method:'wallet_addEthereumChain',
@@ -312,39 +309,40 @@
       const proof = await getAirdropProof(wallet, dayStr);
       // proof: { day:"20250831", index, account, amountWei, proof:[...] }
 
-      // 2) signer BSC + contract
+      // 2) signer + contract (để lấy interface & gọi view)
       const signer = await getSignerBSC();
       const c = new ethers.Contract(AIRDROP_CONTRACT, AIRDROP_ABI, signer);
 
-      // 3) (tuỳ chọn) check root ngày đó đã set chưa
+      // 3) check root đã set chưa
       const root = await c.roots(BigInt(proof.day));
-      if (root === ethers.ZeroHash) throw new Error(`Ngày ${dayStr} chưa có root on-chain.`);
+      if (!root || /^0x0+$/i.test(root)) throw new Error(`Ngày ${dayStr} chưa có root on-chain.`);
 
-      // 4) (tuỳ chọn) check đã claim chưa
+      // 4) check đã claim chưa
       const already = await c.isClaimed(BigInt(proof.day), BigInt(proof.index));
       if (already) { log('Đã claim trước đó.'); return; }
 
-      // 5) estimate + gửi tx
+      // 5) encode calldata + ước lượng gas + gửi tx
       log('Đang gửi giao dịch claim...');
-      // ===== gửi claim với ethers v6 (dùng chữ ký hàm) =====
-const FN = "claim(uint256,uint256,address,uint256,bytes32[])";
-const args = [
-  BigInt(proof.day),
-  BigInt(proof.index),
-  proof.account,
-  BigInt(proof.amountWei),
-  proof.proof
-];
+      const FN = "claim(uint256,uint256,address,uint256,bytes32[])";
+      const args = [
+        BigInt(proof.day),
+        BigInt(proof.index),
+        proof.account,
+        BigInt(proof.amountWei),
+        proof.proof
+      ];
+      const data = c.interface.encodeFunctionData(FN, args);
 
-// estimate gas
-const gas = await c.estimateGas[FN](...args);
+      const gas = await signer.estimateGas({ to: AIRDROP_CONTRACT, data });
+      const tx  = await signer.sendTransaction({
+        to: AIRDROP_CONTRACT,
+        data,
+        gasLimit: (gas * 12n) / 10n   // +20% headroom
+      });
 
-// gửi tx
-const tx  = await c[FN](...args, { gasLimit: (gas * 12n) / 10n });
-log("Tx gửi: " + tx.hash + " — chờ xác nhận...");
-const rc = await tx.wait();
-log("✅ Claim thành công. Tx: " + rc.transactionHash);
-
+      log('Tx gửi: ' + tx.hash + ' — chờ xác nhận...');
+      const rc = await tx.wait();
+      log('✅ Claim thành công. Tx: ' + rc.transactionHash);
 
       // 6) cập nhật nút
       await refreshClaimEligibility();

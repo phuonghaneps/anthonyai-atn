@@ -1,7 +1,9 @@
 name: make-proofs
+permissions:
+  contents: write
 
 on:
-  workflow_dispatch: {}
+  workflow_dispatch:
   push:
     paths:
       - 'lists/airdrop2.csv'
@@ -16,31 +18,32 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          persist-credentials: true    # dùng GITHUB_TOKEN để push
 
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version: 20
 
-      # >>> BƯỚC CÀI DEPENDENCIES (điểm bạn hỏi) <<<
       - name: Install deps (no package.json)
-        run: |
-          npm i csv-parse merkletreejs keccak256 ethers@6
+        run: npm i csv-parse merkletreejs keccak256 ethers@6
 
       - name: Generate proofs.json
         env:
-          CSV: lists/airdrop2.csv          # file CSV của bạn
-          TARGET_DIR: '<repo>'             # thư mục đích chứa proofs.json
-        run: node scripts/make-proofs.js   # chạy script tạo proofs.json
+          CSV: lists/airdrop2.csv
+          TARGET_DIR: '<repo>'         # bạn đang dùng thư mục tên "<repo>" là đúng
+        run: node scripts/make-proofs.js
 
       - name: Commit & push if changed
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           if [[ -n "$(git status --porcelain)" ]]; then
-            git config user.name "github-actions[bot]"
+            git config user.name  "github-actions[bot]"
             git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
             git add '<repo>/proofs.json'
             git commit -m "chore: update proofs.json (auto)"
-            git push
+            git push origin HEAD:${GITHUB_REF_NAME}
           else
             echo "No changes to commit."
           fi

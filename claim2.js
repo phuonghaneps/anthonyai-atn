@@ -3,7 +3,7 @@
 const X_HANDLE2      = "Token_ATN";
 const AIRDROP2_ADDR  = ethers.utils.getAddress("PASTE_AIRDROP2B_ADDRESS_HERE"); // <— ĐIỀN CONTRACT MỚI
 const TOKEN_ADDR     = ethers.utils.getAddress("0xb5C84953983931dd2C10C9b04a379eE52697193"); // ATN
-const PROOFS_URL     = "./claim/proofs.json"; // đường dẫn proofs.json bạn up lên GitHub Pages
+const PROOFS_URL = "./<repo>/proofs.json";
 
 // ABI tối giản cho MerkleAirdropV2 (claim(amount, proof))
 const AIRDROP2_ABI   = [

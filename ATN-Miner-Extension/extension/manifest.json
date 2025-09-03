@@ -1,0 +1,37 @@
+{
+  "manifest_version": 3,
+  "name": "ATN Miner",
+  "version": "1.2.0",
+
+  "action": {
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "images/logo-16.png",
+      "32": "images/logo-32.png",
+      "48": "images/logo-48.png",
+      "128": "images/logo-128.png"
+    }
+  },
+
+  "icons": {
+    "16": "images/logo-16.png",
+    "32": "images/logo-32.png",
+    "48": "images/logo-48.png",
+    "128": "images/logo-128.png"
+  },
+
+  "permissions": ["storage", "alarms"],
+  "host_permissions": [
+    "https://api.atncrypto.com/*",
+    "http://localhost:8000/*",
+    "http://127.0.0.1:8000/*"
+  ],
+
+  "background": {
+    "service_worker": "bg.js"
+  },
+
+  "content_security_policy": {
+    "extension_pages": "script-src 'self'; object-src 'self'; connect-src 'self' https://api.atncrypto.com http://localhost:8000 http://127.0.0.1:8000"
+  }
+}
